@@ -14,17 +14,9 @@ label { display: block; margin: 10px 0; }
 </style>
 </head>
 <body>
-<h1>E_BSP</h1>
-<p>デッキを選んで対戦を開始してください：</p>
-
-<button onclick="window.open('battle.html?deck=deck1', '_blank')">デッキ1で対戦</button>
-<button onclick="window.open('battle.html?deck=deck2', '_blank')">デッキ2で対戦</button>
-
-<hr>
-
-<h1>デッキ作成</h1>
+<h1>デッキ登録画面</h1>
 <p>
-    <label>編集するデッキ:
+    <label>編集するデッキを選択してください:
         <select id="deckSelector">
             <option value="deck1">デッキ1</option>
             <option value="deck2">デッキ2</option>
@@ -36,6 +28,10 @@ label { display: block; margin: 10px 0; }
 <button onclick="exportDeck()">エクスポート</button>
 <button onclick="importDeck()">インポート</button>
 <button onclick="saveDeck()">デッキ保存</button>
+
+</p>
+<button onclick="window.open('battle.html?deck=deck1', '_blank')">デッキ1で対戦画面へ</button>
+<button onclick="window.open('battle.html?deck=deck2', '_blank')">デッキ2で対戦画面へ</button>
 
 <label><input type="checkbox" id="includeFirstCard"> 契約カードを使用する</label>
 
