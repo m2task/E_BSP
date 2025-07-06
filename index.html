@@ -17,9 +17,10 @@ label { display: block; margin: 10px 0; }
 <h1>デッキ作成</h1>
 <input id="cardName" placeholder="カード名 または カード名×ｎ" />
 <button onclick="addCard()">追加</button>
-<button onclick="saveAndGoToBattle()">対戦画面へ</button>
+<button onclick="saveDeck()">保存</button>
 <button onclick="exportDeck()">エクスポート</button>
 <button onclick="importDeck()">インポート</button>
+<button onclick="goToBattle()" id="battleButton">対戦画面へ</button>
 
 <label><input type="checkbox" id="includeFirstCard"> 契約カードを使用する</label>
 
@@ -76,17 +77,15 @@ deck = deck.filter(card => card !== name);
 updateList();
 }
 
-function saveAndGoToBattle() {
-  localStorage.setItem("deck", JSON.stringify(deck));
+function saveDeck() {
+  localStorage.setItem("myDeck", JSON.stringify(deck));
   const includeFirst = document.getElementById("includeFirstCard").checked;
   if (deck.length > 0 && includeFirst) {
-    // チェックが入っている場合、契約カード情報を保存
     localStorage.setItem("fixedCardName", deck[0]);
   } else {
-    // チェックが入っていない場合、契約カード情報を削除
     localStorage.removeItem("fixedCardName");
   }
-  window.location.href = "battle.html";
+  alert("デッキを保存しました！");
 }
 
 function exportDeck() {
@@ -107,6 +106,10 @@ alert("形式が正しくありません！");
 } catch (e) {
 alert("インポートに失敗しました（JSON形式が正しいか確認してください）");
 }
+}
+
+function goToBattle() {
+window.location.href = "battle.html";
 }
 </script>
 </body>
