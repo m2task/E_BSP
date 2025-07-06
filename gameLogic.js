@@ -31,23 +31,22 @@ export function initializeGame() {
 
     // 契約カードの設定をlocalStorageから読み込む
     const includeFirstCard = JSON.parse(localStorage.getItem("includeFirstCard") || "false");
-    const fixedCardName = localStorage.getItem("fixedCardName");
 
     let initialDeck = loadedDeck;
 
-    deck = initialDeck.map(name => ({ id: `card-${cardIdCounter++}`, name, isRotated: false, isExhausted: false, coresOnCard: [] }));
-    shuffle(deck);
-
     // 契約カードの処理
-    if (includeFirstCard && fixedCardName) {
-        const fixedCardIndex = deck.findIndex(card => card.name === fixedCardName);
+    if (includeFirstCard && initialDeck.length > 0) {
+        // デッキの最初のカードを契約カードとして扱う
+        const fixedCardName = initialDeck[0];
+        const fixedCardIndex = initialDeck.findIndex(name => name === fixedCardName); // 最初のカードのインデックスを見つける
         if (fixedCardIndex > -1) {
-            const [fixedCard] = deck.splice(fixedCardIndex, 1);
-            hand.push(fixedCard);
-        } else {
-            console.warn(`契約カードとして指定された「${fixedCardName}」がデッキに見つかりませんでした。`);
+            const [fixedCard] = initialDeck.splice(fixedCardIndex, 1); // デッキから削除
+            hand.push({ id: `card-${cardIdCounter++}`, name: fixedCard, isRotated: false, isExhausted: false, coresOnCard: [] }); // 手札に追加
         }
     }
+
+    deck = initialDeck.map(name => ({ id: `card-${cardIdCounter++}`, name, isRotated: false, isExhausted: false, coresOnCard: [] }));
+    shuffle(deck);
 
     const initialHandSize = 4;
     while (hand.length < initialHandSize && deck.length > 0) {
