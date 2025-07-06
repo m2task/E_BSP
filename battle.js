@@ -119,8 +119,6 @@ function setupEventListeners() {
             drawCard(true); // 下からドロー
         }
     });
-    // document.getElementById('handToggle').addEventListener('click', toggleHand);
-    // document.getElementById('openHandButton').addEventListener('click', toggleHand);
 
     // handZoneContainer にマウスイベントを追加
     const handZoneContainer = document.getElementById('handZoneContainer');
@@ -179,7 +177,6 @@ function setupEventListeners() {
 
 // --- イベントハンドラ ---
 function handleDragStart(e) {
-    console.log('handleDragStart: selectedCores at start:', JSON.stringify(selectedCores));
     draggedElement = e.target;
     setTimeout(() => draggedElement.classList.add('dragging'), 0);
 
@@ -191,7 +188,6 @@ function handleDragStart(e) {
         offsetX = e.clientX - rect.left;
         offsetY = e.clientY - rect.top;
     } else if (draggedElement.classList.contains('core')) {
-        console.log('handleDragStart: draggedElement.classList:', draggedElement.classList.toString());
         const coreType = draggedElement.dataset.coreType;
         const index = parseInt(draggedElement.dataset.index);
         const sourceCardId = draggedElement.dataset.sourceCardId;
@@ -216,8 +212,6 @@ function handleDragStart(e) {
             }
             return false;
         });
-        console.log('handleDragStart: isDraggedCoreSelected:', isDraggedCoreSelected);
-        console.log('handleDragStart: selectedCores.length:', selectedCores.length);
 
         if (isDraggedCoreSelected && selectedCores.length > 1) {
             // 複数のコアが選択されており、ドラッグされたコアがそのうちの1つである場合
@@ -232,7 +226,6 @@ function handleDragStart(e) {
             });
             e.dataTransfer.setData("type", "multiCore");
             e.dataTransfer.setData("cores", JSON.stringify(draggedCoreData));
-            console.log('handleDragStart: multiCore drag initiated. Type:', "multiCore", 'Cores:', JSON.stringify(draggedCoreData));
         } else { // 単一コアのドラッグ（選択されていない場合、または1つだけ選択されていてそれがドラッグされた場合）
             const parentCardElement = draggedElement.closest('.card'); // 親がカードかどうかを再確認
             if (parentCardElement) {
@@ -266,7 +259,6 @@ function handleDragStart(e) {
 }
 
 function handleDragEnd() {
-    console.log('handleDragEnd: called.');
     if (draggedElement) {
         draggedElement.classList.remove('dragging');
         draggedElement = null;
@@ -332,39 +324,25 @@ function handleDeckDrop(e) {
 
 function handleDrop(e) {
     e.preventDefault();
-    console.log('handleDrop: lifeCores at start:', JSON.stringify(lifeCores));
-    console.log('handleDrop: reserveCores at start:', JSON.stringify(reserveCores));
     const type = e.dataTransfer.getData("type");
-    console.log('handleDrop: dataTransfer type:', type);
-    console.log('handleDrop: dataTransfer cores (raw):', e.dataTransfer.getData("cores"));
-    console.log('handleDrop: e.target before closest:', e.target);
     const targetCardElement = e.target.closest('.card'); // ドロップ先がカードかどうか
     const targetZoneElement = e.target.closest('.zone, .special-zone'); // ドロップ先がゾーンかどうか
-
-    console.log('handleDrop: type=', type, 'targetCardElement=', targetCardElement, 'targetZoneElement=', targetZoneElement);
 
     if (type === 'card') {
         handleCardDrop(e);
     } else if (type === 'voidCore' || type === 'core' || type === 'multiCore' || type === 'coreFromCard') {
-        console.log('handleDrop: Entering core handling block.');
         const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
-        console.log('handleDrop: coresToMove (parsed):', JSON.stringify(coresToMove));
         if (targetCardElement) {
             // Check if it's an internal move within the same card
             const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
             if (coresToMove.length === 1 && coresToMove[0].sourceCardId === targetCardElement.dataset.id) {
-                console.log('handleDrop: Internal core move on card. Calling handleCoreInternalMoveOnCard.');
                 handleCoreInternalMoveOnCard(e, targetCardElement);
             } else {
-                console.log('handleDrop: targetCardElement is present. Calling handleCoreDropOnCard.');
                 handleCoreDropOnCard(e, targetCardElement);
             }
         } else if (targetZoneElement) {
-            console.log('handleDrop: targetZoneElement is present. Calling handleCoreDropOnZone.');
             handleCoreDropOnZone(e, targetZoneElement);
         }
-    } else {
-        console.log('handleDrop: Unhandled type:', type);
     }
     clearSelectedCores(); // ドロップ処理の最後に選択状態をクリア
 }
@@ -388,7 +366,6 @@ function handleCardDrop(e) {
             left: e.clientX - fieldRect.left - offsetX,
             top: e.clientY - fieldRect.top - offsetY
         };
-        console.log('moveCardData: Card moved to field. Current field:', field);
     } else {
         delete cardPositions[cardId];
     }
@@ -396,14 +373,11 @@ function handleCardDrop(e) {
 }
 
 function handleCoreDropOnCard(e, targetCardElement) {
-    console.log('handleCoreDropOnCard: Function entered.');
     e.preventDefault();
     const type = e.dataTransfer.getData("type");
     const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
     const targetCardId = targetCardElement.dataset.id;
     const targetCard = field.find(card => card.id === targetCardId);
-
-    console.log('handleCoreDropOnCard: type=', type, 'coresToMove=', coresToMove, 'targetCardId=', targetCardId, 'targetCard=', targetCard);
 
     if (!targetCard) return;
 
@@ -427,7 +401,6 @@ function handleCoreDropOnCard(e, targetCardElement) {
         }
         voidChargeCount = 0; // ボイドコア移動後はチャージをリセット
         showToast('voidToast', '', true); // ボイドトーストを非表示
-        console.log('handleCoreDropOnCard (voidCore): targetCard.coresOnCard after push:', targetCard.coresOnCard);
     } else {
         // 通常のコア移動の場合
         // 移動元からコアを削除
@@ -647,8 +620,6 @@ function moveCoresToZone(cores, targetZoneName) {
 }
 
 function removeCoresFromSource(cores) {
-    console.log('removeCoresFromSource: cores to remove (input):', JSON.stringify(cores));
-
     // Group cores by their source (array or card)
     const groupedCores = {};
     for (const coreInfo of cores) {
@@ -658,7 +629,6 @@ function removeCoresFromSource(cores) {
         } else if (coreInfo.sourceCardId) {
             sourceKey = `card:${coreInfo.sourceCardId}`;
         } else {
-            console.warn('removeCoresFromSource: Core info missing source:', coreInfo);
             continue;
         }
         if (!groupedCores[sourceKey]) {
@@ -678,10 +648,8 @@ function removeCoresFromSource(cores) {
             const sourceArrayName = sourceKey.substring(6); // "array:".length
             const sourceArray = getArrayByZoneName(sourceArrayName);
             if (!sourceArray) {
-                console.warn('removeCoresFromSource: Source array not found:', sourceArrayName);
                 continue;
             }
-            console.log(`removeCoresFromSource: Processing array ${sourceArrayName}. BEFORE splice:`, JSON.stringify(sourceArray));
 
             for (const coreInfo of coresToRemoveFromThisSource) {
                 // Find the actual current index of the core in the array
@@ -689,21 +657,16 @@ function removeCoresFromSource(cores) {
                 const actualIndex = coreInfo.index; // Assuming coreInfo.type is the actual core value
                 if (actualIndex > -1 && actualIndex < sourceArray.length) {
                     sourceArray.splice(actualIndex, 1);
-                    console.log(`removeCoresFromSource: Removed core of type ${coreInfo.type} from ${sourceArrayName} at actual index ${actualIndex}.`);
                 } else {
-                    console.warn(`removeCoresFromSource: Core of type ${coreInfo.type} not found in ${sourceArrayName} for removal.`);
                 }
             }
-            console.log(`removeCoresFromSource: Processing array ${sourceArrayName}. AFTER splice:`, JSON.stringify(sourceArray));
 
         } else if (sourceKey.startsWith('card:')) {
             const sourceCardId = sourceKey.substring(5); // "card:".length
             const sourceCard = field.find(card => card.id === sourceCardId);
             if (!sourceCard || !sourceCard.coresOnCard) {
-                console.warn('removeCoresFromSource: Source card or coresOnCard not found:', sourceCardId);
                 continue;
             }
-            console.log(`removeCoresFromSource: Processing card ${sourceCardId}. BEFORE splice:`, JSON.stringify(sourceCard.coresOnCard));
 
             for (const coreInfo of coresToRemoveFromThisSource) {
                 // For cores on cards, we need to match by type and potentially position if multiple of same type
@@ -712,12 +675,9 @@ function removeCoresFromSource(cores) {
                 const actualIndex = coreInfo.index; // Assuming coreInfo.type is the actual core value
                 if (actualIndex > -1 && actualIndex < sourceCard.coresOnCard.length) {
                     sourceCard.coresOnCard.splice(actualIndex, 1);
-                    console.log(`removeCoresFromSource: Removed core of type ${coreInfo.type} from card ${sourceCardId} at actual index ${actualIndex}.`);
                 } else {
-                    console.warn(`removeCoresFromSource: Core of type ${coreInfo.type} not found on card ${sourceCardId} for removal.`);
                 }
             }
-            console.log(`removeCoresFromSource: Processing card ${sourceCardId}. AFTER splice:`, JSON.stringify(sourceCard.coresOnCard));
         }
     }
 }
@@ -725,10 +685,8 @@ function removeCoresFromSource(cores) {
 // --- コア選択ロジック ---
 function handleCoreClick(e) {
     e.stopPropagation(); // イベントの伝播を停止
-    console.log('handleCoreClick: selectedCores BEFORE:', JSON.stringify(selectedCores));
     const coreElement = e.target.closest('.core');
     if (!coreElement) {
-        console.log('Click was not on a core.');
         return;
     }
 
@@ -736,7 +694,6 @@ function handleCoreClick(e) {
     const index = parseInt(coreElement.dataset.index);
     const sourceCardId = coreElement.dataset.sourceCardId;
 
-    console.log('handleCoreClick: Clicked core:', { coreType, index, sourceCardId, parentId: coreElement.parentElement.id });
 
     let coreIdentifier = {
         type: coreType,
@@ -749,7 +706,6 @@ function handleCoreClick(e) {
         coreIdentifier.sourceArrayName = coreElement.parentElement.id;
     }
 
-    console.log('handleCoreClick: coreIdentifier:', JSON.stringify(coreIdentifier));
 
     const existingIndex = selectedCores.findIndex(c => {
         if (c.sourceCardId && coreIdentifier.sourceCardId) {
@@ -760,24 +716,18 @@ function handleCoreClick(e) {
         return false;
     });
 
-    console.log('handleCoreClick: existingIndex:', existingIndex);
 
     // Ctrl/Metaキーの有無に関わらず、選択をトグル
     if (existingIndex > -1) {
         selectedCores.splice(existingIndex, 1);
-        console.log('handleCoreClick: Core deselected. selectedCores AFTER:', JSON.stringify(selectedCores));
     } else {
         selectedCores.push(coreIdentifier);
-        console.log('handleCoreClick: Core selected. selectedCores AFTER:', JSON.stringify(selectedCores));
     }
     renderAll();
-    console.log('handleCoreClick: renderAll() called.');
 }
 
 function clearSelectedCores() {
-    console.log('clearSelectedCores: BEFORE:', JSON.stringify(selectedCores));
     selectedCores = [];
-    console.log('clearSelectedCores: AFTER: []');
     renderAll(); // 選択状態をクリアしたら再描画してDOMを更新
 }
 
@@ -797,8 +747,6 @@ function getZoneName(element) {
 }
 
 function getArrayByZoneName(zoneName) {
-    console.log(`getArrayByZoneName called for: ${zoneName}`);
-    console.log(`lifeCores length: ${lifeCores.length}, reserveCores length: ${reserveCores.length}`);
     switch (zoneName) {
         case 'hand': case 'handZone': return hand;
         case 'field': case 'fieldCards': return field;
@@ -879,8 +827,6 @@ function renderHand() {
 function renderField() {
     const fieldZone = document.getElementById("fieldCards");
     fieldZone.innerHTML = "";
-    console.log('renderField: Current field array:', field);
-    console.log('selectedCores at renderField start:', selectedCores); // 追加
     field.forEach(cardData => {
         const cardElement = createCardElement(cardData);
         const pos = cardPositions[cardData.id];
@@ -895,7 +841,6 @@ function renderField() {
 
         // カード上のコアを描画
         if (cardData.coresOnCard && cardData.coresOnCard.length > 0) {
-            console.log('renderField: coresOnCard for', cardData.name, ':', cardData.coresOnCard);
             const coresContainer = document.createElement('div');
             coresContainer.className = 'cores-on-card'; // 新しいクラスを追加
             cardData.coresOnCard.forEach((core, index) => {
@@ -919,9 +864,7 @@ function renderField() {
                 });
                 if (isSelected) {
                     coreDiv.classList.add('selected');
-                    console.log(`Core on card ${cardData.id} at index ${index} is selected.`);
                 } else {
-                    console.log(`Core on card ${cardData.id} at index ${index} is NOT selected.`);
                 }
                 coresContainer.appendChild(coreDiv);
             });
@@ -953,8 +896,6 @@ function renderCores(containerId, coreArray) {
     const container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = "";
-    console.log(`renderCores called for ${containerId} with array:`, coreArray); // Add this log
-    console.log(`selectedCores at renderCores start for ${containerId}:`, selectedCores); // 追加
     coreArray.forEach((coreType, index) => {
         const div = document.createElement("div");
         div.className = `core ${coreType}`;
@@ -969,7 +910,6 @@ function renderCores(containerId, coreArray) {
         });
         if (isSelected) {
             div.classList.add('selected');
-            console.log(`Core at ${containerId}[${index}] is selected.`);
         }
         container.appendChild(div);
     });
