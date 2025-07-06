@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>デッキ作成ツール</title>
+<style>
+body { font-family: sans-serif; padding: 20px; }
+input, textarea { padding: 5px; width: 100%; margin-bottom: 10px; }
+button { margin: 5px 5px 5px 0; padding: 5px 10px; }
+ul { margin-top: 10px; list-style: none; padding-left: 0; }
+li { margin-bottom: 5px; }
+.card-item { display: flex; justify-content: space-between; align-items: center; }
+label { display: block; margin: 10px 0; }
+</style>
+</head>
+<body>
+<h1>デッキ作成</h1>
+<input id="cardName" placeholder="カード名 または カード名×ｎ" />
+<button onclick="addCard()">追加</button>
+<button onclick="saveAndGoToBattle()">対戦画面へ</button>
+<button onclick="exportDeck()">エクスポート</button>
+<button onclick="importDeck()">インポート</button>
+
+<label><input type="checkbox" id="includeFirstCard"> 契約カードを使用する</label>
+
+<p id="cardCount">現在のデッキ枚数: 0枚</p>
+<ul id="deckList"></ul>
+
+<h3>デッキデータ（コピー・貼り付け用）</h3>
+<textarea id="deckData" rows="4" placeholder="ここにデッキデータを貼り付けてインポートできます"></textarea>
+
+<script>
+let deck = [];
+
+function addCard() {
+const input = document.getElementById("cardName").value.trim();
+if (!input) return;
+
+const match = input.match(/^(.+?)(?:[×\*xX](\d+))?$/);
+if (match) {
+const name = match[1].trim();
+const count = parseInt(match[2] || "1", 10);
+for (let i = 0; i < count; i++) {
+deck.push(name);
+}
+updateList();
+document.getElementById("cardName").value = "";
+}
+}
+
+function updateList() {
+const ul = document.getElementById("deckList");
+ul.innerHTML = "";
+
+const cardCounts = {};
+deck.forEach(card => {
+cardCounts[card] = (cardCounts[card] || 0) + 1;
+});
+
+for (const card in cardCounts) {
+const li = document.createElement("li");
+li.className = "card-item";
+
+li.innerHTML = `
+<span>${card} ×${cardCounts[card]}</span>
+<button onclick="deleteCard('${card}')">削除</button>
+`;
+ul.appendChild(li);
+}
+
+document.getElementById("cardCount").textContent = `現在のデッキ枚数: ${deck.length}枚`;
+}
+
+function deleteCard(name) {
+deck = deck.filter(card => card !== name);
+updateList();
+}
+
+function saveAndGoToBattle() {
+  localStorage.setItem("deck", JSON.stringify(deck));
+  const includeFirst = document.getElementById("includeFirstCard").checked;
+  if (deck.length > 0 && includeFirst) {
+    // チェックが入っている場合、契約カード情報を保存
+    localStorage.setItem("fixedCardName", deck[0]);
+  } else {
+    // チェックが入っていない場合、契約カード情報を削除
+    localStorage.removeItem("fixedCardName");
+  }
+  window.location.href = "battle.html";
+}
+
+function exportDeck() {
+document.getElementById("deckData").value = JSON.stringify(deck, null, 2);
+alert("デッキをコピーしておくと、別の端末でも再利用できます！");
+}
+
+function importDeck() {
+try {
+const input = document.getElementById("deckData").value;
+const imported = JSON.parse(input);
+if (Array.isArray(imported)) {
+deck = imported;
+updateList();
+} else {
+alert("形式が正しくありません！");
+}
+} catch (e) {
+alert("インポートに失敗しました（JSON形式が正しいか確認してください）");
+}
+}
+</script>
+</body>
+</html>
