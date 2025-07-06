@@ -1,7 +1,7 @@
 // src/core_logic.js
 import { lifeCores, reserveCores, countCores, trashCores, field, voidChargeCount, selectedCores, draggedCoreData, paymentState, setPaymentState, setVoidChargeCount, setSelectedCores, setDraggedCoreData, draggedElement, setMoveState, moveState } from './game_data.js';
 import { renderAll } from './ui_render.js';
-import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
+import { showToast, getArrayByZoneName, getZoneName, isMobileDevice } from './utils.js';
 
 
 // =====================================================================
@@ -132,7 +132,13 @@ export function clearSelectedCores() {
 }
 
 export function handleCoreDropOnCard(e, targetCardElement) {
-    const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
+    const coresDataString = e.dataTransfer.getData("cores");
+    if (!coresDataString) {
+        console.error("Failed to get core data on drop.");
+        return;
+    }
+
+    const coresToMove = JSON.parse(coresDataString);
     const targetCardId = targetCardElement.dataset.id;
     const targetCard = field.find(card => card.id === targetCardId);
 

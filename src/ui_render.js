@@ -16,8 +16,8 @@ export function createCardElement(cardData) {
     div.dataset.id = cardData.id;
 
     if (cardData.isSpecial) {
-        // Only add the special-card class for tensei, not for tokens
-        if (cardData.specialType === 'tensei') {
+        // Add the special-card class for tensei and tokens
+        if (cardData.specialType === 'tensei' || cardData.specialType === 'token') {
             div.classList.add('special-card');
         }
         // Still add the data-attribute for both, as it's used for sizing and other logic

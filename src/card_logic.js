@@ -184,7 +184,7 @@ export function createSpecialCardOnField(cardType, position) {
     let currentCardId = cardIdCounter;
     const newCard = {
         id: `card-${currentCardId++}`,
-        name: cardType === 'token' ? 'トークン' : '転生後',
+        name: cardType === 'token' ? 'トークン' : 'カードB面',
         imgDataUrl: null, // No image for special cards
         isRotated: false,
         isExhausted: false,

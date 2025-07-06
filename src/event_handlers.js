@@ -263,7 +263,22 @@ function handleMouseOver(e) {
         }
     });
 
-    document.getElementById('trashZoneTitle').addEventListener('click', openTrashModal);
+    document.getElementById('trashZoneTitle').addEventListener('click', (e) => {
+        e.stopPropagation(); // 手札が閉じるのを防ぐ
+        openTrashModal();
+    });
+
+    // トラッシュゾーンのカードをクリックしてもモーダルを開く
+    const trashCardElement = document.getElementById('trashCard');
+    trashCardElement.addEventListener('click', (e) => {
+        // .card クラスを持つ要素、またはその子孫がクリックされたかを確認
+        const card = e.target.closest('.card');
+        // #trashCard の中にカードが存在し、かつそのカードがクリックされた場合
+        if (card && trashCardElement.contains(card)) {
+            e.stopPropagation(); // 手札が閉じるのを防ぐ
+            openTrashModal();
+        }
+    });
     document.getElementById('addDeckCoreBtn').addEventListener('click', addDeckCore);
     document.getElementById('toggleDeckCoreBtn').addEventListener('click', toggleDeckCoreCount);
     document.getElementById('refreshButton').addEventListener('click', refreshAll);
@@ -284,7 +299,7 @@ function handleMouseOver(e) {
 
     document.getElementById('deckDiscardBtn').addEventListener('click', discardDeck);
     document.getElementById('deckOpenBtn').addEventListener('click', openDeck);
-    document.getElementById('deckGaiButton').addEventListener('click', openDeckGaiModal);
+    document.getElementById('openDeckgaiButton').addEventListener('click', openDeckGaiModal);
 
     // 支払いキャンセルボタンのイベントリスナー
     document.getElementById('cancelPaymentButton').addEventListener('click', () => {
@@ -342,6 +357,7 @@ export function handleDragStart(e) {
 
     setDraggedElement(target);
     setTimeout(() => target.classList.add('dragging'), 0);
+    setIsDragging(true); // ドラッグ開始時に true に設定
 
     if (target.classList.contains('card')) {
         // If it's a special card from the modal (it won't have a cardId yet)
@@ -400,12 +416,16 @@ export function handleDragStart(e) {
 }
 
 export function handleDragEnd(e) {
+    console.log("handleDragEnd called.");
     if (draggedElement) {
+        console.log("draggedElement before reset:", draggedElement.dataset.id);
         draggedElement.classList.remove('dragging');
         setDraggedElement(null);
     }
+    console.log("draggedElement after reset:", draggedElement); // null になっているはず
     setDraggedCoreData(null);
     clearSelectedCores();
+    console.log("isDragging after reset:", isDragging); // false になっているはず
 }
 
 export function handleDeckDragEnter(e) {
@@ -478,7 +498,14 @@ export function handleDrop(e) {
         handleSpecialCardDrop(mockEvent);
     }
     clearSelectedCores();
-    setDraggedElement(null); // ドロップ直後にドラッグ状態を強制的にクリア
+
+    // ドラッグ操作の終了処理をここでも実行
+    if (draggedElement) {
+        draggedElement.classList.remove('dragging');
+        setDraggedElement(null);
+    }
+    setDraggedCoreData(null);
+    setIsDragging(false); // PC版のドラッグ終了時にも確実に false にする
 }
 
 function handleCardDrop(e) {
@@ -550,10 +577,19 @@ function handleCardDrop(e) {
 function handleCoreDrop(e) {
     const targetCardElement = e.target.closest('.card');
 
-    // ★ カードへのドロップを最優先で処理
+    // ★ ドロップ先がカード（またはその子要素）の場合
     if (targetCardElement) {
-        const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
+        const isTrashCard = targetCardElement.closest('#trashZoneFrame');
 
+        // そのカードがトラッシュゾーンにある場合は、ゾーンへのドロップとして扱う
+        if (isTrashCard) {
+            handleCoreDropOnZone(e, isTrashCard);
+            return;
+        }
+
+        // それ以外のカード（フィールドなど）へのドロップの場合
+        const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
+        // 同じカード内での移動か判定
         const isInternalMove = (coresToMove.length === 1 && coresToMove[0].sourceCardId === targetCardElement.dataset.id);
 
         if (isInternalMove) {
@@ -561,10 +597,10 @@ function handleCoreDrop(e) {
         } else {
             handleCoreDropOnCard(e, targetCardElement);
         }
-        return; // カードにドロップしたら、ここで処理を終了する
+        return;
     }
 
-    // ★ カード以外の場合、ゾーンへのドロップを試みる
+    // ★ ドロップ先がカードではない場合、ゾーンへのドロップを試みる
     const targetZoneElement = e.target.closest('.zone, .special-zone');
     if (targetZoneElement) {
         handleCoreDropOnZone(e, targetZoneElement);
@@ -734,33 +770,62 @@ function handleTouchEnd(e) {
 
         if (dropTarget) {
             if (touchedElement.classList.contains('card')) {
-                // カードのタッチドロップ処理
-                const cardId = touchedElement.dataset.id;
-                const sourceZoneName = getZoneName(touchedElement.parentElement);
-                const targetZoneElement = dropTarget.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea');
+                // 特殊カード（トークンなど）か、既存のカードかを判定
+                const isSpecial = touchedElement.classList.contains('special-card') && !touchedElement.dataset.id;
 
-                if (targetZoneElement) {
-                    const targetZoneName = getZoneName(targetZoneElement);
-                    if (targetZoneName === 'field') {
-                        const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
-                        cardPositions[cardId] = {
-                            left: currentTouchX - fieldRect.left - touchOffsetX,
-                            top: currentTouchY - fieldRect.top - touchOffsetY
-                        };
-                    } else {
-                        delete cardPositions[cardId];
+                if (isSpecial) {
+                    // 特殊カードのドロップ処理
+                    const cardType = touchedElement.dataset.cardType;
+                    const targetElement = dropTarget.closest('#fieldZone');
+
+                    if (targetElement) {
+                        const targetZoneName = getZoneName(targetElement);
+                        if (targetZoneName === 'field') {
+                            const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
+                            const position = {
+                                left: currentTouchX - fieldRect.left - touchOffsetX,
+                                top: currentTouchY - fieldRect.top - touchOffsetY
+                            };
+                            createSpecialCardOnField(cardType, position);
+                        }
                     }
-                    moveCardData(cardId, sourceZoneName, targetZoneName);
                     hideMagnifier();
+                } else {
+                    // 既存カードの移動処理
+                    const cardId = touchedElement.dataset.id;
+                    const sourceZoneName = getZoneName(touchedElement.parentElement);
+                    const targetZoneElement = dropTarget.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea');
+
+                    if (targetZoneElement) {
+                        const targetZoneName = getZoneName(targetZoneElement);
+                        if (targetZoneName === 'field') {
+                            const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
+                            cardPositions[cardId] = {
+                                left: currentTouchX - fieldRect.left - touchOffsetX,
+                                top: currentTouchY - fieldRect.top - touchOffsetY
+                            };
+                        } else {
+                            delete cardPositions[cardId];
+                        }
+                        moveCardData(cardId, sourceZoneName, targetZoneName);
+                        hideMagnifier();
+                    }
                 }
             } else if (touchedElement.classList.contains('core') || touchedElement.id === 'voidCore') {
                 // コアのタッチドロップ処理
+
+                // ドロップ先がカード、またはカードの子要素であるかを確認
+                const targetCardElement = dropTarget.closest('.card');
+                // mockEventのターゲットを、もしカード上ならそのカード要素に、そうでなければ元のdropTargetに設定
+                const eventTarget = targetCardElement || dropTarget;
+
                 // draggedCoreData を使用する
-                const coresToMove = draggedCoreData; 
+                const coresToMove = draggedCoreData;
                 const mockEvent = {
                     clientX: currentTouchX,
                     clientY: currentTouchY,
-                    target: dropTarget,
+                    target: eventTarget, // 修正後のターゲットを使用
+                    preventDefault: function() {}, // ★★★ 空の関数を追加 ★★★
                     dataTransfer: {
                         getData: (key) => {
                             if (key === "cores") return JSON.stringify(coresToMove);
@@ -811,6 +876,8 @@ export function openModal(modalId, contentId, renderContent) {
         }
     };
     document.addEventListener('mousedown', closeModalOnClick);
+
+    renderAll(); // モーダルが開かれた時にも renderAll を呼び出す
 }
 
 export function addDeckCore() {

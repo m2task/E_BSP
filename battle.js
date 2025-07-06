@@ -109,4 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     initializeMagnifyButton(); // 拡大表示のON/OFFボタンを初期化
     document.getElementById('cancelPaymentButton').addEventListener('click', cancelPayment);
+
+    
 });

@@ -1,4 +1,7 @@
-body {
+html {
+      overflow: hidden; /* サイト全体のスクロールを無効にする */
+    }
+    body {
       margin: 0;
       padding: 10px;
       font-family: sans-serif;
@@ -8,6 +11,8 @@ body {
       -webkit-user-select: none; /* Safari */
       -moz-user-select: none; /* Firefox */
       -ms-user-select: none; /* IE/Edge */
+      overflow: hidden; /* サイト全体のスクロールを無効にする */
+      touch-action: manipulation; /* 追加: ダブルタップズームを無効にする */
     }
 
     .column {
@@ -69,6 +74,13 @@ body {
       font-weight: bold;
       position: relative; /* オーバーレイの基準位置 */
       overflow: hidden; /* はみ出る部分を隠す */
+    }
+
+    .deck-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin: 10px 0;
     }
 
     .deck-actions button {
@@ -170,10 +182,11 @@ body {
     }
 
     .cores {
-      display: flex;
-      gap: 5px;
-      margin-top: 10px;
-    }
+  display: flex;
+  gap: 5px;
+  margin-top: 10px;
+  align-items: center; /* 追加 */
+}
 
     .core {
       width: 20px;
@@ -183,6 +196,7 @@ body {
       position: relative; /* 擬似要素の基準位置 */
       transition: transform 0.2s ease;
       z-index: 10; /* コアを重疲労ボタンより前面に表示 */
+      touch-action: none; /* ドラッグ中のスクロールを無効化 */
     }
     .core.blue {
       /* 立体感を出すためのグラデーション */
@@ -206,25 +220,46 @@ body {
       top: 0; left: 0; right: 0; bottom: 0;
       /* 立体感を出すためのグラデーション */
       background: radial-gradient(circle at 50% 50%, #ff7d7d, #c82333);
-      /* ひし形に形状変更 */
       clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
       z-index: 1;
     }
     .void-core {
+      background: radial-gradient(circle at 50% 50%, #5dade2, #007bff);
       clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); /* 六角形 */
       width: 26px;
       height: 26px;
+    }
+
+    /* 無限コアに「∞」マークを追加 */
+    #voidCore::after {
+        content: '∞';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -55%);
+        color: white;
+        font-size: 18px;
+        font-weight: bold;
+        text-shadow: 0 0 3px rgb(128, 128, 128);
+        pointer-events: none; /* クリックを背後のコアに透過させる */
+    }
+
+    /* ボイドコアのサイズを大きくする */
+    #voidCore {
+        width: 26px;
+        height: 26px;
     }
     /* 選択されたコアのスタイル */
     .core.selected {
       transform: scale(1.2);
     }
     .core-list {
-      display: flex;
-      gap: 4px;
-      justify-content: center;
-      padding-bottom: 4px;
-    }
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  padding-bottom: 4px;
+  align-items: center; /* 追加 */
+}
     .core-container {
       display: flex;
       flex-wrap: wrap;
@@ -299,19 +334,25 @@ body {
       left: 100px;
     }
 
-    .open-deckgai-toggle {
+    .bottom-right-buttons {
       position: fixed;
       bottom: 0;
       right: 20px;
+      display: flex;
+      gap: 8px; /* ボタン間の隙間 */
+      z-index: 101;
+    }
+
+    .bottom-button {
       background: #ddd;
       font-weight: bold;
       padding: 5px 15px;
-      border-top: 1px solid #999;
-      border-left: 1px solid #999;
-      border-right: 1px solid #999;
+      border: 1px solid #999;
+      border-bottom: none;
       border-radius: 5px 5px 0 0;
       cursor: pointer;
-      z-index: 101;
+      font-family: sans-serif;
+      color: black;
     }
 
     .special-card {
@@ -329,13 +370,43 @@ body {
       }
 
       .open-hand-toggle, .open-trash-toggle {
-        padding: 10px 20px; /* タップしやすいようにパディングを増やす */
-        /* 中央配置を解除し、左寄せにする */
-        left: 20px; /* 左端から20pxの位置に配置 */
-        right: auto; /* right プロパティを解除 */
-        transform: none; /* translateX(-50%) を解除 */
-        display: block; /* 常に表示 */
+    padding: 10px 20px; /* タップしやすいようにパディングを増やす */
+    /* 中央配置を解除し、左寄せにする */
+    left:140px; /* 位置を右に調整 */
+    right: auto; /* right プロパティを解除 */
+    transform: none; /* translateX(-50%) を解除 */
+    display: block; /* 常に表示 */
+  }
+
+      /* ボタンを右側に配置 & 大きさを統一 */
+      .bottom-right-buttons {
+        gap: 0;
       }
+      .bottom-button {
+        width: 90px;
+        text-align: center;
+        padding: 10px 5px;
+      }
+      /* --- ここまで --- */
+
+      /* --- スマホ用コアサイズ調整 --- */
+      .core.blue {
+        width: 26px;
+        height: 26px;
+      }
+      .core.soul {
+        width: 29px;
+        height: 29px;
+      }
+      #voidCore {
+        width: 31px;
+        height: 31px;
+      }
+      #voidCore::after {
+        font-size: 22px; /* ∞マークのサイズ調整 */
+        transform: translate(-50%, -50%); /* 位置を少し下に調整 */
+      }
+      /* --- ここまで --- */
     }
 
     .hidden { display: none; }
@@ -646,7 +717,7 @@ body {
   box-shadow: 0 0 6px #007bff33;
 }
 
-/* フィールドの転生後カードのサイズを手札と同じにする */
+/* フィールドのカードB面カードのサイズを手札と同じにする */
 #fieldCards .card[data-card-type="tensei"] {
   width: 80px;
   height: 120px;

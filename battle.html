@@ -17,7 +17,7 @@
     <div class="zone special-zone" id="voidZone" style="min-width: 60px; min-height: 70px; margin-left: 13px; margin-top: -5px; position: relative; z-index: 2;">
       <div class="zone-title">ボイド</div>
       <div class="core-list" style="justify-content: center;">
-        <div class="void-core" draggable="true" id="voidCore" style="background:#007bff; color:white; font-weight:bold; text-align:center; line-height:25px; user-select:none; cursor:grab;">∞</div>
+        <div id="voidCore" class="core blue" draggable="true"></div>
       </div>
       <div id="voidToast" class="toast-message local"></div>
     </div>
@@ -82,7 +82,7 @@
       <div class="deck-zone-overlay bottom-zone"></div>
     </div>
   </div>
-  <div class="deck-actions" style="display: flex; gap: 8px; justify-content: center; margin: 10px 0;">
+  <div class="deck-actions">
     <button id="deckOpenBtn">オープン</button>
     <button id="deckDiscardBtn">破棄</button>
   </div>
@@ -92,7 +92,7 @@
     <div id="trashListArea" style="display:none; margin-top:8px; flex-wrap:wrap; gap:8px;"></div>
     <div id="trashToast" class="toast-message local"></div>
   </div>
-  <div id="refreshButton" class="zone-title" style="text-align: center; cursor: pointer; margin-top: 10px;">リフレッシュ</div>
+  
 </div>
 
 <!-- 手札ゾーン -->
@@ -102,7 +102,12 @@
   <div class="hand-zone" id="handZone"></div>
 </div>
 <div id="openHandButton" class="open-hand-toggle hidden">▲ 手札を開く（<span id="handCount">0</span>枚）</div>
-<div id="deckGaiButton" class="open-deckgai-toggle">デッキ外</div>
+
+<!-- 右下のボタン群 -->
+<div class="bottom-right-buttons">
+  <button id="refreshButton" class="bottom-button">リフレッシュ</button>
+  <button id="openDeckgaiButton" class="bottom-button">デッキ外</button>
+</div>
 
 <!-- トラッシュモーダル -->
 <div id="trashModal">
@@ -116,7 +121,7 @@
             <div class="card-name-fallback">トークン</div>
         </div>
         <div class="card special-card" draggable="true" data-card-type="tensei">
-            <div class="card-name-fallback">転生後</div>
+            <div class="card-name-fallback">カードB面</div>
         </div>
     </div>
 </div>

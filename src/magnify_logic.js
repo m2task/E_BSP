@@ -21,7 +21,13 @@ function getCardData(cardId) {
 }
 
 function handleCardMouseOver(e) {
+    console.log("handleCardMouseOver called for:", e.currentTarget.dataset.id);
+    console.log("isMagnifyEnabled:", isMagnifyEnabled);
+    console.log("draggedElement:", draggedElement);
+    console.log("isDragging:", isDragging);
+
     if (!isMagnifyEnabled || draggedElement || isDragging) {
+        console.log("Magnifier hidden due to condition.");
         loupe.style.display = 'none'; // ドラッグ中は非表示を徹底
         return;
     }
