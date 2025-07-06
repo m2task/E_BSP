@@ -26,6 +26,11 @@ let cardPositions = {}; // { cardId: { left, top } }
 let selectedCores = []; // 選択されたコアの情報を保持 { type: 'blue', sourceArrayName: 'lifeCores', index: 0 }
 let draggedCoreData = null; // ドラッグ中のコアデータ（複数選択対応）
 
+function getDeckNameFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("deck") || "deck1"; // デフォルトは deck1
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initializeGame();
     setupEventListeners();
@@ -33,7 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initializeGame() {
     selectedCores = []; // 選択されたコアを初期化
-    const loadedDeck = JSON.parse(localStorage.getItem("deck"));
+    const deckName = getDeckNameFromURL();
+    const loadedDeck = JSON.parse(localStorage.getItem(deckName)) || [];
     const fixedCardName = localStorage.getItem("fixedCardName");
     const initialDeck = loadedDeck;
 
