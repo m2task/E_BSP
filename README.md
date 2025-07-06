@@ -3,9 +3,9 @@
 これはTrading Card GameのBattle Spiritsをシミュレーションできるプロジェクトです。
 https://m2task.github.io/E_BSP/
 ## 特徴
-- デッキをローカルストレージに保存
+- デッキをローカルストレージに保存して登録
 - バトル画面でカードやコアをドラッグ＆ドロップ
-- GitHub Pagesで動作する
+- GitHub Pagesで動作する(上リンク)
 
 ## 使い方
 1. index.html でデッキを構築
