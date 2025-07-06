@@ -34,6 +34,7 @@ label { display: block; margin: 10px 0; }
 <button onclick="window.open('battle.html?deck=deck2', '_blank')">デッキ2で対戦画面へ</button>
 
 <label><input type="checkbox" id="includeFirstCard"> 契約カードを使用する</label>
+<label>契約カード名: <input type="text" id="fixedCardName" placeholder="契約カードのカード名"></label>
 
 <p id="cardCount">現在のデッキ枚数: 0枚</p>
 <ul id="deckList"></ul>
@@ -48,12 +49,41 @@ let currentDeck = 'deck1'; // 現在編集中のデッキ
 // --- DOMContentLoaded ---
 document.addEventListener('DOMContentLoaded', () => {
     const deckSelector = document.getElementById('deckSelector');
+    const includeFirstCardCheckbox = document.getElementById('includeFirstCard');
+    const fixedCardNameInput = document.getElementById('fixedCardName');
+
     deckSelector.addEventListener('change', (e) => {
         currentDeck = e.target.value;
         loadDeck();
+        loadFixedCardSettings();
     });
+
+    includeFirstCardCheckbox.addEventListener('change', () => {
+        localStorage.setItem('includeFirstCard', includeFirstCardCheckbox.checked);
+    });
+
+    fixedCardNameInput.addEventListener('input', () => {
+        localStorage.setItem('fixedCardName', fixedCardNameInput.value);
+    });
+
     loadDeck(); // 初期ロード
+    loadFixedCardSettings(); // 契約カード設定の初期ロード
 });
+
+function loadFixedCardSettings() {
+    const includeFirstCardCheckbox = document.getElementById('includeFirstCard');
+    const fixedCardNameInput = document.getElementById('fixedCardName');
+
+    const savedIncludeFirstCard = localStorage.getItem('includeFirstCard');
+    if (savedIncludeFirstCard !== null) {
+        includeFirstCardCheckbox.checked = JSON.parse(savedIncludeFirstCard);
+    }
+
+    const savedFixedCardName = localStorage.getItem('fixedCardName');
+    if (savedFixedCardName !== null) {
+        fixedCardNameInput.value = savedFixedCardName;
+    }
+}
 
 // --- デッキ操作 ---
 function loadDeck() {

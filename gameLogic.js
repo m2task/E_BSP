@@ -15,12 +15,12 @@ export let voidChargeCount;
 export let toastTimeout;
 export let handVisible;
 export let deckShowCountAsNumber;
-export let cardIdCounter;
+export let cardIdCounter = 0; // cardIdCounter を初期化
 export let draggedElement;
 export let offsetX;
 export let offsetY;
-export let cardPositions;
-export let selectedCores;
+export let cardPositions = {}; // cardPositions を初期化
+export let selectedCores = []; // selectedCores を初期化
 export let draggedCoreData;
 
 // 初期化関数 (battle.js から移動)
@@ -28,17 +28,24 @@ export function initializeGame() {
     selectedCores = []; // 選択されたコアを初期化
     const deckName = getDeckNameFromURL();
     const loadedDeck = JSON.parse(localStorage.getItem(deckName)) || [];
-    const fixedCardName = localStorage.getItem("fixedCardName");
-    const initialDeck = loadedDeck;
 
-    deck = initialDeck.map(name => ({ id: `card-${cardIdCounter++}`, name, isRotated: false, isExhausted: false, coresOnCard: [] })); // coresOnCard: [] を追加
+    // 契約カードの設定をlocalStorageから読み込む
+    const includeFirstCard = JSON.parse(localStorage.getItem("includeFirstCard") || "false");
+    const fixedCardName = localStorage.getItem("fixedCardName");
+
+    let initialDeck = loadedDeck;
+
+    deck = initialDeck.map(name => ({ id: `card-${cardIdCounter++}`, name, isRotated: false, isExhausted: false, coresOnCard: [] }));
     shuffle(deck);
 
-    if (fixedCardName) {
+    // 契約カードの処理
+    if (includeFirstCard && fixedCardName) {
         const fixedCardIndex = deck.findIndex(card => card.name === fixedCardName);
         if (fixedCardIndex > -1) {
             const [fixedCard] = deck.splice(fixedCardIndex, 1);
             hand.push(fixedCard);
+        } else {
+            console.warn(`契約カードとして指定された「${fixedCardName}」がデッキに見つかりませんでした。`);
         }
     }
 
