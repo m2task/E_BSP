@@ -1,8 +1,7 @@
-https://m2task.github.io/E_BSP/
 # E_BSP
 
-これはオリジナルのカードゲーム「E_BSP」のバトル画面とデッキ管理画面を実装したプロジェクトです。
-
+これはTrading Card GameのBattle Spiritsをシミュレーションできるプロジェクトです。
+https://m2task.github.io/E_BSP/
 ## 特徴
 - デッキをローカルストレージに保存
 - バトル画面でカードやコアをドラッグ＆ドロップ
