@@ -1,5 +1,5 @@
-import { field, hand, trash, burst, lifeCores, reserveCores, deckCores, trashCores, cardPositions, selectedCores, deckShowCountAsNumber } from './gameLogic.js';
-import { handleCoreClick } from './dragDrop.js'; // handleCoreClick は後で作成します
+import { field, hand, trash, burst, lifeCores, reserveCores, deckCores, trashCores, cardPositions, selectedCores, deckShowCountAsNumber } from './state.js'; // gameLogic.js から state.js に変更
+import { handleCoreClick } from './dragDrop.js';
 
 export function renderAll() {
     renderHand();
@@ -37,9 +37,9 @@ export function createCardElement(cardData) {
             cardData.isExhausted = false;
         } else {
             cardData.isExhausted = true;
-            cardData.isRotated = false; // 重疲労させたら疲労は解除
+            cardData.isRotated = false;
         }
-        renderAll(); // 状態変更を反映するために再描画
+        renderAll();
     });
     div.appendChild(exhaustBtn);
     return div;
@@ -66,31 +66,27 @@ export function renderField() {
             cardElement.style.left = pos.left + 'px';
             cardElement.style.top = pos.top + 'px';
         }
-        // 回転状態を反映
         if (cardData.isRotated) cardElement.classList.add('rotated');
         if (cardData.isExhausted) cardElement.classList.add('exhausted');
 
-        // カード上のコアを描画
         if (cardData.coresOnCard && cardData.coresOnCard.length > 0) {
             const coresContainer = document.createElement('div');
-            coresContainer.className = 'cores-on-card'; // 新しいクラスを追加
+            coresContainer.className = 'cores-on-card';
             cardData.coresOnCard.forEach((core, index) => {
                 const coreDiv = document.createElement('div');
                 coreDiv.className = `core ${core.type}`;
                 coreDiv.draggable = true;
-                coreDiv.dataset.index = index; // カード上のコアのインデックス
+                coreDiv.dataset.index = index;
                 coreDiv.dataset.coreType = core.type;
-                coreDiv.dataset.sourceCardId = cardData.id; // コアの親カードID
+                coreDiv.dataset.sourceCardId = cardData.id;
                 coreDiv.style.position = 'absolute';
                 coreDiv.style.left = core.x + 'px';
                 coreDiv.style.top = core.y + 'px';
                 coreDiv.addEventListener('click', (e) => {
-                    e.stopPropagation(); // コアのクリックがカードの回転イベントに伝播しないようにする
-                    handleCoreClick(e); // ここでhandleCoreClickを呼び出す
+                    e.stopPropagation();
+                    handleCoreClick(e);
                 });
-                // 選択状態を反映
                 const isSelected = selectedCores.some(c => {
-                    // selectedCores内の要素がsourceCardIdを持つ場合のみ比較
                     return c.sourceCardId && c.sourceCardId === cardData.id && c.index === index;
                 });
                 if (isSelected) {
@@ -133,10 +129,8 @@ export function renderCores(containerId, coreArray) {
         div.draggable = true;
         div.dataset.index = index;
         div.dataset.coreType = coreType;
-        div.addEventListener('click', handleCoreClick); // ここでhandleCoreClickを呼び出す
-        // 選択状態を反映
+        div.addEventListener('click', handleCoreClick);
         const isSelected = selectedCores.some(c => {
-            // selectedCores内の要素がsourceArrayNameを持つ場合のみ比較
             return c.sourceArrayName && c.sourceArrayName === containerId && c.index === index;
         });
         if (isSelected) {

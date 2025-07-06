@@ -1,5 +1,5 @@
 import { getDeckNameFromURL, shuffle, getZoneName } from './utils.js';
-import { deck, field, hand, trash, burst, lifeCores, reserveCores, deckCores, trashCores, voidChargeCount, toastTimeout, handVisible, deckShowCountAsNumber, cardIdCounter, draggedElement, offsetX, offsetY, cardPositions, selectedCores, draggedCoreData, initializeGame, getArrayByZoneName, moveCardData, moveCoresToZone, removeCoresFromSource, drawCard, addDeckCore, toggleDeckCoreCount, refreshAll, clearSelectedCores, showToast } from './gameLogic.js';
+import { initializeGame, getArrayByZoneName, moveCardData, moveCoresToZone, removeCoresFromSource, drawCard, addDeckCore, toggleDeckCoreCount, refreshAll, clearSelectedCores, showToast } from './gameLogic.js';
 import { renderAll, createCardElement, renderHand, renderField, renderTrash, renderBurst, renderCores, renderDeckCore, renderTrashCores, toggleHand, renderTrashModalContent, openTrashModal } from './renderers.js';
 import { handleDragStart, handleDragEnd, handleDeckDragEnter, handleDeckDragLeave, handleDeckDragOver, handleDeckDrop, handleDrop, handleCardDrop, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, handleCoreClick } from './dragDrop.js';
 
