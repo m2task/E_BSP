@@ -16,4 +16,4 @@ https://m2task.github.io/E_BSP/
 [https://m2task.github.io/E_BSP/](https://m2task.github.io/E_BSP/)
 
 ## ライセンス
-MIT
+このゲームは「バトルスピリッツ」にインスパイアされて作られた非公式のファン作品です。
