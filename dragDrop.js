@@ -1,7 +1,7 @@
 import { getZoneName } from './utils.js';
 import { renderAll } from './renderers.js';
-import { draggedElement, offsetX, offsetY, cardPositions, selectedCores, draggedCoreData, moveCardData, removeCoresFromSource, showToast, voidChargeCount, field, setDraggedElement, setOffsetX, setOffsetY, setCardPositions, setSelectedCores, setDraggedCoreData, setVoidChargeCount } from './state.js';
-import { clearSelectedCores } from './gameLogic.js'; // gameLogic.js から state.js に変更
+import { draggedElement, offsetX, offsetY, cardPositions, selectedCores, draggedCoreData, removeCoresFromSource, showToast, voidChargeCount, field, setDraggedElement, setOffsetX, setOffsetY, setCardPositions, setSelectedCores, setDraggedCoreData, setVoidChargeCount } from './state.js';
+import { clearSelectedCores, moveCardData } from './gameLogic.js';
 
 export function handleDragStart(e) {
     setDraggedElement(e.target);
