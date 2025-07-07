@@ -173,6 +173,62 @@ export function setupEventListeners() {
             }
         });
 
+    // interact.js を使ったカードのドラッグ処理
+    interact('.card')
+        .draggable({
+            listeners: {
+                start (event) {
+                    console.log('Card drag start');
+                    // ドラッグ開始時にカードの元の位置を保存
+                    const target = event.target;
+                    target.setAttribute('data-start-x', target.offsetLeft);
+                    target.setAttribute('data-start-y', target.offsetTop);
+                },
+                move (event) {
+                    const target = event.target;
+                    // keep the dragged position in the data-x/data-y attributes
+                    const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                    const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+                    // translate the element
+                    target.style.transform = `translate(${x}px, ${y}px)`;
+
+                    // update the posiion attributes
+                    target.setAttribute('data-x', x);
+                    target.setAttribute('data-y', y);
+                },
+                end (event) {
+                    console.log('Card drag end');
+                    const target = event.target;
+                    const dropTarget = event.relatedTarget; // ドロップされた要素
+
+                    // カードの元の位置に戻す
+                    target.style.transform = 'translate(0px, 0px)';
+                    target.setAttribute('data-x', 0);
+                    target.setAttribute('data-y', 0);
+
+                    if (dropTarget) {
+                        // ダミーのDragEventオブジェクトを作成
+                        const dummyEvent = {
+                            preventDefault: () => {},
+                            dataTransfer: {
+                                getData: (key) => {
+                                    if (key === "type") return "card";
+                                    if (key === "cardId") return target.dataset.id;
+                                    if (key === "sourceZoneId") return target.parentElement.id;
+                                    return "";
+                                }
+                            },
+                            clientX: event.clientX,
+                            clientY: event.clientY
+                        };
+                        // handleCardDrop を呼び出す
+                        handleCardDrop(dummyEvent);
+                    }
+                }
+            }
+        });
+
     // Configure droppable zones for interact.js
     interact('.zone, .special-zone, .card, .deck-button') // Select all potential drop targets
         .dropzone({
@@ -222,14 +278,7 @@ export function handleDragStart(e) {
     setDraggedElement(e.target);
     draggedElement.classList.add('dragging');
 
-    if (draggedElement.classList.contains('card')) {
-        e.dataTransfer.setData("type", "card");
-        e.dataTransfer.setData("cardId", draggedElement.dataset.id);
-        e.dataTransfer.setData("sourceZoneId", draggedElement.parentElement.id);
-        const rect = draggedElement.getBoundingClientRect();
-        setOffsetX(e.clientX - rect.left);
-        setOffsetY(e.clientY - rect.top);
-    } else if (draggedElement.classList.contains('core')) {
+    if (draggedElement.classList.contains('core')) {
         const coreType = draggedElement.dataset.coreType;
         const index = parseInt(draggedElement.dataset.index);
         const sourceCardId = draggedElement.dataset.sourceCardId;
