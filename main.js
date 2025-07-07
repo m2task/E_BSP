@@ -15,8 +15,13 @@ function initializeGame() {
     const loadedDeck = JSON.parse(localStorage.getItem(deckName)) || [];
     const fixedCardName = localStorage.getItem("fixedCardName");
 
-    // deckとhandを直接変更する代わりにsetterを使用
-    let newDeck = loadedDeck.map(name => ({ id: `card-${cardIdCounter++}`, name, isRotated: false, isExhausted: false, coresOnCard: [] }));
+    let currentCardId = cardIdCounter; // 現在のカウンター値を取得
+    let newDeck = loadedDeck.map(name => {
+        const card = { id: `card-${currentCardId++}`, name, isRotated: false, isExhausted: false, coresOnCard: [] };
+        return card;
+    });
+    setCardIdCounter(currentCardId); // map処理後にグローバルカウンターを更新
+
     setDeck(newDeck);
     shuffle(deck);
 
