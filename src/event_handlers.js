@@ -1,5 +1,5 @@
 // src/event_handlers.js
-import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber } from './game_data.js';
+import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber } from './game_data.js';
 import { renderAll, renderTrashModalContent } from './ui_render.js';
 import { showToast, getZoneName } from './utils.js';
 import { drawCard, moveCardData } from './card_logic.js';
@@ -336,7 +336,7 @@ export function addDeckCore() {
 }
 
 export function toggleDeckCoreCount() {
-    countShowCountAsNumber = !countShowCountAsNumber;
+    setCountShowCountAsNumber(!countShowCountAsNumber);
     renderAll();
 }
 
