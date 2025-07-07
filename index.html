@@ -66,8 +66,8 @@ label { display: block; margin: 10px 0; }
 <button onclick="saveDeck()">デッキ保存</button>
 
 </p>
-<button onclick="window.open('battle.html?deck=deck1', '_blank')">デッキ1で対戦画面へ</button>
-<button onclick="window.open('battle.html?deck=deck2', '_blank')">デッキ2で対戦画面へ</button>
+<button onclick="openBattlePage('deck1')">デッキ1で対戦画面へ</button>
+<button onclick="openBattlePage('deck2')">デッキ2で対戦画面へ</button>
 
 <label><input type="checkbox" id="includeFirstCard"> 契約カードを使用する</label>
 
@@ -94,13 +94,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- デッキ操作 ---
 function loadDeck() {
-    const savedDeck = localStorage.getItem(currentDeck);
-    deck = savedDeck ? JSON.parse(savedDeck) : [];
+    const savedData = localStorage.getItem(currentDeck);
+    if (savedData) {
+        const data = JSON.parse(savedData);
+        deck = data.cards || [];
+        document.getElementById('includeFirstCard').checked = data.includeFirstCard || false;
+    } else {
+        deck = [];
+        document.getElementById('includeFirstCard').checked = false;
+    }
     updateList();
 }
 
 function saveDeck() {
-    localStorage.setItem(currentDeck, JSON.stringify(deck));
+    const includeFirstCard = document.getElementById('includeFirstCard').checked;
+    const dataToSave = {
+        cards: deck,
+        includeFirstCard: includeFirstCard
+    };
+    localStorage.setItem(currentDeck, JSON.stringify(dataToSave));
     showToast(`${currentDeck} を保存しました。`);
 }
 
@@ -179,6 +191,11 @@ function importDeck() {
     } catch (e) {
         alert("インポートに失敗しました（JSON形式が正しいか確認してください）");
     }
+}
+
+function openBattlePage(deckName) {
+    const includeFirstCard = document.getElementById('includeFirstCard').checked;
+    window.open(`battle.html?deck=${deckName}&includeFirstCard=${includeFirstCard}`, '_blank');
 }
 </script>
 </body>
