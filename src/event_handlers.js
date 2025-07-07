@@ -208,7 +208,7 @@ export function setupEventListeners() {
     // Configure droppable zones for interact.js
     interact('.zone, .special-zone, .card, .deck-button, #fieldZone') // Select all potential drop targets
         .dropzone({
-            accept: '#voidCore', // Only accept drops from #voidCore for now
+            accept: '#voidCore, .card', // Only accept drops from #voidCore and .card for now
             overlap: 0.75, // Require 75% overlap for a drop to be valid
 
             ondropactivate: function (event) {
@@ -230,6 +230,7 @@ export function setupEventListeners() {
             },
             ondrop: function (event) {
                 console.log('interact.js drop event on:', event.target.id || event.target.className);
+                console.log('Draggable element:', event.relatedTarget.id || event.relatedTarget.className); // Debug log
                 const draggableElement = event.relatedTarget; // ドラッグされた要素
                 const dropzoneElement = event.target; // ドロップされたゾーン
 
