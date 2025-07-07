@@ -139,13 +139,20 @@ function updateList() {
         cardCounts[card] = (cardCounts[card] || 0) + 1;
     });
 
-    for (const card in cardCounts) {
+    const sortedCards = Object.keys(cardCounts).sort();
+
+    for (const card of sortedCards) {
         const li = document.createElement("li");
         li.className = "card-item";
 
         li.innerHTML = `
-<span>${card} ×${cardCounts[card]}</span>
-<button onclick="deleteCard('${card}')">削除</button>
+<span>${card}</span>
+<div style="display: flex; align-items: center;">
+    <button onclick="decrementCard('${card}')" style="margin-right: 5px;">-</button>
+    <span style="min-width: 20px; text-align: center;">${cardCounts[card]}</span>
+    <button onclick="incrementCard('${card}')" style="margin-left: 5px; margin-right: 10px;">+</button>
+    <button onclick="deleteAllOfCard('${card}')">削除</button>
+</div>
 `;
         ul.appendChild(li);
     }
@@ -153,11 +160,21 @@ function updateList() {
     document.getElementById("cardCount").textContent = `現在のデッキ枚数: ${deck.length}枚`;
 }
 
-function deleteCard(name) {
+function incrementCard(name) {
+    deck.push(name);
+    updateList();
+}
+
+function decrementCard(name) {
     const index = deck.indexOf(name);
     if (index > -1) {
         deck.splice(index, 1);
+        updateList();
     }
+}
+
+function deleteAllOfCard(name) {
+    deck = deck.filter(card => card !== name);
     updateList();
 }
 
