@@ -153,7 +153,7 @@ export function setupEventListeners() {
 // --- イベントハンドラ --- 
 export function handleDragStart(e) {
     setDraggedElement(e.target);
-    setTimeout(() => draggedElement.classList.add('dragging'), 0);
+    draggedElement.classList.add('dragging');
 
     if (draggedElement.classList.contains('card')) {
         e.dataTransfer.setData("type", "card");
