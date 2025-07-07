@@ -223,7 +223,7 @@ export function setupEventListeners() {
                             clientY: event.clientY
                         };
                         // handleCardDrop を呼び出す
-                        handleCardDrop(dummyEvent);
+                        handleCardDrop(dummyEvent, dropTarget);
                     }
                 }
             }
@@ -431,10 +431,10 @@ export function handleDrop(e) {
     clearSelectedCores(); // ドロップ処理の最後に選択状態をクリア
 }
 
-export function handleCardDrop(e) {
+export function handleCardDrop(e, dropTarget) {
     const cardId = e.dataTransfer.getData("cardId");
     const sourceZoneId = e.dataTransfer.getData("sourceZoneId");
-    const targetElement = e.target.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone');
+    const targetElement = dropTarget;
     if (!targetElement) return;
 
     const targetZoneName = getZoneName(targetElement);
