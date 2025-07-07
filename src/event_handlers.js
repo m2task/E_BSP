@@ -179,36 +179,34 @@ export function setupEventListeners() {
             listeners: {
                 start (event) {
                     console.log('Card drag start');
-                    // ドラッグ開始時にカードの元の位置を保存
                     const target = event.target;
-                    target.setAttribute('data-start-x', target.offsetLeft);
-                    target.setAttribute('data-start-y', target.offsetTop);
+                    const rect = target.getBoundingClientRect();
+                    target.dataset.dragOffsetX = event.clientX - rect.left;
+                    target.dataset.dragOffsetY = event.clientY - rect.top;
                 },
                 move (event) {
                     const target = event.target;
-                    // keep the dragged position in the data-x/data-y attributes
                     const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
                     const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
 
-                    // translate the element
                     target.style.transform = `translate(${x}px, ${y}px)`;
 
-                    // update the posiion attributes
                     target.setAttribute('data-x', x);
                     target.setAttribute('data-y', y);
                 },
                 end (event) {
                     console.log('Card drag end');
                     const target = event.target;
-                    const dropTarget = event.relatedTarget; // ドロップされた要素
+                    const dropTarget = event.relatedTarget;
 
-                    // カードの元の位置に戻す
                     target.style.transform = 'translate(0px, 0px)';
                     target.setAttribute('data-x', 0);
                     target.setAttribute('data-y', 0);
 
                     if (dropTarget) {
-                        // ダミーのDragEventオブジェクトを作成
+                        const dragOffsetX = parseFloat(target.dataset.dragOffsetX || 0);
+                        const dragOffsetY = parseFloat(target.dataset.dragOffsetY || 0);
+
                         const dummyEvent = {
                             preventDefault: () => {},
                             dataTransfer: {
@@ -216,13 +214,14 @@ export function setupEventListeners() {
                                     if (key === "type") return "card";
                                     if (key === "cardId") return target.dataset.id;
                                     if (key === "sourceZoneId") return target.parentElement.id;
+                                    if (key === "offsetX") return dragOffsetX;
+                                    if (key === "offsetY") return dragOffsetY;
                                     return "";
                                 }
                             },
                             clientX: event.clientX,
                             clientY: event.clientY
                         };
-                        // handleCardDrop を呼び出す
                         handleCardDrop(dummyEvent, dropTarget);
                     }
                 }
@@ -446,6 +445,8 @@ export function handleCardDrop(e, dropTarget) {
 
     if (targetZoneName === 'field') {
         const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
+        const offsetX = parseFloat(e.dataTransfer.getData("offsetX"));
+        const offsetY = parseFloat(e.dataTransfer.getData("offsetY"));
         cardPositions[cardId] = {
             left: e.clientX - fieldRect.left - offsetX,
             top: e.clientY - fieldRect.top - offsetY
