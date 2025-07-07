@@ -1,6 +1,6 @@
 // src/utils.js
 import { toastTimeout, setToastTimeout } from './game_data.js';
-import { hand, field, trash, burst, lifeCores, reserveCores, deckCores, trashCores } from './game_data.js';
+import { hand, field, trash, burst, lifeCores, reserveCores, countCores, trashCores } from './game_data.js';
 
 export function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
@@ -31,7 +31,7 @@ export function getArrayByZoneName(zoneName) {
         case 'burst': case 'burstZone': case 'burstCard': return burst;
         case 'life': case 'lifeCores': return lifeCores;
         case 'reserve': case 'reserveCores': return reserveCores;
-        case 'count': case 'countZone': return deckCores;
+        case 'count': case 'countZone': return countCores;
         case 'trashcore': case 'trashListArea': return trashCores;
         default: return null;
     }
