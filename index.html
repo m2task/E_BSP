@@ -66,8 +66,8 @@ label { display: block; margin: 10px 0; }
 <button onclick="saveDeck()">デッキ保存</button>
 
 </p>
-<button onclick="window.open('battle.html?deck=deck1', '_blank')">デッキ1で対戦画面へ</button>
-<button onclick="window.open('battle.html?deck=deck2', '_blank')">デッキ2で対戦画面へ</button>
+<button onclick="goToBattle('deck1')">デッキ1で対戦画面へ</button>
+<button onclick="goToBattle('deck2')">デッキ2で対戦画面へ</button>
 
 <label><input type="checkbox" id="includeFirstCard"> 契約カードを使用する</label>
 
@@ -94,13 +94,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- デッキ操作 ---
 function loadDeck() {
-    const savedDeck = localStorage.getItem(currentDeck);
-    deck = savedDeck ? JSON.parse(savedDeck) : [];
+    const savedData = localStorage.getItem(currentDeck);
+    if (savedData) {
+        const { deck: savedDeck, includeFirstCard } = JSON.parse(savedData);
+        deck = savedDeck || [];
+        document.getElementById('includeFirstCard').checked = includeFirstCard || false;
+    } else {
+        deck = [];
+        document.getElementById('includeFirstCard').checked = false;
+    }
     updateList();
 }
 
 function saveDeck() {
-    localStorage.setItem(currentDeck, JSON.stringify(deck));
+    const includeFirstCard = document.getElementById('includeFirstCard').checked;
+    const dataToSave = {
+        deck: deck,
+        includeFirstCard: includeFirstCard
+    };
+    localStorage.setItem(currentDeck, JSON.stringify(dataToSave));
     showToast(`${currentDeck} を保存しました。`);
 }
 
@@ -139,9 +151,9 @@ function updateList() {
         cardCounts[card] = (cardCounts[card] || 0) + 1;
     });
 
-    const sortedCards = Object.keys(cardCounts).sort();
+    const uniqueCardsInOrder = [...new Set(deck)];
 
-    for (const card of sortedCards) {
+    for (const card of uniqueCardsInOrder) {
         const li = document.createElement("li");
         li.className = "card-item";
 
@@ -196,6 +208,11 @@ function importDeck() {
     } catch (e) {
         alert("インポートに失敗しました（JSON形式が正しいか確認してください）");
     }
+}
+
+function goToBattle(deckId) {
+    const includeFirstCard = document.getElementById('includeFirstCard').checked;
+    window.open(`battle.html?deck=${deckId}&contract=${includeFirstCard}`, '_blank');
 }
 </script>
 </body>
