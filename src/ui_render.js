@@ -49,8 +49,7 @@ export function renderField() {
         const pos = cardPositions[cardData.id];
         if (pos) {
             cardElement.style.position = 'absolute';
-            cardElement.style.left = pos.left + 'px';
-            cardElement.style.top = pos.top + 'px';
+            cardElement.style.transform = `translate(${pos.left}px, ${pos.top}px)`;
         }
         // 回転状態を反映
         if (cardData.isRotated) cardElement.classList.add('rotated');
