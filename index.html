@@ -11,9 +11,45 @@ ul { margin-top: 10px; list-style: none; padding-left: 0; }
 li { margin-bottom: 5px; }
 .card-item { display: flex; justify-content: space-between; align-items: center; }
 label { display: block; margin: 10px 0; }
+.toast {
+    visibility: hidden;
+    min-width: 250px;
+    margin-left: -125px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 2px;
+    padding: 16px;
+    position: fixed;
+    z-index: 1;
+    left: 50%;
+    bottom: 30px;
+}
+.toast.show {
+    visibility: visible;
+    -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+@-webkit-keyframes fadein {
+    from {bottom: 0; opacity: 0;}
+    to {bottom: 30px; opacity: 1;}
+}
+@keyframes fadein {
+    from {bottom: 0; opacity: 0;}
+    to {bottom: 30px; opacity: 1;}
+}
+@-webkit-keyframes fadeout {
+    from {bottom: 30px; opacity: 1;}
+    to {bottom: 0; opacity: 0;}
+}
+@keyframes fadeout {
+    from {bottom: 30px; opacity: 1;}
+    to {bottom: 0; opacity: 0;}
+}
 </style>
 </head>
 <body>
+<div id="toast" class="toast"></div>
 <h1>デッキ登録画面</h1>
 <p>
     <label>編集するデッキを選択してください:
@@ -44,6 +80,7 @@ label { display: block; margin: 10px 0; }
 <script>
 let deck = [];
 let currentDeck = 'deck1'; // 現在編集中のデッキ
+let toastTimeout;
 
 // --- DOMContentLoaded ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -64,7 +101,17 @@ function loadDeck() {
 
 function saveDeck() {
     localStorage.setItem(currentDeck, JSON.stringify(deck));
-    alert(`${currentDeck} を保存しました。`);
+    showToast(`${currentDeck} を保存しました。`);
+}
+
+function showToast(message) {
+    const toastElement = document.getElementById("toast");
+    toastElement.textContent = message;
+    toastElement.className = "toast show";
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+        toastElement.className = toastElement.className.replace("show", "");
+    }, 3000);
 }
 
 function addCard() {
@@ -107,7 +154,10 @@ function updateList() {
 }
 
 function deleteCard(name) {
-    deck = deck.filter(card => card !== name);
+    const index = deck.indexOf(name);
+    if (index > -1) {
+        deck.splice(index, 1);
+    }
     updateList();
 }
 
