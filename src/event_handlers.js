@@ -205,6 +205,106 @@ export function setupEventListeners() {
             }
         });
 
+    // interact.js を使ったコアのドラッグ処理
+    interact('.core:not(#voidCore)') // voidCore 以外のコアを選択
+        .draggable({
+            listeners: {
+                start (event) {
+                    console.log('Core drag start');
+                    const target = event.target;
+                    const rect = target.getBoundingClientRect();
+                    target.dataset.dragOffsetX = event.clientX - rect.left;
+                    target.dataset.dragOffsetY = event.clientY - rect.top;
+
+                    // 複数選択されたコアのドラッグを考慮
+                    if (selectedCores.length > 1 && selectedCores.some(c => c.sourceCardId === target.dataset.sourceCardId && c.index === parseInt(target.dataset.index))) {
+                        // 複数選択されている場合は、選択されたすべてのコアをドラッグ対象とする
+                        // ここでは、ドラッグされたコアの見た目だけを動かし、実際のデータ移動は drop イベントで処理する
+                    } else {
+                        // 単一コアのドラッグ
+                    }
+                },
+                move (event) {
+                    const target = event.target;
+                    const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                    const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+                    target.style.transform = `translate(${x}px, ${y}px)`;
+                    target.setAttribute('data-x', x);
+                    target.setAttribute('data-y', y);
+                },
+                end (event) {
+                    console.log('Core drag end');
+                    const target = event.target;
+                    const dropTarget = event.relatedTarget;
+
+                    // コアの見た目を元の位置に戻す
+                    target.style.transform = 'translate(0px, 0px)';
+                    target.setAttribute('data-x', 0);
+                    target.setAttribute('data-y', 0);
+
+                    if (dropTarget) {
+                        const coreType = target.dataset.coreType;
+                        const index = parseInt(target.dataset.index);
+                        const sourceCardId = target.dataset.sourceCardId;
+
+                        let coresToMove = [];
+                        let type = 'core'; // デフォルトは単一コア
+
+                        if (selectedCores.length > 1 && selectedCores.some(c => c.sourceCardId === sourceCardId && c.index === index)) {
+                            // 複数選択されている場合は、選択されたすべてのコアを移動対象とする
+                            coresToMove = selectedCores.map(c => {
+                                const coreData = { type: c.type, index: c.index };
+                                if (c.sourceCardId) {
+                                    coreData.sourceCardId = c.sourceCardId;
+                                } else {
+                                    coreData.sourceArrayName = c.sourceArrayName;
+                                }
+                                return coreData;
+                            });
+                            type = 'multiCore';
+                        } else {
+                            // 単一コアの移動
+                            const coreData = { type: coreType, index: index };
+                            if (sourceCardId) {
+                                coreData.sourceCardId = sourceCardId;
+                                type = 'coreFromCard';
+                            } else {
+                                coreData.sourceArrayName = target.parentElement.id;
+                                type = 'core';
+                            }
+                            coresToMove.push(coreData);
+                        }
+
+                        const dragOffsetX = parseFloat(target.dataset.dragOffsetX || 0);
+                        const dragOffsetY = parseFloat(target.dataset.dragOffsetY || 0);
+
+                        const dummyEvent = {
+                            preventDefault: () => {},
+                            dataTransfer: {
+                                getData: (key) => {
+                                    if (key === "type") return type;
+                                    if (key === "cores") return JSON.stringify(coresToMove);
+                                    if (key === "offsetX") return dragOffsetX;
+                                    if (key === "offsetY") return dragOffsetY;
+                                    return "";
+                                }
+                            },
+                            clientX: event.clientX,
+                            clientY: event.clientY
+                        };
+
+                        if (dropTarget.classList.contains('card')) {
+                            handleCoreDropOnCard(dummyEvent, dropTarget);
+                        } else if (dropTarget.classList.contains('zone') || dropTarget.classList.contains('special-zone') || dropTarget.classList.contains('deck-button')) {
+                            handleCoreDropOnZone(dummyEvent, dropTarget);
+                        }
+                    }
+                    clearSelectedCores(); // ドラッグ終了時に選択を解除
+                }
+            }
+        });
+
     // Configure droppable zones for interact.js
     interact('.zone, .special-zone, .card, .deck-button, #fieldZone') // Select all potential drop targets
         .dropzone({
@@ -277,69 +377,7 @@ export function handleDragStart(e) {
     setDraggedElement(e.target);
     draggedElement.classList.add('dragging');
 
-    if (draggedElement.classList.contains('core')) {
-        const coreType = draggedElement.dataset.coreType;
-        const index = parseInt(draggedElement.dataset.index);
-        const sourceCardId = draggedElement.dataset.sourceCardId;
-
-        let currentDraggedCoreIdentifier = {
-            type: coreType,
-            index: index
-        };
-        if (sourceCardId) {
-            currentDraggedCoreIdentifier.sourceCardId = sourceCardId;
-        } else {
-            currentDraggedCoreIdentifier.sourceArrayName = draggedElement.parentElement.id;
-        }
-
-        // 現在ドラッグされているコアが選択されたコアのリストに含まれているかを確認
-        const isDraggedCoreSelected = selectedCores.some(c => {
-            if (c.sourceCardId && currentDraggedCoreIdentifier.sourceCardId) {
-                return c.sourceCardId === currentDraggedCoreIdentifier.sourceCardId && c.index === currentDraggedCoreIdentifier.index;
-            } else if (c.sourceArrayName && currentDraggedCoreIdentifier.sourceArrayName) {
-                return c.sourceArrayName === currentDraggedCoreIdentifier.sourceArrayName && c.index === currentDraggedCoreIdentifier.index;
-            }
-            return false;
-        });
-
-        if (isDraggedCoreSelected && selectedCores.length > 1) {
-            // 複数のコアが選択されており、ドラッグされたコアがそのうちの1つである場合
-            setDraggedCoreData(selectedCores.map(c => {
-                const coreData = { type: c.type, index: c.index };
-                if (c.sourceCardId) {
-                    coreData.sourceCardId = c.sourceCardId;
-                } else {
-                    coreData.sourceArrayName = c.sourceArrayName;
-                }
-                return coreData;
-            }));
-            e.dataTransfer.setData("type", "multiCore");
-            e.dataTransfer.setData("cores", JSON.stringify(draggedCoreData));
-        } else { // 単一コアのドラッグ（選択されていない場合、または1つだけ選択されていてそれがドラッグされた場合）
-            const parentCardElement = draggedElement.closest('.card'); // 親がカードかどうかを再確認
-            if (parentCardElement) {
-                // カード上のコアのドラッグ
-                const rect = draggedElement.getBoundingClientRect();
-                setOffsetX(e.clientX - rect.left);
-                setOffsetY(e.clientY - rect.top);
-                e.dataTransfer.setData("offsetX", offsetX);
-                e.dataTransfer.setData("offsetY", offsetY);
-
-                setDraggedCoreData([{ type: coreType, sourceCardId: sourceCardId, index: index, x: parseFloat(draggedElement.style.left), y: parseFloat(draggedElement.style.top) }]);
-                e.dataTransfer.setData("type", "coreFromCard");
-                e.dataTransfer.setData("cores", JSON.stringify(draggedCoreData));
-            } else {
-                // ゾーンのコアのドラッグ
-                setDraggedCoreData([{ type: coreType, sourceArrayName: draggedElement.parentElement.id, index: index }]);
-                e.dataTransfer.setData("type", "core");
-                e.dataTransfer.setData("coreType", coreType);
-                e.dataTransfer.setData("coreIndex", index);
-                e.dataTransfer.setData("cores", JSON.stringify(draggedCoreData));
-            }
-        }
     }
-    
-}
 
 export function handleDragEnd() {
     if (draggedElement) {
