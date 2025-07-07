@@ -35,7 +35,6 @@ label { display: block; margin: 10px 0; }
 
 <label><input type="checkbox" id="includeFirstCard"> 契約カードを使用する</label>
 
-
 <p id="cardCount">現在のデッキ枚数: 0枚</p>
 <ul id="deckList"></ul>
 
@@ -49,30 +48,12 @@ let currentDeck = 'deck1'; // 現在編集中のデッキ
 // --- DOMContentLoaded ---
 document.addEventListener('DOMContentLoaded', () => {
     const deckSelector = document.getElementById('deckSelector');
-    const includeFirstCardCheckbox = document.getElementById('includeFirstCard');
-
     deckSelector.addEventListener('change', (e) => {
         currentDeck = e.target.value;
         loadDeck();
-        loadFixedCardSettings();
     });
-
-    includeFirstCardCheckbox.addEventListener('change', () => {
-        localStorage.setItem('includeFirstCard', includeFirstCardCheckbox.checked);
-    });
-
     loadDeck(); // 初期ロード
-    loadFixedCardSettings(); // 契約カード設定の初期ロード
 });
-
-function loadFixedCardSettings() {
-    const includeFirstCardCheckbox = document.getElementById('includeFirstCard');
-
-    const savedIncludeFirstCard = localStorage.getItem('includeFirstCard');
-    if (savedIncludeFirstCard !== null) {
-        includeFirstCardCheckbox.checked = JSON.parse(savedIncludeFirstCard);
-    }
-}
 
 // --- デッキ操作 ---
 function loadDeck() {

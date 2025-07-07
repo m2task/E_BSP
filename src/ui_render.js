@@ -1,20 +1,6 @@
-import { field, hand, trash, burst, lifeCores, reserveCores, deckCores, trashCores, cardPositions, selectedCores, deckShowCountAsNumber } from './state.js'; // gameLogic.js から state.js に変更
-import { handleCoreClick } from './dragDrop.js';
-
-export function renderAll() {
-    renderHand();
-    renderField();
-    renderTrash();
-    renderBurst();
-    renderCores("lifeCores", lifeCores);
-    renderCores("reserveCores", reserveCores);
-    renderDeckCore();
-    renderTrashCores();
-
-    if (document.getElementById("trashModal").style.display === "flex") {
-        renderTrashModalContent();
-    }
-}
+// src/ui_render.js
+import { hand, field, trash, burst, lifeCores, reserveCores, deckCores, trashCores, selectedCores, cardPositions, deckShowCountAsNumber } from './game_data.js';
+import { handleCoreClick } from './event_handlers.js';
 
 export function createCardElement(cardData) {
     const div = document.createElement('div');
@@ -30,16 +16,16 @@ export function createCardElement(cardData) {
         e.stopPropagation();
         const cardElement = e.target.closest('.card');
         const cardId = cardElement.dataset.id;
-        const cardData = field.find(card => card.id === cardId);
-        if (!cardData) return;
+        const card = field.find(c => c.id === cardId);
+        if (!card) return;
 
-        if (cardData.isExhausted) {
-            cardData.isExhausted = false;
+        if (card.isExhausted) {
+            card.isExhausted = false;
         } else {
-            cardData.isExhausted = true;
-            cardData.isRotated = false;
+            card.isExhausted = true;
+            card.isRotated = false; // 重疲労させたら疲労は解除
         }
-        renderAll();
+        renderAll(); // 状態変更を反映するために再描画
     });
     div.appendChild(exhaustBtn);
     return div;
@@ -66,32 +52,35 @@ export function renderField() {
             cardElement.style.left = pos.left + 'px';
             cardElement.style.top = pos.top + 'px';
         }
+        // 回転状態を反映
         if (cardData.isRotated) cardElement.classList.add('rotated');
         if (cardData.isExhausted) cardElement.classList.add('exhausted');
 
+        // カード上のコアを描画
         if (cardData.coresOnCard && cardData.coresOnCard.length > 0) {
             const coresContainer = document.createElement('div');
-            coresContainer.className = 'cores-on-card';
+            coresContainer.className = 'cores-on-card'; // 新しいクラスを追加
             cardData.coresOnCard.forEach((core, index) => {
                 const coreDiv = document.createElement('div');
                 coreDiv.className = `core ${core.type}`;
                 coreDiv.draggable = true;
-                coreDiv.dataset.index = index;
+                coreDiv.dataset.index = index; // カード上のコアのインデックス
                 coreDiv.dataset.coreType = core.type;
-                coreDiv.dataset.sourceCardId = cardData.id;
+                coreDiv.dataset.sourceCardId = cardData.id; // コアの親カードID
                 coreDiv.style.position = 'absolute';
                 coreDiv.style.left = core.x + 'px';
                 coreDiv.style.top = core.y + 'px';
                 coreDiv.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    handleCoreClick(e);
+                    e.stopPropagation(); // コアのクリックがカードの回転イベントに伝播しないようにする
+                    handleCoreClick(e); // ここでhandleCoreClickを呼び出す
                 });
+                // 選択状態を反映
                 const isSelected = selectedCores.some(c => {
+                    // selectedCores内の要素がsourceCardIdを持つ場合のみ比較
                     return c.sourceCardId && c.sourceCardId === cardData.id && c.index === index;
                 });
                 if (isSelected) {
                     coreDiv.classList.add('selected');
-                } else {
                 }
                 coresContainer.appendChild(coreDiv);
             });
@@ -129,8 +118,10 @@ export function renderCores(containerId, coreArray) {
         div.draggable = true;
         div.dataset.index = index;
         div.dataset.coreType = coreType;
-        div.addEventListener('click', handleCoreClick);
+        div.addEventListener('click', handleCoreClick); // ここでhandleCoreClickを呼び出す
+        // 選択状態を反映
         const isSelected = selectedCores.some(c => {
+            // selectedCores内の要素がsourceArrayNameを持つ場合のみ比較
             return c.sourceArrayName && c.sourceArrayName === containerId && c.index === index;
         });
         if (isSelected) {
@@ -168,16 +159,19 @@ export function renderTrashCores() {
     renderCores('trashListArea', trashCores);
 }
 
-export function toggleHand() {
-    const container = document.getElementById("handZoneContainer");
-    const openBtn = document.getElementById("openHandButton");
+// --- 全体描画関数 ---
+export function renderAll() {
+    renderHand();
+    renderField();
+    renderTrash();
+    renderBurst();
+    renderCores("lifeCores", lifeCores);
+    renderCores("reserveCores", reserveCores);
+    renderDeckCore();
+    renderTrashCores();
 
-    if (container.classList.contains("collapsed")) {
-        container.classList.remove("collapsed");
-        openBtn.classList.add("hidden");
-    } else {
-        container.classList.add("collapsed");
-        openBtn.classList.remove("hidden");
+    if (document.getElementById("trashModal").style.display === "flex") {
+        renderTrashModalContent();
     }
 }
 
@@ -193,18 +187,4 @@ export function renderTrashModalContent() {
         div.dataset.sourceZoneId = 'trashModalContent';
         content.appendChild(div);
     });
-}
-
-export function openTrashModal() {
-    const modal = document.getElementById("trashModal");
-    renderTrashModalContent();
-    modal.style.display = "flex";
-
-    const closeModalOnClick = e => {
-        if (!document.getElementById("trashModalContent").contains(e.target)) {
-            modal.style.display = "none";
-            document.removeEventListener('mousedown', closeModalOnClick);
-        }
-    };
-    setTimeout(() => document.addEventListener('mousedown', closeModalOnClick), 0);
 }
