@@ -133,7 +133,7 @@ export function renderCores(containerId, coreArray) {
 
 export function renderDeckCore() {
     const countZone = document.getElementById("countZone");
-    const countSummary = document.getElementById("deckCoreSummary");
+    const countSummary = document.getElementById("countCoreSummary");
     const n = countCores.length;
     if (countShowCountAsNumber) {
         countSummary.textContent = `カウント: ${n}`;

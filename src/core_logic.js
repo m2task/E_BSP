@@ -1,5 +1,5 @@
 // src/core_logic.js
-import { lifeCores, reserveCores, deckCores, trashCores, field, voidChargeCount, selectedCores, draggedCoreData, setVoidChargeCount, setSelectedCores, setDraggedCoreData } from './game_data.js';
+import { lifeCores, reserveCores, countCores, trashCores, field, voidChargeCount, selectedCores, draggedCoreData, setVoidChargeCount, setSelectedCores, setDraggedCoreData } from './game_data.js';
 import { renderAll } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
 
@@ -152,7 +152,7 @@ export function handleCoreDropOnZone(e, targetElement) {
             if (targetZoneName === 'trash') trashCores.push("blue");
             else if (targetZoneName === 'reserve') reserveCores.push("blue");
             else if (targetZoneName === 'life') lifeCores.push("blue");
-            else if (targetZoneName === 'count') deckCores.push("blue");
+            else if (targetZoneName === 'count') countCores.push("blue");
         }
         const toastMessage = `${movedCount}個増やしました`;
         showToast('voidToast', toastMessage);
