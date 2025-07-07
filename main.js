@@ -15,21 +15,26 @@ function initializeGame() {
     const loadedDeck = JSON.parse(localStorage.getItem(deckName)) || [];
     const fixedCardName = localStorage.getItem("fixedCardName");
 
-    setDeck(loadedDeck.map(name => ({ id: `card-${cardIdCounter++}`, name, isRotated: false, isExhausted: false, coresOnCard: [] }))); // coresOnCard: [] を追加
+    // deckとhandを直接変更する代わりにsetterを使用
+    let newDeck = loadedDeck.map(name => ({ id: `card-${cardIdCounter++}`, name, isRotated: false, isExhausted: false, coresOnCard: [] }));
+    setDeck(newDeck);
     shuffle(deck);
 
     if (fixedCardName) {
         const fixedCardIndex = deck.findIndex(card => card.name === fixedCardName);
         if (fixedCardIndex > -1) {
             const [fixedCard] = deck.splice(fixedCardIndex, 1);
-            hand.push(fixedCard);
+            hand.push(fixedCard); // handは直接pushでOK
         }
     }
 
     const initialHandSize = 4;
     while (hand.length < initialHandSize && deck.length > 0) {
-        hand.push(deck.shift());
+        hand.push(deck.shift()); // handは直接pushでOK
     }
+
+    console.log("Initialized Deck:", deck);
+    console.log("Initialized Hand:", hand);
 
     renderAll();
 }

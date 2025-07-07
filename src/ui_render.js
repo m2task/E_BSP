@@ -1,6 +1,6 @@
 // src/ui_render.js
 import { hand, field, trash, burst, lifeCores, reserveCores, deckCores, trashCores, selectedCores, cardPositions, deckShowCountAsNumber } from './game_data.js';
-import { handleCoreClick } from './event_handlers.js';
+import { handleCoreClick } from './core_logic.js'; // 修正: event_handlers.js から core_logic.js に変更
 
 export function createCardElement(cardData) {
     const div = document.createElement('div');
