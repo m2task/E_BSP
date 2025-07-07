@@ -28,16 +28,17 @@ function initializeGame() {
     setCardIdCounter(currentCardId);
 
     // 契約カードの処理
+    let initialHandSize = 4;
     if (useContract && newDeck.length > 0) {
         const contractCard = newDeck.shift(); // デッキの最初のカードを契約カードとして取得
-        field.push(contractCard); // フィールドに配置
+        hand.push(contractCard); // 手札に加える
+        initialHandSize = 3; // 契約カードを手札に加えたので、残りは3枚引く
     }
     
     setDeck(newDeck);
     shuffle(deck);
 
     // 初期手札を引く
-    const initialHandSize = 4;
     while (hand.length < initialHandSize && deck.length > 0) {
         hand.push(deck.shift());
     }
