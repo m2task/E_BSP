@@ -1,5 +1,6 @@
 // src/utils.js
 import { toastTimeout, setToastTimeout } from './game_data.js';
+import { hand, field, trash, burst, lifeCores, reserveCores, deckCores, trashCores } from './game_data.js';
 
 export function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
@@ -24,14 +25,14 @@ export function getZoneName(element) {
 
 export function getArrayByZoneName(zoneName) {
     switch (zoneName) {
-        case 'hand': case 'handZone': return window.hand;
-        case 'field': case 'fieldCards': return window.field;
-        case 'trash': case 'trashZoneFrame': case 'trashModalContent': return window.trash;
-        case 'burst': case 'burstZone': case 'burstCard': return window.burst;
-        case 'life': case 'lifeCores': return window.lifeCores;
-        case 'reserve': case 'reserveCores': return window.reserveCores;
-        case 'count': case 'countZone': return window.deckCores;
-        case 'trashcore': case 'trashListArea': return window.trashCores;
+        case 'hand': case 'handZone': return hand;
+        case 'field': case 'fieldCards': return field;
+        case 'trash': case 'trashZoneFrame': case 'trashModalContent': return trash;
+        case 'burst': case 'burstZone': case 'burstCard': return burst;
+        case 'life': case 'lifeCores': return lifeCores;
+        case 'reserve': case 'reserveCores': return reserveCores;
+        case 'count': case 'countZone': return deckCores;
+        case 'trashcore': case 'trashListArea': return trashCores;
         default: return null;
     }
 }

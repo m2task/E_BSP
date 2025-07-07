@@ -1,6 +1,6 @@
 // src/event_handlers.js
-import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData } from './game_data.js';
-import { renderAll } from './ui_render.js';
+import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field } from './game_data.js';
+import { renderAll, renderTrashModalContent } from './ui_render.js';
 import { showToast, getZoneName } from './utils.js';
 import { drawCard, moveCardData } from './card_logic.js';
 import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone } from './core_logic.js';
@@ -113,7 +113,7 @@ export function setupEventListeners() {
 
     // 「デッキ登録画面へ」ボタンのクリックイベント
     document.getElementById('goToDeckRegisterButton').addEventListener('click', () => {
-        if (confirm("デッキ登録画面に移動しますか?\n現在のゲーム状態は保存されません。")) {
+        if (confirm("デッキ登録画面に移動しますか？\n現在のゲーム状態は保存されません。")) {
             window.location.href = "index.html";
         }
     });
@@ -191,7 +191,8 @@ export function handleDragStart(e) {
                 e.dataTransfer.setData("cores", JSON.stringify(draggedCoreData));
             }
         }
-    } else if (draggedElement.id === 'voidCore') {
+    }
+    else if (draggedElement.id === 'voidCore') {
         // ボイドコアのドラッグ
         const coresToMoveCount = voidChargeCount > 0 ? voidChargeCount : 1; // チャージ数が0でも1個は移動可能
         setDraggedCoreData(Array(coresToMoveCount).fill({ type: "blue", sourceArrayName: 'void', index: -1 }));
