@@ -111,6 +111,37 @@ export function setupEventListeners() {
         showToast('voidToast', ` ${voidChargeCount}個増やせます`);
     });
 
+    // interact.js を使った voidCore のドラッグ処理
+    interact('#voidCore')
+        .draggable({
+            listeners: {
+                start (event) {
+                    // ドラッグ開始時の処理
+                    console.log('voidCore drag start');
+                    showToast('voidToast', '', true); // ドラッグ開始時にトーストを非表示
+                },
+                move (event) {
+                    // ドラッグ中の処理
+                    const target = event.target;
+                    // keep the dragged position in the data-x/data-y attributes
+                    const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                    const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+                    // translate the element
+                    target.style.transform = `translate(${x}px, ${y}px)`;
+
+                    // update the posiion attributes
+                    target.setAttribute('data-x', x);
+                    target.setAttribute('data-y', y);
+                },
+                end (event) {
+                    // ドラッグ終了時の処理
+                    console.log('voidCore drag end');
+                    // ここでドロップゾーンへの配置などの処理を実装
+                }
+            }
+        });
+
     // 「デッキ登録画面へ」ボタンのクリックイベント
     document.getElementById('goToDeckRegisterButton').addEventListener('click', () => {
         if (confirm("デッキ登録画面に移動しますか？\n現在のゲーム状態は保存されません。")) {
@@ -192,14 +223,7 @@ export function handleDragStart(e) {
             }
         }
     }
-    else if (draggedElement.id === 'voidCore') {
-        // ボイドコアのドラッグ
-        const coresToMoveCount = voidChargeCount > 0 ? voidChargeCount : 1; // チャージ数が0でも1個は移動可能
-        setDraggedCoreData(Array(coresToMoveCount).fill({ type: "blue", sourceArrayName: 'void', index: -1 }));
-        e.dataTransfer.setData("type", "voidCore");
-        e.dataTransfer.setData("cores", JSON.stringify(draggedCoreData));
-        showToast('voidToast', '', true); // ドラッグ開始時にトーストを非表示
-    }
+    
 }
 
 export function handleDragEnd() {
