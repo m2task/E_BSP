@@ -1,5 +1,5 @@
 // src/ui_render.js
-import { hand, field, trash, burst, lifeCores, reserveCores, deckCores, trashCores, selectedCores, cardPositions, deckShowCountAsNumber } from './game_data.js';
+import { hand, field, trash, burst, lifeCores, reserveCores, countCores, trashCores, selectedCores, cardPositions, countShowCountAsNumber } from './game_data.js';
 import { handleCoreClick } from './core_logic.js'; // 修正: event_handlers.js から core_logic.js に変更
 
 export function createCardElement(cardData) {
@@ -134,8 +134,8 @@ export function renderCores(containerId, coreArray) {
 export function renderDeckCore() {
     const countZone = document.getElementById("countZone");
     const countSummary = document.getElementById("deckCoreSummary");
-    const n = deckCores.length;
-    if (deckShowCountAsNumber) {
+    const n = countCores.length;
+    if (countShowCountAsNumber) {
         countSummary.textContent = `カウント: ${n}`;
         countSummary.style.display = 'block';
         countZone.style.display = 'none';
@@ -144,7 +144,7 @@ export function renderDeckCore() {
         countSummary.style.display = 'none';
         countZone.style.display = 'flex';
         countZone.classList.add('core-move-mode');
-        renderCores('countZone', deckCores);
+        renderCores('countZone', countCores);
     }
 }
 
