@@ -198,6 +198,11 @@ export function setupEventListeners() {
                     end (event) {
                     console.log('Card drag end');
                     const target = event.target;
+
+                    // カードの元の位置に戻す
+                    target.style.transform = 'translate(0px, 0px)';
+                    target.setAttribute('data-x', 0);
+                    target.setAttribute('data-y', 0);
                 }
                 }
             }
