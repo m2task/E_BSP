@@ -230,7 +230,7 @@ export function setupEventListeners() {
         });
 
     // Configure droppable zones for interact.js
-    interact('.zone, .special-zone, .card, .deck-button') // Select all potential drop targets
+    interact('.zone, .special-zone, .card, .deck-button, #fieldZone') // Select all potential drop targets
         .dropzone({
             accept: '#voidCore', // Only accept drops from #voidCore for now
             overlap: 0.75, // Require 75% overlap for a drop to be valid
