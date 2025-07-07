@@ -197,34 +197,10 @@ export function setupEventListeners() {
                 end (event) {
                     console.log('Card drag end');
                     const target = event.target;
-                    const dropTarget = event.relatedTarget;
 
                     target.style.transform = 'translate(0px, 0px)';
                     target.setAttribute('data-x', 0);
                     target.setAttribute('data-y', 0);
-
-                    if (dropTarget) {
-                        const dragOffsetX = parseFloat(target.dataset.dragOffsetX || 0);
-                        const dragOffsetY = parseFloat(target.dataset.dragOffsetY || 0);
-                        console.log('dragOffsetX:', dragOffsetX, 'dragOffsetY:', dragOffsetY); // Debug log
-
-                        const dummyEvent = {
-                            preventDefault: () => {},
-                            dataTransfer: {
-                                getData: (key) => {
-                                    if (key === "type") return "card";
-                                    if (key === "cardId") return target.dataset.id;
-                                    if (key === "sourceZoneId") return target.parentElement.id;
-                                    if (key === "offsetX") return dragOffsetX;
-                                    if (key === "offsetY") return dragOffsetY;
-                                    return "";
-                                }
-                            },
-                            clientX: event.clientX,
-                            clientY: event.clientY
-                        };
-                        handleCardDrop(dummyEvent, dropTarget);
-                    }
                 }
             }
         });
@@ -253,10 +229,32 @@ export function setupEventListeners() {
                 event.relatedTarget.classList.remove('can-drop');
             },
             ondrop: function (event) {
-                // This event fires when a draggable element is dropped on a droppable element.
-                // The actual core generation logic will be in the draggable's dragend event.
-                // This is mainly for visual feedback or if we want to handle the drop here.
                 console.log('interact.js drop event on:', event.target.id || event.target.className);
+                const draggableElement = event.relatedTarget; // ドラッグされた要素
+                const dropzoneElement = event.target; // ドロップされたゾーン
+
+                // voidCore のドロップ処理は voidCore の dragend で処理済みなので、ここではカードのドロップのみを考慮
+                if (draggableElement.classList.contains('card')) {
+                    const dragOffsetX = parseFloat(draggableElement.dataset.dragOffsetX || 0);
+                    const dragOffsetY = parseFloat(draggableElement.dataset.dragOffsetY || 0);
+
+                    const dummyEvent = {
+                        preventDefault: () => {},
+                        dataTransfer: {
+                            getData: (key) => {
+                                if (key === "type") return "card";
+                                if (key === "cardId") return draggableElement.dataset.id;
+                                if (key === "sourceZoneId") return draggableElement.parentElement.id;
+                                if (key === "offsetX") return dragOffsetX;
+                                if (key === "offsetY") return dragOffsetY;
+                                return "";
+                            }
+                        },
+                        clientX: event.clientX,
+                        clientY: event.clientY
+                    };
+                    handleCardDrop(dummyEvent, dropzoneElement);
+                }
             },
             ondropdeactivate: function (event) {
                 // remove active dropzone feedback
