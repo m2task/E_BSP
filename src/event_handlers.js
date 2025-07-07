@@ -206,6 +206,7 @@ export function setupEventListeners() {
                     if (dropTarget) {
                         const dragOffsetX = parseFloat(target.dataset.dragOffsetX || 0);
                         const dragOffsetY = parseFloat(target.dataset.dragOffsetY || 0);
+                        console.log('dragOffsetX:', dragOffsetX, 'dragOffsetY:', dragOffsetY); // Debug log
 
                         const dummyEvent = {
                             preventDefault: () => {},
@@ -431,30 +432,44 @@ export function handleDrop(e) {
 }
 
 export function handleCardDrop(e, dropTarget) {
+    console.log('handleCardDrop called.'); // Debug log
+    console.log('dropTarget:', dropTarget); // Debug log
     const cardId = e.dataTransfer.getData("cardId");
     const sourceZoneId = e.dataTransfer.getData("sourceZoneId");
     const targetElement = dropTarget;
-    if (!targetElement) return;
+    if (!targetElement) {
+        console.log('No targetElement, returning.'); // Debug log
+        return;
+    }
 
     const targetZoneName = getZoneName(targetElement);
+    console.log('targetZoneName:', targetZoneName); // Debug log
 
     if (targetZoneName === 'deck') {
         // デッキへのドロップは handleDeckDrop で処理するため、ここでは何もしない
+        console.log('Dropped on deck, returning.'); // Debug log
         return;
     }
 
     if (targetZoneName === 'field') {
+        console.log('Dropped on field.'); // Debug log
         const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
         const offsetX = parseFloat(e.dataTransfer.getData("offsetX"));
         const offsetY = parseFloat(e.dataTransfer.getData("offsetY"));
+        console.log('offsetX:', offsetX, 'offsetY:', offsetY); // Debug log
+        console.log('e.clientX:', e.clientX, 'e.clientY:', e.clientY); // Debug log
+        console.log('fieldRect.left:', fieldRect.left, 'fieldRect.top:', fieldRect.top); // Debug log
         cardPositions[cardId] = {
             left: e.clientX - fieldRect.left - offsetX,
             top: e.clientY - fieldRect.top - offsetY
         };
+        console.log('cardPositions[cardId]:', cardPositions[cardId]); // Debug log
     } else {
+        console.log('Dropped on non-field zone.'); // Debug log
         delete cardPositions[cardId];
     }
     moveCardData(cardId, sourceZoneId, targetZoneName);
+    console.log('moveCardData called.'); // Debug log
 }
 
 export function openTrashModal() {
