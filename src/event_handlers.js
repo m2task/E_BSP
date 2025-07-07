@@ -195,12 +195,10 @@ export function setupEventListeners() {
                     target.setAttribute('data-y', y);
                 },
                 end (event) {
+                    end (event) {
                     console.log('Card drag end');
                     const target = event.target;
-
-                    target.style.transform = 'translate(0px, 0px)';
-                    target.setAttribute('data-x', 0);
-                    target.setAttribute('data-y', 0);
+                }
                 }
             }
         });
