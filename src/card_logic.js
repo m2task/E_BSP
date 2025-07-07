@@ -26,7 +26,41 @@ export function drawCard(fromBottom = false) {
     }
 }
 
-export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = null, dropTargetElement = null) {
+export function moveCardData(cardId, sourceZoneId, targetZoneName, e = null, targetElement = null) {
+    // ... 既存のロジック ...
+}
+
+export function drawCardAndPlaceOnField(e) {
+    if (deck.length === 0) {
+        console.log("デッキがありません。");
+        return;
+    }
+
+    const cardName = deck.shift(); // デッキからカード名を取得
+    setDeck(deck); // game_dataのデッキを更新
+
+    // ユニークなIDを持つ新しいカードオブジェクトを作成
+    const newCard = {
+        id: `card-${cardIdCounter++}`,
+        name: cardName,
+        isRotated: false,
+        isExhausted: false,
+        coresOnCard: []
+    };
+    setCardIdCounter(cardIdCounter); // グローバルカウンターを更新
+
+    field.push(newCard); // フィールドに追加
+    setField(field); // game_dataのフィールドを更新
+
+    // ドロップされた位置に基づいてカードの座標を計算
+    const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
+    cardPositions[newCard.id] = {
+        left: e.clientX - fieldRect.left - 50, // カードの幅の半分を考慮
+        top: e.clientY - fieldRect.top - 70 // カードの高さの半分を考慮
+    };
+
+    renderAll();
+}
     const sourceArray = getArrayByZoneName(sourceZoneId);
     if (!sourceArray) return;
     const cardIndex = sourceArray.findIndex(c => c.id === cardId);

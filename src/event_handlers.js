@@ -2,7 +2,7 @@
 import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores } from './game_data.js';
 import { renderAll, renderTrashModalContent } from './ui_render.js';
 import { showToast, getZoneName } from './utils.js';
-import { drawCard, moveCardData } from './card_logic.js';
+import { drawCard, moveCardData, drawCardAndPlaceOnField } from './card_logic.js';
 import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone } from './core_logic.js';
 
 export function setupEventListeners() {
@@ -17,6 +17,7 @@ export function setupEventListeners() {
     deckButton.addEventListener('dragleave', handleDeckDragLeave);
     deckButton.addEventListener('dragover', handleDeckDragOver);
     deckButton.addEventListener('drop', handleDeckDrop);
+    deckButton.addEventListener('dragstart', handleDeckButtonDragStart); // 追加
 
     // フィールドのカードクリックイベント（回転用）
     document.getElementById('fieldCards').addEventListener('click', (e) => {
@@ -274,6 +275,11 @@ export function handleDrop(e) {
 
     if (type === 'card') {
         handleCardDrop(e);
+    } else if (type === 'deckCard') { // デッキからのカードドラッグ
+        const targetFieldZone = e.target.closest('#fieldZone');
+        if (targetFieldZone) {
+            drawCardAndPlaceOnField(e);
+        }
     } else if (type === 'voidCore' || type === 'core' || type === 'multiCore' || type === 'coreFromCard') {
         const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
         if (targetCardElement) {
@@ -289,6 +295,11 @@ export function handleDrop(e) {
         }
     }
     clearSelectedCores(); // ドロップ処理の最後に選択状態をクリア
+}
+
+export function handleDeckButtonDragStart(e) {
+    e.dataTransfer.setData("type", "deckCard");
+    e.dataTransfer.effectAllowed = "copy";
 }
 
 export function handleCardDrop(e) {
