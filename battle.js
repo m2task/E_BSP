@@ -32,7 +32,6 @@ function initializeGame() {
     if (useContract && newDeck.length > 0) {
         const contractCard = newDeck.shift(); // デッキの最初のカードを契約カードとして取得
         hand.push(contractCard); // 手札に加える
-        initialHandSize = 3; // 契約カードを手札に加えたので、残りは3枚引く
     }
     
     setDeck(newDeck);
