@@ -135,10 +135,77 @@ export function setupEventListeners() {
                     target.setAttribute('data-y', y);
                 },
                 end (event) {
-                    // ドラッグ終了時の処理
                     console.log('voidCore drag end');
-                    // ここでドロップゾーンへの配置などの処理を実装
+                    const dropTarget = event.relatedTarget; // ドロップされた要素
+
+                    // voidCore の位置をリセット
+                    const target = event.target;
+                    target.style.transform = 'translate(0px, 0px)';
+                    target.setAttribute('data-x', 0);
+                    target.setAttribute('data-y', 0);
+
+                    // コア生成ロジックを呼び出すための準備
+                    const coresToMoveCount = voidChargeCount > 0 ? voidChargeCount : 1;
+                    const coresToMove = Array(coresToMoveCount).fill({ type: "blue", sourceArrayName: 'void', index: -1 });
+                    
+                    // ダミーのDragEventオブジェクトを作成
+                    const dummyEvent = {
+                        preventDefault: () => {},
+                        dataTransfer: {
+                            getData: (key) => {
+                                if (key === "type") return "voidCore";
+                                if (key === "cores") return JSON.stringify(coresToMove);
+                                return "";
+                            }
+                        },
+                        clientX: event.clientX,
+                        clientY: event.clientY
+                    };
+
+                    if (dropTarget) {
+                        if (dropTarget.classList.contains('card')) {
+                            handleCoreDropOnCard(dummyEvent, dropTarget);
+                        } else if (dropTarget.classList.contains('zone') || dropTarget.classList.contains('special-zone') || dropTarget.classList.contains('deck-button')) {
+                            handleCoreDropOnZone(dummyEvent, dropTarget);
+                        }
+                    }
                 }
+            }
+        });
+
+    // Configure droppable zones for interact.js
+    interact('.zone, .special-zone, .card, .deck-button') // Select all potential drop targets
+        .dropzone({
+            accept: '#voidCore', // Only accept drops from #voidCore for now
+            overlap: 0.75, // Require 75% overlap for a drop to be valid
+
+            ondropactivate: function (event) {
+                // add active dropzone feedback
+                event.target.classList.add('drop-active');
+            },
+            ondragenter: function (event) {
+                var draggableElement = event.relatedTarget;
+                var dropzoneElement = event.target;
+
+                // feedback the draggable element and dropzone
+                dropzoneElement.classList.add('drop-target');
+                draggableElement.classList.add('can-drop');
+            },
+            ondragleave: function (event) {
+                // remove the drop feedback style
+                event.target.classList.remove('drop-target');
+                event.relatedTarget.classList.remove('can-drop');
+            },
+            ondrop: function (event) {
+                // This event fires when a draggable element is dropped on a droppable element.
+                // The actual core generation logic will be in the draggable's dragend event.
+                // This is mainly for visual feedback or if we want to handle the drop here.
+                console.log('interact.js drop event on:', event.target.id || event.target.className);
+            },
+            ondropdeactivate: function (event) {
+                // remove active dropzone feedback
+                event.target.classList.remove('drop-active');
+                event.target.classList.remove('drop-target');
             }
         });
 
