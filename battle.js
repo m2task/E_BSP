@@ -1,45 +1,50 @@
 // main.js
-import { deck, hand, cardIdCounter, setDeck, setHand, setCardIdCounter, setSelectedCores } from './src/game_data.js';
+import { deck, hand, field, cardIdCounter, setDeck, setHand, setCardIdCounter, setSelectedCores } from './src/game_data.js';
 import { setupEventListeners } from './src/event_handlers.js';
 import { renderAll } from './src/ui_render.js';
 import { shuffle } from './src/utils.js';
 
-function getDeckNameFromURL() {
+function getURLParams() {
     const params = new URLSearchParams(window.location.search);
-    return params.get("deck") || "deck1"; // デフォルトは deck1
+    return {
+        deckName: params.get("deck") || "deck1",
+        useContract: params.get("contract") === "true"
+    };
 }
 
 function initializeGame() {
     setSelectedCores([]); // 選択されたコアを初期化
-    const deckName = getDeckNameFromURL();
-    const loadedDeck = JSON.parse(localStorage.getItem(deckName)) || [];
-    const fixedCardName = localStorage.getItem("fixedCardName");
+    const { deckName, useContract } = getURLParams();
 
-    let currentCardId = cardIdCounter; // 現在のカウンター値を取得
+    // ローカルストレージからデッキデータを読み込む
+    const savedData = JSON.parse(localStorage.getItem(deckName)) || {};
+    const loadedDeck = savedData.deck || [];
+    
+    // カードデータをオブジェクトに変換
+    let currentCardId = cardIdCounter;
     let newDeck = loadedDeck.map(name => {
-        const card = { id: `card-${currentCardId++}`, name, isRotated: false, isExhausted: false, coresOnCard: [] };
-        return card;
+        return { id: `card-${currentCardId++}`, name, isRotated: false, isExhausted: false, coresOnCard: [] };
     });
-    setCardIdCounter(currentCardId); // map処理後にグローバルカウンターを更新
+    setCardIdCounter(currentCardId);
 
+    // 契約カードの処理
+    if (useContract && newDeck.length > 0) {
+        const contractCard = newDeck.shift(); // デッキの最初のカードを契約カードとして取得
+        field.push(contractCard); // フィールドに配置
+    }
+    
     setDeck(newDeck);
     shuffle(deck);
 
-    if (fixedCardName) {
-        const fixedCardIndex = deck.findIndex(card => card.name === fixedCardName);
-        if (fixedCardIndex > -1) {
-            const [fixedCard] = deck.splice(fixedCardIndex, 1);
-            hand.push(fixedCard); // handは直接pushでOK
-        }
-    }
-
+    // 初期手札を引く
     const initialHandSize = 4;
     while (hand.length < initialHandSize && deck.length > 0) {
-        hand.push(deck.shift()); // handは直接pushでOK
+        hand.push(deck.shift());
     }
 
     console.log("Initialized Deck:", deck);
     console.log("Initialized Hand:", hand);
+    console.log("Field:", field);
 
     renderAll();
 }
