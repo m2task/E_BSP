@@ -55,3 +55,13 @@ export function showToast(toastId, message, hide = false) {
         }, 1000)); // 1秒後に非表示
     }
 }
+
+export function isMobileDevice() {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    // Android, iOS, and Windows Phone detection
+    if (/android/i.test(userAgent) || /iPad|iPhone|iPod/.test(userAgent) || /windows phone/i.test(userAgent)) {
+        return true;
+    }
+    // Check for touch support (less reliable for specific device type, but good for touch-enabled devices)
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+}

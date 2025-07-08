@@ -1,12 +1,15 @@
 // src/ui_render.js
 import { hand, field, trash, burst, lifeCores, reserveCores, countCores, trashCores, selectedCores, cardPositions, countShowCountAsNumber } from './game_data.js';
 import { handleCoreClick } from './core_logic.js'; // 修正: event_handlers.js から core_logic.js に変更
+import { isMobileDevice } from './utils.js';
 
 export function createCardElement(cardData) {
     const div = document.createElement('div');
     div.className = 'card';
     div.textContent = cardData.name;
-    div.draggable = true;
+    if (!isMobileDevice()) { // PCの場合のみdraggable属性を設定
+        div.draggable = true;
+    }
     div.dataset.id = cardData.id;
 
     const exhaustBtn = document.createElement('button');
@@ -63,7 +66,9 @@ export function renderField() {
             cardData.coresOnCard.forEach((core, index) => {
                 const coreDiv = document.createElement('div');
                 coreDiv.className = `core ${core.type}`;
-                coreDiv.draggable = true;
+                if (!isMobileDevice()) { // PCの場合のみdraggable属性を設定
+                    coreDiv.draggable = true;
+                }
                 coreDiv.dataset.index = index; // カード上のコアのインデックス
                 coreDiv.dataset.coreType = core.type;
                 coreDiv.dataset.sourceCardId = cardData.id; // コアの親カードID
@@ -115,7 +120,9 @@ export function renderCores(containerId, coreArray) {
     coreArray.forEach((coreType, index) => {
         const div = document.createElement("div");
         div.className = `core ${coreType}`;
-
+        if (!isMobileDevice()) { // PCの場合のみdraggable属性を設定
+            div.draggable = true;
+        }
         div.dataset.index = index;
         div.dataset.coreType = coreType;
         div.addEventListener('click', handleCoreClick); // ここでhandleCoreClickを呼び出す
