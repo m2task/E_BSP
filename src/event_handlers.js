@@ -8,52 +8,9 @@ import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreIn
 export function setupEventListeners() {
     if (isMobileDevice()) {
         // interact.js を使ったドラッグ処理
-        interact('.card')
-            .draggable({
-                listeners: {
-                    start (event) {
-                        event.target.classList.add('dragging');
-                        const cardId = event.target.dataset.id;
-                        const sourceZoneId = event.target.parentElement.id;
-                        event.target.dataset.sourceZoneId = sourceZoneId; // ドロップ時に参照できるように保存
-                        event.target.dataset.originalX = event.target.offsetLeft;
-                        event.target.dataset.originalY = event.target.offsetTop;
-                    },
-                    move (event) {
-                        const target = event.target;
-                        const x = (parseFloat(target.dataset.x) || 0) + event.dx;
-                        const y = (parseFloat(target.dataset.y) || 0) + event.dy;
-
-                        target.style.transform = `translate(${x}px, ${y}px)`;
-                        target.dataset.x = x;
-                        target.dataset.y = y;
-                    },
-                    end (event) {
-                        event.target.classList.remove('dragging');
-                        event.target.style.transform = ''; // 位置をリセット
-                        event.target.dataset.x = 0;
-                        event.target.dataset.y = 0;
-
-                        const dropTarget = event.relatedTarget;
-                        const cardId = event.target.dataset.id;
-                        const sourceZoneId = event.target.dataset.sourceZoneId;
-
-                        if (dropTarget) {
-                            const targetZoneName = getZoneName(dropTarget);
-                            if (targetZoneName === 'field') {
-                                const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
-                                cardPositions[cardId] = {
-                                    left: event.pageX - fieldRect.left - (event.rect.width / 2), // カードの中心を基準に
-                                    top: event.pageY - fieldRect.top - (event.rect.height / 2)
-                                };
-                            } else {
-                                delete cardPositions[cardId];
-                            }
-                            moveCardData(cardId, sourceZoneId, targetZoneName, event, dropTarget);
-                        }
-                    }
-                }
-            });
+        // interact.js を使ったドラッグ処理 (カード) - タップ移動に置き換え
+        // interact('.card')
+        //     .draggable({...});
 
         interact('.core')
             .draggable({
@@ -263,22 +220,102 @@ export function setupEventListeners() {
     }
 
     // フィールドのカードクリックイベント（回転用）
-    document.getElementById('fieldCards').addEventListener('click', (e) => {
-        const cardElement = e.target.closest('.card');
-        if (cardElement && !e.target.classList.contains('exhaust-button')) {
-            const cardId = cardElement.dataset.id;
-            const cardData = field.find(card => card.id === cardId);
-            if (!cardData) return; // データが見つからない場合は何もしない
+    // モバイルデバイスの場合、タップでの選択とダブルタップでの回転を処理
+    if (isMobileDevice()) {
+        let lastTapTime = 0;
+        let lastTapCardId = null;
 
-            if (cardData.isRotated) {
-                cardData.isRotated = false;
+        document.getElementById('fieldCards').addEventListener('touchend', (e) => {
+            const cardElement = e.target.closest('.card');
+            if (!cardElement || e.target.classList.contains('exhaust-button')) return;
+
+            const cardId = cardElement.dataset.id;
+            const currentTime = new Date().getTime();
+            const DOUBLE_TAP_THRESHOLD = 300; // ms
+
+            if (currentTime - lastTapTime < DOUBLE_TAP_THRESHOLD && lastTapCardId === cardId) {
+                // ダブルタップと判断
+                const cardData = field.find(card => card.id === cardId);
+                if (!cardData) return;
+
+                if (cardData.isRotated) {
+                    cardData.isRotated = false;
+                } else {
+                    cardData.isRotated = true;
+                    cardData.isExhausted = false; // 疲労させたら重疲労は解除
+                }
+                renderAll();
+                lastTapTime = 0; // ダブルタップ後はリセット
+                lastTapCardId = null;
             } else {
-                cardData.isRotated = true;
-                cardData.isExhausted = false; // 疲労させたら重疲労は解除
+                // シングルタップと判断
+                if (selectedCardForMobileMove && selectedCardForMobileMove.id === cardId) {
+                    // 既に選択されているカードを再度タップ -> 選択解除
+                    cardElement.classList.remove('selected-for-move');
+                    setSelectedCardForMobileMove(null);
+                } else {
+                    // 新しいカードを選択
+                    if (selectedCardForMobileMove) {
+                        // 以前選択されていたカードがあれば、その選択を解除
+                        const prevSelectedCardElement = document.querySelector(`.card[data-id="${selectedCardForMobileMove.id}"]`);
+                        if (prevSelectedCardElement) {
+                            prevSelectedCardElement.classList.remove('selected-for-move');
+                        }
+                    }
+                    cardElement.classList.add('selected-for-move');
+                    setSelectedCardForMobileMove({ id: cardId, sourceZoneId: cardElement.parentElement.id });
+                }
+                lastTapTime = currentTime;
+                lastTapCardId = cardId;
             }
-            renderAll(); // 状態変更を反映するために再描画
-        }
-    });
+        });
+
+        // ゾーンへのタップでカードを移動
+        document.querySelectorAll('.zone, .special-zone, .deck-button').forEach(zoneElement => {
+            zoneElement.addEventListener('touchend', (e) => {
+                if (selectedCardForMobileMove) {
+                    const targetZoneName = getZoneName(zoneElement);
+                    moveCardData(selectedCardForMobileMove.id, selectedCardForMobileMove.sourceZoneId, targetZoneName, e, zoneElement);
+                    // 移動後、選択状態を解除
+                    const prevSelectedCardElement = document.querySelector(`.card[data-id="${selectedCardForMobileMove.id}"]`);
+                    if (prevSelectedCardElement) {
+                        prevSelectedCardElement.classList.remove('selected-for-move');
+                    }
+                    setSelectedCardForMobileMove(null);
+                }
+            });
+        });
+
+        // 空の領域をタップで選択解除
+        document.addEventListener('touchend', (e) => {
+            if (selectedCardForMobileMove && !e.target.closest('.card') && !e.target.closest('.zone') && !e.target.closest('.special-zone') && !e.target.closest('.deck-button')) {
+                const prevSelectedCardElement = document.querySelector(`.card[data-id="${selectedCardForMobileMove.id}"]`);
+                if (prevSelectedCardElement) {
+                    prevSelectedCardElement.classList.remove('selected-for-move');
+                }
+                setSelectedCardForMobileMove(null);
+            }
+        });
+
+    } else {
+        // PC版のカードクリックイベント（回転用）
+        document.getElementById('fieldCards').addEventListener('click', (e) => {
+            const cardElement = e.target.closest('.card');
+            if (cardElement && !e.target.classList.contains('exhaust-button')) {
+                const cardId = cardElement.dataset.id;
+                const cardData = field.find(card => card.id === cardId);
+                if (!cardData) return; // データが見つからない場合は何もしない
+
+                if (cardData.isRotated) {
+                    cardData.isRotated = false;
+                } else {
+                    cardData.isRotated = true;
+                    cardData.isExhausted = false; // 疲労させたら重疲労は解除
+                }
+                renderAll(); // 状態変更を反映するために再描画
+            }
+        });
+    }
 
     // 画面のどこかをクリックしたらコアの選択を解除
     document.addEventListener('click', (e) => {
