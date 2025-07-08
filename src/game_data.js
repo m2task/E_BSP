@@ -17,10 +17,7 @@ export let handVisible = true;
 export let countShowCountAsNumber = true;
 export let cardIdCounter = 0;
 
-// --- ドラッグ情報とカード位置 ---
-export let draggedElement = null;
-export let offsetX = 0;
-export let offsetY = 0;
+
 export let cardPositions = {}; // { cardId: { left, top } }
 
 // --- コア選択・ドラッグ関連 ---
@@ -42,9 +39,7 @@ export function setToastTimeout(timeout) { toastTimeout = timeout; }
 export function setHandVisible(visible) { handVisible = visible; }
 export function setCountShowCountAsNumber(showAsNumber) { countShowCountAsNumber = showAsNumber; }
 export function setCardIdCounter(counter) { cardIdCounter = counter; }
-export function setDraggedElement(element) { draggedElement = element; }
-export function setOffsetX(x) { offsetX = x; }
-export function setOffsetY(y) { offsetY = y; }
+
 export function setCardPositions(positions) { cardPositions = positions; }
 export function setSelectedCores(cores) { selectedCores = cores; }
 export function setDraggedCoreData(data) { draggedCoreData = data; }

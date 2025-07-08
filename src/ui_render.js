@@ -49,7 +49,8 @@ export function renderField() {
         const pos = cardPositions[cardData.id];
         if (pos) {
             cardElement.style.position = 'absolute';
-            cardElement.style.transform = `translate(${pos.left}px, ${pos.top}px)`;
+            cardElement.style.left = pos.left + 'px';
+            cardElement.style.top = pos.top + 'px';
         }
         // 回転状態を反映
         if (cardData.isRotated) cardElement.classList.add('rotated');
@@ -114,7 +115,7 @@ export function renderCores(containerId, coreArray) {
     coreArray.forEach((coreType, index) => {
         const div = document.createElement("div");
         div.className = `core ${coreType}`;
-        div.draggable = true;
+
         div.dataset.index = index;
         div.dataset.coreType = coreType;
         div.addEventListener('click', handleCoreClick); // ここでhandleCoreClickを呼び出す
