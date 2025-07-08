@@ -111,6 +111,12 @@ body {
     }
 
     .card {
+  touch-action: none;
+}
+
+.core {
+  touch-action: none;
+}
       width: 80px;
       height: 120px;
       background: #ddf;

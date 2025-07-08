@@ -53,6 +53,7 @@ export function clearSelectedCores() {
 
 export function handleCoreDropOnCard(e, targetCardElement) {
     e.preventDefault();
+    const type = e.dataTransfer.getData("type");
     const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
     const targetCardId = targetCardElement.dataset.id;
     const targetCard = field.find(card => card.id === targetCardId);
@@ -63,31 +64,33 @@ export function handleCoreDropOnCard(e, targetCardElement) {
     const dropX = e.clientX - cardRect.left;
     const dropY = e.clientY - cardRect.top;
 
-    if (e.dataTransfer.getData("type") === 'voidCore') {
+    if (type === 'voidCore') {
         // ボイドコアの場合、チャージ数分の新しい青コアを生成してカードに追加
-        const coresToAddCount = coresToMove.length;
-        const coreOffsetX = 10;
-        const coreOffsetY = 10;
+        const coresToAddCount = coresToMove.length; // coresToMoveにはチャージ数分のダミーコアが入っている
+        const coreOffsetX = 10; // コアの水平方向オフセット
+        const coreOffsetY = 10; // コアの垂直方向オフセット
 
         for (let i = 0; i < coresToAddCount; i++) {
-            const currentCoresOnCardCount = targetCard.coresOnCard.length;
+            const currentCoresOnCardCount = targetCard.coresOnCard.length; // 現在のコア数を取得
             targetCard.coresOnCard.push({
                 type: "blue",
                 x: dropX + (currentCoresOnCardCount * coreOffsetX),
                 y: dropY + (currentCoresOnCardCount * coreOffsetY)
             });
         }
-        setVoidChargeCount(0);
-        showToast('voidToast', '', true);
+        setVoidChargeCount(0); // ボイドコア移動後はチャージをリセット
+        showToast('voidToast', '', true); // ボイドトーストを非表示
     } else {
         // 通常のコア移動の場合
+        // 移動元からコアを削除
         removeCoresFromSource(coresToMove);
 
-        const coreOffsetX = 10;
-        const coreOffsetY = 10;
+        const coreOffsetX = 10; // コアの水平方向オフセット
+        const coreOffsetY = 10; // コアの垂直方向オフセット
 
+        // カードにコアを追加
         for (const coreInfo of coresToMove) {
-            const currentCoresOnCardCount = targetCard.coresOnCard.length;
+            const currentCoresOnCardCount = targetCard.coresOnCard.length; // 現在のコア数を取得
             targetCard.coresOnCard.push({
                 type: coreInfo.type,
                 x: dropX + (currentCoresOnCardCount * coreOffsetX),
@@ -97,7 +100,8 @@ export function handleCoreDropOnCard(e, targetCardElement) {
     }
     renderAll();
 
-    if (e.dataTransfer.getData("type") === 'voidCore') {
+    // 最後にトーストを表示（ボイドからの場合のみ）
+    if (type === 'voidCore') {
         const movedCount = coresToMove.length;
         const toastMessage = `${movedCount}個増やしました`;
         showToast('voidToast', toastMessage);
@@ -136,8 +140,9 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement) {
 
 export function handleCoreDropOnZone(e, targetElement) {
     const targetZoneName = getZoneName(targetElement);
+    const type = e.dataTransfer.getData("type");
 
-    if (e.dataTransfer.getData("type") === 'voidCore') {
+    if (type === 'voidCore') {
         const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
         setVoidChargeCount(0);
         showToast('voidToast', '', true);
@@ -156,28 +161,32 @@ export function handleCoreDropOnZone(e, targetElement) {
     }
 
     let coresToMove = [];
-    const type = e.dataTransfer.getData("type");
     if (type === 'multiCore' || type === 'coreFromCard' || type === 'core') {
         coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
     }
 
     const coresToActuallyMove = [];
+    // ボイドへの移動の場合、ソウルコアの確認を行う
     if (targetZoneName === 'void') {
         for (const coreInfo of coresToMove) {
             if (coreInfo.type === 'soul') {
                 if (confirm("ソウルドライブしますか？")) {
-                    coresToActuallyMove.push(coreInfo);
+                    coresToActuallyMove.push(coreInfo); // OKなら移動リストに追加
                 }
+                // キャンセルの場合は何もしない（＝元の位置に残る）
             } else {
-                coresToActuallyMove.push(coreInfo);
+                coresToActuallyMove.push(coreInfo); // ソウルコア以外は無条件で移動
             }
         }
     } else {
+        // ボイド以外への移動は、すべてのコアを移動リストに含める
         coresToActuallyMove.push(...coresToMove);
     }
 
+    // 実際に移動するコアだけをソースから削除
     removeCoresFromSource(coresToActuallyMove);
 
+    // 移動先へコアを追加
     const targetArray = (targetZoneName === 'trash') ? trashCores : getArrayByZoneName(targetZoneName);
     if (targetArray) {
         for (const coreInfo of coresToActuallyMove) {
