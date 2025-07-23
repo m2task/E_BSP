@@ -161,7 +161,7 @@ export function renderTrashCores() {
 
 export function renderDeck() {
     const deckButton = document.getElementById("deckButton");
-    deckButton.innerHTML = `デッキ: ${deck.length}<div class="deck-zone-overlay top-zone"></div><div class="deck-zone-overlay bottom-zone"></div>`;
+    deckButton.innerHTML = `デッキ: ${deck.length}枚<div class="deck-zone-overlay top-zone"></div><div class="deck-zone-overlay bottom-zone"></div>`;
 }
 
 // --- 全体描画関数 ---
