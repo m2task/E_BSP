@@ -41,12 +41,19 @@ export function renderHand() {
     document.getElementById("handCount").textContent = hand.length;
 
     const handZoneContainer = document.getElementById('handZoneContainer');
+    const openHandButton = document.getElementById('openHandButton');
+
     if (handPinned) {
         handZoneContainer.classList.remove('collapsed');
+        openHandButton.classList.add('hidden'); // 固定時は常に非表示
     } else {
-        handZoneContainer.classList.add('collapsed');
+        // 固定されていない場合、手札が閉じている時のみopenHandButtonを表示
+        if (handZoneContainer.classList.contains('collapsed')) {
+            openHandButton.classList.remove('hidden');
+        } else {
+            openHandButton.classList.add('hidden');
+        }
     }
-}
 
 export function renderField() {
     const fieldZone = document.getElementById("fieldCards");
