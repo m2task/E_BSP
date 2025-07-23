@@ -117,6 +117,8 @@ export function setupEventListeners() {
             window.location.href = "index.html";
         }
     });
+
+    document.getElementById('deckDiscardBtn').addEventListener('click', discardDeck);
 }
 
 // --- イベントハンドラ --- 
