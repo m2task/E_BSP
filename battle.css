@@ -497,6 +497,7 @@ body {
   z-index: 200;
   justify-content: center;
   align-items: center;
+  pointer-events: none; /* 背景はクリックを透過 */
 }
 
 .modal-content {
@@ -506,6 +507,7 @@ body {
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
   min-width: 300px;
   max-width: 80%;
+  pointer-events: auto; /* コンテンツ部分は操作可能 */
 }
 
 .open-area-zone {
