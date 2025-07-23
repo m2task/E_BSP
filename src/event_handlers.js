@@ -118,10 +118,6 @@ export function setupEventListeners() {
         }
     });
 
-    document.getElementById('deckOpenBtn').addEventListener('click', openDeck);
-    document.getElementById('deckDiscardBtn').addEventListener('click', discardDeck);
-}
-
 // --- イベントハンドラ --- 
 export function handleDragStart(e) {
     setDraggedElement(e.target);

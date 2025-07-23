@@ -1,5 +1,5 @@
 // src/card_logic.js
-import { deck, hand, field, trash, burst, reserveCores, discardState, setDeck, setHand, setField, setTrash, setBurst, setReserveCores, setDiscardCounter, setDiscardedCardNames, setDiscardToastTimer } from './game_data.js';
+import { deck, hand, field, trash, burst, reserveCores, setDeck, setHand, setField, setTrash, setBurst, setReserveCores } from './game_data.js';
 import { renderAll } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
 
@@ -121,32 +121,17 @@ export function openDeck() {
 }
 
 export function discardDeck() {
-    if (deck.length === 0) {
-        alert("デッキが空です");
+    const numToDiscard = parseInt(prompt("デッキから何枚破棄しますか？", "1"));
+    if (isNaN(numToDiscard) || numToDiscard <= 0) return;
+
+    if (deck.length < numToDiscard) {
+        alert("デッキが足りません。");
         return;
     }
 
-    const discardedCard = deck.shift();
-    trash.push(discardedCard);
-
-    setDiscardCounter(discardState.counter + 1);
-    setDiscardedCardNames([...discardState.names, discardedCard.name]);
-
-    renderAll();
-
-    // 既存のタイマーがあればクリア
-    if (discardState.timer) {
-        clearTimeout(discardState.timer);
+    if (confirm(`デッキの上から${numToDiscard}枚破棄しますか？`)) {
+        const discardedCards = deck.splice(0, numToDiscard);
+        trash.push(...discardedCards);
+        renderAll();
     }
-
-    // 新しいタイマーを設定
-    setDiscardToastTimer(setTimeout(() => {
-        const message = `${discardState.counter}枚破棄しました。\n${discardState.names.join("、")}`;
-        showToast('cardMoveToast', message);
-        
-        // カウンターとリストをリセット
-        setDiscardCounter(0);
-        setDiscardedCardNames([]);
-        setDiscardToastTimer(null);
-    }, 350)); // 350msのデバウンス
 }
