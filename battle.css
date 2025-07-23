@@ -52,33 +52,18 @@ body {
     }
 
     .deck-button {
-      width: 140px; /* さらに拡大 */
+      width: 100px;
       height: 140px;
       background: #ccc;
       text-align: center;
       line-height: 140px;
-      font-size: 16px;
+      font-size: 16px; /* 18pxから16pxに縮小 */
       border-radius: 8px;
       cursor: pointer;
+      margin: auto;
       font-weight: bold;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .deck-actions button {
-      padding: 8px 6px; /* パディングで幅を調整 */
-      font-size: 12px;
-      white-space: nowrap; /* 文字を一行に保つ */
-      font-weight: bold;
-      cursor: pointer;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      background-color: #f0f0f0;
-    }
-
-    .deck-actions button:hover {
-      background-color: #e0e0e0;
-      border-color: #bbb;
+      position: relative; /* オーバーレイの基準位置 */
+      overflow: hidden; /* はみ出る部分を隠す */
     }
 
     .deck-zone-overlay {

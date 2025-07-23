@@ -105,3 +105,33 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
 
     renderAll();
 }
+
+export function openDeck() {
+    const numToOpen = parseInt(prompt("デッキを何枚オープンしますか？", "1"));
+    if (isNaN(numToOpen) || numToOpen <= 0) return;
+
+    if (deck.length < numToOpen) {
+        alert("デッキが足りません。");
+        return;
+    }
+
+    const openedCards = deck.slice(0, numToOpen);
+    const cardNames = openedCards.map(c => c.name).join("\n");
+    alert(`オープンしたカード:\n${cardNames}`);
+}
+
+export function discardDeck() {
+    const numToDiscard = parseInt(prompt("デッキから何枚破棄しますか？", "1"));
+    if (isNaN(numToDiscard) || numToDiscard <= 0) return;
+
+    if (deck.length < numToDiscard) {
+        alert("デッキが足りません。");
+        return;
+    }
+
+    if (confirm(`デッキの上から${numToDiscard}枚破棄しますか？`)) {
+        const discardedCards = deck.splice(0, numToDiscard);
+        trash.push(...discardedCards);
+        renderAll();
+    }
+}

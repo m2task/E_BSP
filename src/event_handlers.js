@@ -2,7 +2,7 @@
 import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores } from './game_data.js';
 import { renderAll, renderTrashModalContent } from './ui_render.js';
 import { showToast, getZoneName } from './utils.js';
-import { drawCard, moveCardData } from './card_logic.js';
+import { drawCard, moveCardData, openDeck, discardDeck } from './card_logic.js';
 import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone } from './core_logic.js';
 
 export function setupEventListeners() {
@@ -117,6 +117,9 @@ export function setupEventListeners() {
             window.location.href = "index.html";
         }
     });
+
+    document.getElementById('deckOpenBtn').addEventListener('click', openDeck);
+    document.getElementById('deckDiscardBtn').addEventListener('click', discardDeck);
 }
 
 // --- イベントハンドラ --- 
