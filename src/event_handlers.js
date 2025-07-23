@@ -117,6 +117,7 @@ export function setupEventListeners() {
             window.location.href = "index.html";
         }
     });
+}
 
 // --- イベントハンドラ --- 
 export function handleDragStart(e) {
