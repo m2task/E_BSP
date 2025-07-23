@@ -52,23 +52,24 @@ body {
     }
 
     .deck-button {
-      width: 100px;
+      width: 120px; /* 100pxから120pxに拡大 */
       height: 140px;
       background: #ccc;
       text-align: center;
       line-height: 140px;
-      font-size: 16px; /* 18pxから16pxに縮小 */
+      font-size: 16px;
       border-radius: 8px;
       cursor: pointer;
-      /* margin: auto; */ /* 中央寄せを解除 */
       font-weight: bold;
-      position: relative; /* オーバーレイの基準位置 */
-      overflow: hidden; /* はみ出る部分を隠す */
+      position: relative;
+      overflow: hidden;
     }
 
     .deck-actions button {
-      padding: 8px 12px;
-      font-size: 14px;
+      padding: 8px 10px; /* 横のパディングを少し狭くする */
+      font-size: 12px; /* フォントサイズを小さくする */
+      width: 60px; /* ボタンの幅を固定 */
+      box-sizing: border-box; /* パディングを含めて幅を計算 */
       font-weight: bold;
       cursor: pointer;
       border: 1px solid #ccc;
