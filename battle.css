@@ -66,6 +66,21 @@ body {
       overflow: hidden; /* はみ出る部分を隠す */
     }
 
+    .deck-actions button {
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: #f0f0f0;
+    }
+
+    .deck-actions button:hover {
+      background-color: #e0e0e0;
+      border-color: #bbb;
+    }
+
     .deck-zone-overlay {
       position: absolute;
       left: 0;
