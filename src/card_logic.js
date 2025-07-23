@@ -63,13 +63,13 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
         }
 
         // デッキへの配置が確定した場合のみ、コア移動のフラグを立てる
-        if (getZoneName({ id: sourceZoneId }) === 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0) {
+        if (sourceZoneId === 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0) {
             shouldTransferCoresToReserve = true;
         }
     } else if (targetZoneName === 'void') {
         // カードをボイドに移動する場合、単にソースから削除し、どこにも追加しない
         // フィールドからボイドに移動する場合、その上のコアをリザーブに移動
-        if (getZoneName({ id: sourceZoneId }) === 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0) {
+        if (sourceZoneId === 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0) {
             shouldTransferCoresToReserve = true;
         }
         if (!confirm(`${cardData.name}をゲームから除外していいですか？`)) {
