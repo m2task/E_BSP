@@ -27,9 +27,7 @@ export let cardPositions = {}; // { cardId: { left, top } }
 export let selectedCores = []; // 選択されたコアの情報を保持 { type: 'blue', sourceArrayName: 'lifeCores', index: 0 }
 export let draggedCoreData = null; // ドラッグ中のコアデータ（複数選択対応）
 
-export let discardCounter = 0;
-export let discardedCardNames = [];
-export let discardToastTimer = null;
+export const discardState = { counter: 0, names: [], timer: null };
 
 // Setters for game data
 export function setDeck(newDeck) { deck = newDeck; }
@@ -52,6 +50,6 @@ export function setOffsetY(y) { offsetY = y; }
 export function setCardPositions(positions) { cardPositions = positions; }
 export function setSelectedCores(cores) { selectedCores = cores; }
 export function setDraggedCoreData(data) { draggedCoreData = data; }
-export function setDiscardCounter(count) { discardCounter = count; }
-export function setDiscardedCardNames(names) { discardedCardNames = names; }
-export function setDiscardToastTimer(timer) { discardToastTimer = timer; }
+export function setDiscardCounter(count) { discardState.counter = count; }
+export function setDiscardedCardNames(names) { discardState.names = names; }
+export function setDiscardToastTimer(timer) { discardState.timer = timer; }

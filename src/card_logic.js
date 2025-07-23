@@ -1,5 +1,5 @@
 // src/card_logic.js
-import { deck, hand, field, trash, burst, reserveCores, discardCounter, discardedCardNames, discardToastTimer, setDeck, setHand, setField, setTrash, setBurst, setReserveCores, setDiscardCounter, setDiscardedCardNames, setDiscardToastTimer } from './game_data.js';
+import { deck, hand, field, trash, burst, reserveCores, discardState, setDeck, setHand, setField, setTrash, setBurst, setReserveCores, setDiscardCounter, setDiscardedCardNames, setDiscardToastTimer } from './game_data.js';
 import { renderAll } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
 
@@ -129,19 +129,19 @@ export function discardDeck() {
     const discardedCard = deck.shift();
     trash.push(discardedCard);
 
-    discardCounter++;
-    discardedCardNames.push(discardedCard.name);
+    setDiscardCounter(discardState.counter + 1);
+    setDiscardedCardNames([...discardState.names, discardedCard.name]);
 
     renderAll();
 
     // 既存のタイマーがあればクリア
-    if (discardToastTimer) {
-        clearTimeout(discardToastTimer);
+    if (discardState.timer) {
+        clearTimeout(discardState.timer);
     }
 
     // 新しいタイマーを設定
     setDiscardToastTimer(setTimeout(() => {
-        const message = `${discardCounter}枚破棄しました。\n${discardedCardNames.join("、")}`;
+        const message = `${discardState.counter}枚破棄しました。\n${discardState.names.join("、")}`;
         showToast('cardMoveToast', message);
         
         // カウンターとリストをリセット
