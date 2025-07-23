@@ -112,16 +112,13 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
 }
 
 export function openDeck() {
-    const numToOpen = parseInt(prompt("デッキを何枚オープンしますか？", "1"));
-    if (isNaN(numToOpen) || numToOpen <= 0) return;
-
-    if (deck.length < numToOpen) {
-        alert("デッキの残りが足りません。");
+    if (deck.length < 1) {
+        alert("デッキが空です。");
         return;
     }
 
-    const openedCards = deck.splice(0, numToOpen);
-    setOpenArea([...openArea, ...openedCards]);
+    const openedCard = deck.shift();
+    setOpenArea([...openArea, openedCard]);
 
     const openAreaModal = document.getElementById('openAreaModal');
     openAreaModal.style.display = 'flex';
