@@ -32,8 +32,6 @@ export function createCardElement(cardData) {
 }
 
 export function renderHand() {
-    console.log("renderHand called");
-    console.log("hand data:", hand);
     const handZone = document.getElementById("handZone");
     handZone.innerHTML = "";
     hand.forEach(cardData => {
@@ -56,6 +54,7 @@ export function renderHand() {
             openHandButton.classList.add('hidden');
         }
     }
+}
 
 export function renderField() {
     const fieldZone = document.getElementById("fieldCards");
@@ -125,7 +124,6 @@ export function renderBurst() {
 }
 
 export function renderCores(containerId, coreArray) {
-    console.log(`renderCores called for ${containerId} with data:`, coreArray);
     const container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = "";
