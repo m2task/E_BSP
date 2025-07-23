@@ -10,6 +10,7 @@ export function shuffle(array) {
 }
 
 export function getZoneName(element) {
+    console.log("getZoneName called with element:", element);
     const id = element.id;
     if (id.includes('field')) return 'field';
     if (id.includes('hand')) return 'hand';
