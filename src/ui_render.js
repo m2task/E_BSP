@@ -1,5 +1,5 @@
 // src/ui_render.js
-import { hand, field, trash, burst, lifeCores, reserveCores, countCores, trashCores, selectedCores, cardPositions, countShowCountAsNumber } from './game_data.js';
+import { deck, hand, field, trash, burst, lifeCores, reserveCores, countCores, trashCores, selectedCores, cardPositions, countShowCountAsNumber } from './game_data.js';
 import { handleCoreClick } from './core_logic.js'; // 修正: event_handlers.js から core_logic.js に変更
 
 export function createCardElement(cardData) {
@@ -159,6 +159,11 @@ export function renderTrashCores() {
     renderCores('trashListArea', trashCores);
 }
 
+export function renderDeck() {
+    const deckButton = document.getElementById("deckButton");
+    deckButton.innerHTML = `デッキ: ${deck.length}<div class="deck-zone-overlay top-zone"></div><div class="deck-zone-overlay bottom-zone"></div>`;
+}
+
 // --- 全体描画関数 ---
 export function renderAll() {
     renderHand();
@@ -169,6 +174,7 @@ export function renderAll() {
     renderCores("reserveCores", reserveCores);
     renderDeckCore();
     renderTrashCores();
+    renderDeck();
 
     if (document.getElementById("trashModal").style.display === "flex") {
         renderTrashModalContent();
@@ -188,3 +194,9 @@ export function renderTrashModalContent() {
         content.appendChild(div);
     });
 }
+
+
+// --- 初期化 ---
+document.addEventListener('DOMContentLoaded', () => {
+    renderAll();
+});
