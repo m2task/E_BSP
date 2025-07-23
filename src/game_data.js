@@ -27,6 +27,10 @@ export let cardPositions = {}; // { cardId: { left, top } }
 export let selectedCores = []; // 選択されたコアの情報を保持 { type: 'blue', sourceArrayName: 'lifeCores', index: 0 }
 export let draggedCoreData = null; // ドラッグ中のコアデータ（複数選択対応）
 
+export let discardCounter = 0;
+export let discardedCardNames = [];
+export let discardToastTimer = null;
+
 // Setters for game data
 export function setDeck(newDeck) { deck = newDeck; }
 export function setField(newField) { field = newField; }
