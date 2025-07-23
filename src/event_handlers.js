@@ -297,7 +297,7 @@ export function handleDrop(e) {
 export function handleCardDrop(e) {
     const cardId = e.dataTransfer.getData("cardId");
     const sourceZoneId = e.dataTransfer.getData("sourceZoneId");
-    const targetElement = e.target.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone');
+    const targetElement = e.target.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea');
     if (!targetElement) return;
 
     const targetZoneName = getZoneName(targetElement);

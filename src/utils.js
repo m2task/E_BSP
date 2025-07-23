@@ -20,6 +20,7 @@ export function getZoneName(element) {
     if (id.includes('reserve')) return 'reserve';
     if (id.includes('count') || id.includes('deckCore')) return 'count';
     if (id.includes('void')) return 'void';
+    if (id.includes('openArea')) return 'openArea';
     return null;
 }
 
