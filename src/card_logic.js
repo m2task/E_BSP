@@ -112,7 +112,6 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
 }
 
 export function openDeck() {
-    console.log("openDeck function called");
     const numToOpen = parseInt(prompt("デッキを何枚オープンしますか？", "1"));
     if (isNaN(numToOpen) || numToOpen <= 0) return;
 
