@@ -15,6 +15,7 @@ export let voidChargeCount = 0;
 export let toastTimeout = null;
 
 export let handVisible = true;
+export let handPinned = false;
 export let countShowCountAsNumber = true;
 export let cardIdCounter = 0;
 
@@ -44,6 +45,7 @@ export function setTrashCores(newTCC) { trashCores = newTCC; }
 export function setVoidChargeCount(count) { voidChargeCount = count; }
 export function setToastTimeout(timeout) { toastTimeout = timeout; }
 export function setHandVisible(visible) { handVisible = visible; }
+export function setHandPinned(pinned) { handPinned = pinned; }
 export function setCountShowCountAsNumber(showAsNumber) { countShowCountAsNumber = showAsNumber; }
 export function setCardIdCounter(counter) { cardIdCounter = counter; }
 export function setDraggedElement(element) { draggedElement = element; }

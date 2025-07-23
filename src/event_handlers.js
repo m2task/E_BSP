@@ -1,5 +1,5 @@
 // src/event_handlers.js
-import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores } from './game_data.js';
+import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, handPinned, setHandPinned } from './game_data.js';
 import { renderAll, renderTrashModalContent } from './ui_render.js';
 import { showToast, getZoneName } from './utils.js';
 import { drawCard, moveCardData, openDeck, discardDeck } from './card_logic.js';
@@ -71,31 +71,54 @@ export function setupEventListeners() {
     const openHandButton = document.getElementById('openHandButton');
 
     handZoneContainer.addEventListener('mouseover', () => {
-        handZoneContainer.classList.remove('collapsed');
-        openHandButton.classList.add('hidden');
+        if (!handPinned) {
+            handZoneContainer.classList.remove('collapsed');
+            openHandButton.classList.add('hidden');
+        }
     });
 
     handZoneContainer.addEventListener('mouseleave', () => {
-        handZoneContainer.classList.add('collapsed');
-        openHandButton.classList.remove('hidden');
+        if (!handPinned) {
+            handZoneContainer.classList.add('collapsed');
+            openHandButton.classList.remove('hidden');
+        }
     });
 
     // openHandButton にマウスイベントを追加
     openHandButton.addEventListener('mouseover', () => {
-        handZoneContainer.classList.remove('collapsed');
-        openHandButton.classList.add('hidden');
+        if (!handPinned) {
+            handZoneContainer.classList.remove('collapsed');
+            openHandButton.classList.add('hidden');
+        }
     });
 
     openHandButton.addEventListener('mouseleave', () => {
-        handZoneContainer.classList.add('collapsed');
-        openHandButton.classList.remove('hidden');
+        if (!handPinned) {
+            handZoneContainer.classList.add('collapsed');
+            openHandButton.classList.remove('hidden');
+        }
     });
 
     // ドラッグ中のカードが「手札を開く」ボタンの上に来たら手札を開く
     openHandButton.addEventListener('dragover', () => {
-        if (draggedElement && draggedElement.classList.contains('card')) {
+        if (draggedElement && draggedElement.classList.contains('card') && !handPinned) {
             handZoneContainer.classList.remove('collapsed');
             openHandButton.classList.add('hidden');
+        }
+    });
+
+    // 手札固定ボタンのイベントリスナー
+    document.getElementById('pinHandButton').addEventListener('click', (e) => {
+        setHandPinned(!handPinned);
+        const pinButton = e.currentTarget;
+        if (handPinned) {
+            pinButton.textContent = '解除';
+            handZoneContainer.classList.remove('collapsed'); // 固定したら手札を開く
+            openHandButton.classList.add('hidden');
+        } else {
+            pinButton.textContent = '固定';
+            handZoneContainer.classList.add('collapsed'); // 固定解除したら手札を閉じる
+            openHandButton.classList.remove('hidden');
         }
     });
 

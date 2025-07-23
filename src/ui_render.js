@@ -1,5 +1,5 @@
 // src/ui_render.js
-import { deck, hand, field, trash, burst, lifeCores, reserveCores, countCores, trashCores, selectedCores, cardPositions, countShowCountAsNumber, openArea } from './game_data.js';
+import { deck, hand, field, trash, burst, lifeCores, reserveCores, countCores, trashCores, selectedCores, cardPositions, countShowCountAsNumber, openArea, handPinned } from './game_data.js';
 import { handleCoreClick } from './core_logic.js'; // 修正: event_handlers.js から core_logic.js に変更
 
 export function createCardElement(cardData) {
@@ -39,6 +39,13 @@ export function renderHand() {
         handZone.appendChild(cardElement);
     });
     document.getElementById("handCount").textContent = hand.length;
+
+    const handZoneContainer = document.getElementById('handZoneContainer');
+    if (handPinned) {
+        handZoneContainer.classList.remove('collapsed');
+    } else {
+        handZoneContainer.classList.add('collapsed');
+    }
 }
 
 export function renderField() {
@@ -176,6 +183,11 @@ export function renderAll() {
     renderTrashCores();
     renderDeck();
     renderOpenArea();
+
+    const pinHandButton = document.getElementById('pinHandButton');
+    if (pinHandButton) {
+        pinHandButton.textContent = handPinned ? '解除' : '固定';
+    }
 
     if (document.getElementById("trashModal").style.display === "flex") {
         renderTrashModalContent();
