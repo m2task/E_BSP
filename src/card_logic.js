@@ -1,5 +1,5 @@
 // src/card_logic.js
-import { deck, hand, field, trash, burst, reserveCores, discardState, setDeck, setHand, setField, setTrash, setBurst, setReserveCores, setDiscardCounter, setDiscardedCardNames, setDiscardToastTimer } from './game_data.js';
+import { deck, hand, field, trash, burst, reserveCores, discardState, openArea, setDeck, setHand, setField, setTrash, setBurst, setReserveCores, setDiscardCounter, setDiscardedCardNames, setDiscardToastTimer, setOpenArea } from './game_data.js';
 import { renderAll } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
 
@@ -103,6 +103,11 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
         cardData.coresOnCard = [];
     }
 
+    if (sourceZoneId === 'openArea' && openArea.length === 0) {
+        const openAreaModal = document.getElementById('openAreaModal');
+        openAreaModal.style.display = 'none';
+    }
+
     renderAll();
 }
 
@@ -111,13 +116,17 @@ export function openDeck() {
     if (isNaN(numToOpen) || numToOpen <= 0) return;
 
     if (deck.length < numToOpen) {
-        alert("デッキが足りません。");
+        alert("デッキの残りが足りません。");
         return;
     }
 
-    const openedCards = deck.slice(0, numToOpen);
-    const cardNames = openedCards.map(c => c.name).join("\n");
-    alert(`オープンしたカード:\n${cardNames}`);
+    const openedCards = deck.splice(0, numToOpen);
+    setOpenArea([...openArea, ...openedCards]);
+
+    const openAreaModal = document.getElementById('openAreaModal');
+    openAreaModal.style.display = 'flex';
+
+    renderAll();
 }
 
 export function discardDeck() {

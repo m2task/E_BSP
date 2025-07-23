@@ -4,6 +4,7 @@ export let field = [];
 export let hand = [];
 export let trash = [];
 export let burst = [];
+export let openArea = [];
 
 export let lifeCores = ["blue", "blue", "blue", "blue", "blue"];
 export let reserveCores = ["blue", "blue", "blue", "soul"];
@@ -35,6 +36,7 @@ export function setField(newField) { field = newField; }
 export function setHand(newHand) { hand = newHand; }
 export function setTrash(newTrash) { trash = newTrash; }
 export function setBurst(newBurst) { burst = newBurst; }
+export function setOpenArea(newOpenArea) { openArea = newOpenArea; }
 export function setLifeCores(newLCC) { lifeCores = newLCC; }
 export function setReserveCores(newRCC) { reserveCores = newRCC; }
 export function setCountCores(newDCC) { countCores = newDCC; }
