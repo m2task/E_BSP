@@ -52,7 +52,7 @@ body {
     }
 
     .deck-button {
-      width: 120px; /* 100pxから120pxに拡大 */
+      width: 140px; /* さらに拡大 */
       height: 140px;
       background: #ccc;
       text-align: center;
@@ -66,10 +66,9 @@ body {
     }
 
     .deck-actions button {
-      padding: 8px 10px; /* 横のパディングを少し狭くする */
-      font-size: 12px; /* フォントサイズを小さくする */
-      width: 60px; /* ボタンの幅を固定 */
-      box-sizing: border-box; /* パディングを含めて幅を計算 */
+      padding: 8px 6px; /* パディングで幅を調整 */
+      font-size: 12px;
+      white-space: nowrap; /* 文字を一行に保つ */
       font-weight: bold;
       cursor: pointer;
       border: 1px solid #ccc;
