@@ -15,7 +15,7 @@ export function getZoneName(element) {
     if (id.includes('hand')) return 'hand';
     if (id.includes('trash')) return 'trash';
     if (id.includes('burst')) return 'burst';
-    if (element.classList.contains('deck-button')) return 'deck';
+    if (element && element.classList && element.classList.contains('deck-button')) return 'deck';
     if (id.includes('life')) return 'life';
     if (id.includes('reserve')) return 'reserve';
     if (id.includes('count') || id.includes('deckCore')) return 'count';

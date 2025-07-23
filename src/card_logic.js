@@ -82,7 +82,7 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
     } else { // This 'else' block handles all other target zones (hand, field, trash, burst, life, reserve, count)
         // デッキ以外のエリアへの移動の場合
         // フィールドから別のエリアにカードが移動する場合、その上のコアをリザーブに移動
-        if (getZoneName({ id: sourceZoneId }) === 'field' && targetZoneName !== 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0) {
+        if (sourceZoneId === 'field' && targetZoneName !== 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0) {
             shouldTransferCoresToReserve = true;
         }
 
