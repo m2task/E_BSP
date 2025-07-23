@@ -67,18 +67,20 @@ body {
     }
 
     .deck-actions button {
-      padding: 8px 12px;
-      font-size: 14px;
+      padding: 6px 10px;
+      font-size: 12px;
       font-weight: bold;
       cursor: pointer;
       border: 1px solid #ccc;
       border-radius: 4px;
       background-color: #f0f0f0;
+      transition: all 0.2s ease-in-out;
     }
 
     .deck-actions button:hover {
       background-color: #e0e0e0;
-      border-color: #bbb;
+      border-color: #007bff;
+      box-shadow: 0 0 6px #007bff33;
     }
 
     .deck-zone-overlay {
