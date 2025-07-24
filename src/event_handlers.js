@@ -319,7 +319,11 @@ export function handleDrop(e) {
 
 export function handleCardDrop(e) {
     const cardId = e.dataTransfer.getData("cardId");
-    const sourceZoneId = e.dataTransfer.getData("sourceZoneId");
+    const sourceZoneIdFromDataTransfer = e.dataTransfer.getData("sourceZoneId"); // 'fieldCards' など
+    // sourceZoneIdFromDataTransfer を DOM 要素として取得し、そのゾーン名を正規化
+    const sourceElement = document.getElementById(sourceZoneIdFromDataTransfer);
+    const sourceZoneName = getZoneName(sourceElement);
+
     const targetElement = e.target.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea');
     console.log("targetElement:", targetElement);
     if (!targetElement) return;
@@ -341,7 +345,7 @@ export function handleCardDrop(e) {
     } else {
         delete cardPositions[cardId];
     }
-    moveCardData(cardId, sourceZoneId, targetZoneName);
+    moveCardData(cardId, sourceZoneName, targetZoneName);
 }
 
 export function openTrashModal() {
