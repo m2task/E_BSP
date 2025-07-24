@@ -85,12 +85,12 @@ function updateList() {
         li.className = "card-item";
 
         li.innerHTML = `
-<span>${card}</span>
 <div style="display: flex; align-items: center;">
-    <button onclick="decrementCard('${card}')" style="margin-right: 5px;">-</button>
+    <button onclick="deleteAllOfCard('${card}')">削除</button>
+    <button onclick="decrementCard('${card}')" style="margin-left: 5px;">-</button>
     <span style="min-width: 20px; text-align: center;">${cardCounts[card]}</span>
     <button onclick="incrementCard('${card}')" style="margin-left: 5px; margin-right: 10px;">+</button>
-    <button onclick="deleteAllOfCard('${card}')">削除</button>
+    <span>${card}</span>
 </div>
 `;
         ul.appendChild(li);
