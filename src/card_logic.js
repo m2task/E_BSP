@@ -94,13 +94,21 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
         if (targetZoneName === 'field') {
             const costInput = prompt(`「${cardData.name}」のコストを入力してください:`, '0');
             const cost = parseInt(costInput);
-            if (!isNaN(cost) && cost >= 0) {
-                if (!payCostFromReserve(cost)) {
-                    // コスト支払い失敗時はカードを元の場所に戻すなどの処理を検討
-                    // 現状はそのままフィールドに置かれる
-                }
-            } else {
-                alert("有効なコストを入力してください。");
+
+            // キャンセルされた場合、または無効な入力の場合
+            if (costInput === null || isNaN(cost) || cost < 0) {
+                // カードを元のソースエリアに戻す
+                sourceArray.splice(cardIndex, 0, cardData);
+                renderAll();
+                return; // 処理を中断
+            }
+
+            if (!payCostFromReserve(cost)) {
+                // コスト支払い失敗時（コア不足）
+                // カードを元のソースエリアに戻す
+                sourceArray.splice(cardIndex, 0, cardData);
+                renderAll();
+                return; // 処理を中断
             }
         }
     }
