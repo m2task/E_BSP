@@ -81,7 +81,31 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
             return; // 処理を中断
         }
         // ユーザーがOKした場合、カードは既にソースから削除されているので何もしない
-    } else { // This 'else' block handles all other target zones (hand, field, trash, burst, life, reserve, count)
+    } else if (targetZoneName === 'field') {
+        // フィールドにカードを置く場合、コストを尋ねる
+        const costInput = prompt(`「${cardData.name}」のコストを入力してください:`, '0');
+        const cost = parseInt(costInput);
+
+        // キャンセルされた場合、または無効な入力の場合
+        if (costInput === null || isNaN(cost) || cost < 0) {
+            // カードを元のソースエリアに戻す
+            sourceArray.splice(cardIndex, 0, cardData);
+            renderAll();
+            return; // 処理を中断
+        }
+
+        if (!payCostFromReserve(cost)) {
+            // コスト支払い失敗時（コア不足）
+            // カードを元のソースエリアに戻す
+            sourceArray.splice(cardIndex, 0, cardData);
+            renderAll();
+            return; // 処理を中断
+        }
+        // コスト支払いが成功した場合のみフィールドに追加
+        const targetArray = getArrayByZoneName(targetZoneName);
+        if (targetArray) targetArray.push(cardData);
+
+    } else { // This 'else' block handles all other target zones (hand, trash, burst, life, reserve, count)
         // 手札に戻す場合は回転状態をリセット
         if (targetZoneName === 'hand') {
             cardData.isRotated = false;
@@ -89,28 +113,6 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
         }
         const targetArray = getArrayByZoneName(targetZoneName);
         if (targetArray) targetArray.push(cardData);
-
-        // フィールドにカードを置いた場合、コストを尋ねる
-        if (targetZoneName === 'field') {
-            const costInput = prompt(`「${cardData.name}」のコストを入力してください:`, '0');
-            const cost = parseInt(costInput);
-
-            // キャンセルされた場合、または無効な入力の場合
-            if (costInput === null || isNaN(cost) || cost < 0) {
-                // カードを元のソースエリアに戻す
-                sourceArray.splice(cardIndex, 0, cardData);
-                renderAll();
-                return; // 処理を中断
-            }
-
-            if (!payCostFromReserve(cost)) {
-                // コスト支払い失敗時（コア不足）
-                // カードを元のソースエリアに戻す
-                sourceArray.splice(cardIndex, 0, cardData);
-                renderAll();
-                return; // 処理を中断
-            }
-        }
     }
 
     // コア移動のフラグが立っている場合のみ、コアをリザーブに移動し、カード上のコアを空にする
