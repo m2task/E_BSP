@@ -61,15 +61,11 @@ export function renderField() {
     fieldZone.innerHTML = "";
     field.forEach(cardData => {
         const cardElement = createCardElement(cardData);
-        cardElement.style.position = 'absolute'; // すべてのフィールドカードに適用
         const pos = cardPositions[cardData.id];
         if (pos) {
+            cardElement.style.position = 'absolute';
             cardElement.style.left = pos.left + 'px';
             cardElement.style.top = pos.top + 'px';
-        } else {
-            // 位置情報がない場合のデフォルト（左上隅）
-            cardElement.style.left = '0px';
-            cardElement.style.top = '0px';
         }
         // 回転状態を反映
         if (cardData.isRotated) cardElement.classList.add('rotated');

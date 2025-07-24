@@ -1,7 +1,7 @@
 // src/card_logic.js
-import { deck, hand, field, trash, burst, reserveCores, discardState, openArea, setDeck, setHand, setField, setTrash, setBurst, setReserveCores, setDiscardCounter, setDiscardedCardNames, setDiscardToastTimer, setOpenArea, cardPositions } from './game_data.js';
+import { deck, hand, field, trash, burst, reserveCores, discardState, openArea, setDeck, setHand, setField, setTrash, setBurst, setReserveCores, setDiscardCounter, setDiscardedCardNames, setDiscardToastTimer, setOpenArea } from './game_data.js';
 import { renderAll } from './ui_render.js';
-import { showToast, getArrayByZoneName, getZoneName, showCostPad } from './utils.js';
+import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
 import { payCostFromReserve } from './core_logic.js';
 
 export function drawCard(fromBottom = false) {
@@ -41,20 +41,13 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
     }
 
     const [cardData] = sourceArray.splice(cardIndex, 1); // カードを一時的にソースから削除
-    if (sourceZoneId === 'field') {
-        setField(field); // フィールドから移動した場合、明示的にフィールドを更新
-    }
     console.log(`[moveCardData] Card data extracted:`, cardData);
 
     // コアをリザーブに移動するかどうかのフラグを、移動元がフィールドで、移動先がフィールド以外の場合に設定
     let shouldTransferCoresToReserve = (sourceZoneId === 'field' && targetZoneName !== 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0);
     console.log(`[moveCardData] shouldTransferCoresToReserve: ${shouldTransferCoresToReserve}, Cores on card:`, cardData.coresOnCard);
 
-    if (targetZoneName === 'field' && sourceZoneId === 'field') {
-        // フィールド内の移動なのでコスト支払いは不要
-        const targetArray = getArrayByZoneName(targetZoneName);
-        if (targetArray) targetArray.push(cardData);
-    } else if (targetZoneName === 'deck') {
+    if (targetZoneName === 'deck') {
         let putOnBottom = false;
         if (dropEvent && dropTargetElement) { // ドロップイベントとターゲット要素が渡された場合
             const rect = dropTargetElement.getBoundingClientRect();
@@ -89,30 +82,34 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
         }
         // ユーザーがOKした場合、カードは既にソースから削除されているので何もしない
     } else if (targetZoneName === 'field' && sourceZoneId !== 'field') {
-        // フィールドにカードを置く場合、コストパッドを表示
-        // cardPositions[cardData.id] には、handleCardDrop で計算された最終的な位置が格納されているはず
-        const cardFinalPosition = cardPositions[cardData.id] || { left: 0, top: 0 }; // cardPositionsが未定義の場合のデフォルト値
-
-        // コストパッドの表示位置を計算
-        // カードの右隣に表示するため、カードの幅 (80px) と少しの余白 (例: 10px) を加える
-        const padLeft = cardFinalPosition.left;
-        const padTop = cardFinalPosition.top;
-
-        // showCostPad は event オブジェクトを期待しているので、clientX と clientY を持つオブジェクトを渡す
-        showCostPad(cardData, sourceArray, cardIndex, { clientX: padLeft, clientY: padTop }, (cost) => {
-            if (!payCostFromReserve(cost)) {
-                // コスト支払い失敗時（コア不足）
-                // カードを元のソースエリアに戻す
-                sourceArray.splice(cardIndex, 0, cardData);
-                renderAll();
-                return; // 処理を中断
+        // フィールドにカードを置く場合、コストを尋ねる
+        const costInput = prompt(`「${cardData.name}」のコストを入力してください:`, '0');
+            let processedCostInput = costInput;
+            if (costInput !== null) {
+                // 全角数字を半角数字に変換
+                processedCostInput = costInput.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
             }
-            // コスト支払いが成功した場合のみフィールドに追加
-            const targetArray = getArrayByZoneName(targetZoneName);
-            if (targetArray) targetArray.push(cardData);
+            const cost = parseInt(processedCostInput);
+
+        // キャンセルされた場合、または無効な入力の場合
+        if (costInput === null || isNaN(cost) || cost < 0) {
+            // カードを元のソースエリアに戻す
+            sourceArray.splice(cardIndex, 0, cardData);
             renderAll();
-        });
-        return; // コストパッドの処理に任せるため、一旦ここでreturn
+            return; // 処理を中断
+        }
+
+        if (!payCostFromReserve(cost)) {
+            // コスト支払い失敗時（コア不足）
+            // カードを元のソースエリアに戻す
+            sourceArray.splice(cardIndex, 0, cardData);
+            renderAll();
+            return; // 処理を中断
+        }
+        // コスト支払いが成功した場合のみフィールドに追加
+        const targetArray = getArrayByZoneName(targetZoneName);
+        if (targetArray) targetArray.push(cardData);
+
     } else { // This 'else' block handles all other target zones (hand, trash, burst, life, reserve, count)
         // 手札に戻す場合は回転状態をリセット
         if (targetZoneName === 'hand') {
