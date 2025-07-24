@@ -342,10 +342,12 @@ export function handleCardDrop(e) {
             left: e.clientX - fieldRect.left - offsetX,
             top: e.clientY - fieldRect.top - offsetY
         };
+        // コストパッドを表示するロジックを呼び出す
+        moveCardData(cardId, sourceZoneName, targetZoneName, e); 
     } else {
         delete cardPositions[cardId];
+        moveCardData(cardId, sourceZoneName, targetZoneName, e);
     }
-    moveCardData(cardId, sourceZoneName, targetZoneName);
 }
 
 export function openTrashModal() {

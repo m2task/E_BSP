@@ -61,3 +61,61 @@ export function showToast(toastId, message, hide = false) {
         }, 1000)); // 1秒後に非表示
     }
 }
+
+export function showCostPad(cardData, sourceArray, cardIndex, event, callback) {
+    const costPad = document.getElementById('costPad');
+    costPad.innerHTML = ''; // パッドをクリア
+
+    for (let i = 1; i <= 9; i++) {
+        const button = document.createElement('div');
+        button.className = 'cost-pad-button';
+        button.textContent = i;
+        button.onclick = () => {
+            costPad.style.display = 'none';
+            callback(i);
+        };
+        costPad.appendChild(button);
+    }
+
+    // 0コストボタン
+    const zeroButton = document.createElement('div');
+    zeroButton.className = 'cost-pad-button';
+    zeroButton.textContent = '0';
+    zeroButton.onclick = () => {
+        costPad.style.display = 'none';
+        callback(0);
+    };
+    costPad.appendChild(zeroButton);
+
+    // キャンセルボタン
+    const cancelButton = document.createElement('div');
+    cancelButton.className = 'cost-pad-button';
+    cancelButton.textContent = 'X';
+    cancelButton.style.gridColumn = 'span 2';
+    cancelButton.onclick = (e) => {
+        e.stopPropagation();
+        costPad.style.display = 'none';
+        // カードを元の場所に戻す
+        sourceArray.splice(cardIndex, 0, cardData);
+        renderAll();
+    };
+    costPad.appendChild(cancelButton);
+
+    costPad.style.display = 'grid';
+    costPad.style.left = `${event.clientX}px`;
+    costPad.style.top = `${event.clientY}px`;
+
+    // パッドの外側をクリックしたら閉じる
+    setTimeout(() => {
+        const clickOutsideHandler = (e) => {
+            if (!costPad.contains(e.target)) {
+                costPad.style.display = 'none';
+                // カードを元の場所に戻す
+                sourceArray.splice(cardIndex, 0, cardData);
+                renderAll();
+                document.removeEventListener('click', clickOutsideHandler);
+            }
+        };
+        document.addEventListener('click', clickOutsideHandler);
+    }, 0);
+}

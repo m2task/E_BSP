@@ -82,35 +82,21 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
         }
         // ユーザーがOKした場合、カードは既にソースから削除されているので何もしない
     } else if (targetZoneName === 'field' && sourceZoneId !== 'field') {
-        // フィールドにカードを置く場合、コストを尋ねる
-        const costInput = prompt(`「${cardData.name}」のコストを入力してください:`, '0');
-            let processedCostInput = costInput;
-            if (costInput !== null) {
-                // 全角数字を半角数字に変換
-                processedCostInput = costInput.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+        // フィールドにカードを置く場合、コストパッドを表示
+        showCostPad(cardData, sourceArray, cardIndex, dropEvent, (cost) => {
+            if (!payCostFromReserve(cost)) {
+                // コスト支払い失敗時（コア不足）
+                // カードを元のソースエリアに戻す
+                sourceArray.splice(cardIndex, 0, cardData);
+                renderAll();
+                return; // 処理を中断
             }
-            const cost = parseInt(processedCostInput);
-
-        // キャンセルされた場合、または無効な入力の場合
-        if (costInput === null || isNaN(cost) || cost < 0) {
-            // カードを元のソースエリアに戻す
-            sourceArray.splice(cardIndex, 0, cardData);
+            // コスト支払いが成功した場合のみフィールドに追加
+            const targetArray = getArrayByZoneName(targetZoneName);
+            if (targetArray) targetArray.push(cardData);
             renderAll();
-            return; // 処理を中断
-        }
-
-        if (!payCostFromReserve(cost)) {
-            // コスト支払い失敗時（コア不足）
-            // カードを元のソースエリアに戻す
-            sourceArray.splice(cardIndex, 0, cardData);
-            renderAll();
-            return; // 処理を中断
-        }
-        // コスト支払いが成功した場合のみフィールドに追加
-        const targetArray = getArrayByZoneName(targetZoneName);
-        if (targetArray) targetArray.push(cardData);
-
-    } else { // This 'else' block handles all other target zones (hand, trash, burst, life, reserve, count)
+        });
+        return; // コストパッドの処理に任せるため、一旦ここでreturn else { // This 'else' block handles all other target zones (hand, trash, burst, life, reserve, count)
         // 手札に戻す場合は回転状態をリセット
         if (targetZoneName === 'hand') {
             cardData.isRotated = false;
