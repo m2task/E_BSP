@@ -34,7 +34,8 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
 
     const [cardData] = sourceArray.splice(cardIndex, 1); // カードを一時的にソースから削除
 
-    let shouldTransferCoresToReserve = false; // コアをリザーブに移動するかどうかのフラグ
+    // コアをリザーブに移動するかどうかのフラグを、移動元がフィールドで、移動先がフィールド以外の場合に設定
+    let shouldTransferCoresToReserve = (sourceZoneId === 'field' && targetZoneName !== 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0);
 
     if (targetZoneName === 'deck') {
         let putOnBottom = false;
@@ -61,17 +62,8 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
             deck.unshift(cardData);
             showToast('cardMoveToast', `${cardData.name}をデッキの上に戻しました`);
         }
-
-        // デッキへの配置が確定した場合のみ、コア移動のフラグを立てる
-        if (sourceZoneId === 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0) {
-            shouldTransferCoresToReserve = true;
-        }
     } else if (targetZoneName === 'void') {
         // カードをボイドに移動する場合、単にソースから削除し、どこにも追加しない
-        // フィールドからボイドに移動する場合、その上のコアをリザーブに移動
-        if (sourceZoneId === 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0) {
-            shouldTransferCoresToReserve = true;
-        }
         if (!confirm(`${cardData.name}をゲームから除外していいですか？`)) {
             // ユーザーがキャンセルした場合、カードを元の場所に戻す
             sourceArray.splice(cardIndex, 0, cardData);
@@ -80,12 +72,6 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
         }
         // ユーザーがOKした場合、カードは既にソースから削除されているので何もしない
     } else { // This 'else' block handles all other target zones (hand, field, trash, burst, life, reserve, count)
-        // デッキ以外のエリアへの移動の場合
-        // フィールドから別のエリアにカードが移動する場合、その上のコアをリザーブに移動
-        if (sourceZoneId === 'field' && targetZoneName !== 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0) {
-            shouldTransferCoresToReserve = true;
-        }
-
         // 手札に戻す場合は回転状態をリセット
         if (targetZoneName === 'hand') {
             cardData.isRotated = false;
