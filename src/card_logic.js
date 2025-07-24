@@ -81,7 +81,7 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
             return; // 処理を中断
         }
         // ユーザーがOKした場合、カードは既にソースから削除されているので何もしない
-    } else if (targetZoneName === 'field') {
+    } else if (targetZoneName === 'field' && sourceZoneId !== 'field') {
         // フィールドにカードを置く場合、コストを尋ねる
         const costInput = prompt(`「${cardData.name}」のコストを入力してください:`, '0');
         const cost = parseInt(costInput);
