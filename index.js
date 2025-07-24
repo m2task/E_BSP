@@ -50,22 +50,23 @@ function showToast(message) {
     }, 3000);
 }
 
-function addCard() {
-    const input = document.getElementById("cardName").value.trim();
+function addCard(multiplier = 1) {
+    const cardNameInput = document.getElementById("cardName");
+    const input = cardNameInput.value.trim();
     if (!input) return;
 
     const match = input.match(/^(.+?)(?:[×\*xX](\d+))?$/);
     if (match) {
         const name = match[1].trim();
-        const count = parseInt(match[2] || "1", 10);
+        const count = parseInt(match[2] || "1", 10) * multiplier;
         for (let i = 0; i < count; i++) {
             deck.push(name);
         }
-        // uniqueCardNameOrder にカード名が存在しない場合のみ追加
         if (!uniqueCardNameOrder.includes(name)) {
             uniqueCardNameOrder.push(name);
         }
         updateList();
+        cardNameInput.value = ''; // 入力欄をクリア
     }
 }
 
