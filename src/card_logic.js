@@ -95,7 +95,7 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
 
         // コストパッドの表示位置を計算
         // カードの右隣に表示するため、カードの幅 (80px) と少しの余白 (例: 10px) を加える
-        const padLeft = cardFinalPosition.left + 80 + 10;
+        const padLeft = cardFinalPosition.left;
         const padTop = cardFinalPosition.top;
 
         // showCostPad は event オブジェクトを期待しているので、clientX と clientY を持つオブジェクトを渡す
