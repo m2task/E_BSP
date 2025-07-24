@@ -122,7 +122,7 @@ function deleteAllOfCard(name) {
 
 function exportDeck() {
     document.getElementById("deckData").value = JSON.stringify(deck, null, 2);
-    alert("デッキをコピーしておくと、別の端末でも再利用できます！");
+    showToast("デッキをコピーしておくと、別の端末でも再利用できます！");
 }
 
 function importDeck() {
@@ -131,6 +131,8 @@ function importDeck() {
         const imported = JSON.parse(input);
         if (Array.isArray(imported)) {
             deck = imported;
+            // インポート時に uniqueCardNameOrder を再構築
+            uniqueCardNameOrder = [...new Set(deck)];
             updateList();
         } else {
             alert("形式が正しくありません！");
@@ -138,6 +140,13 @@ function importDeck() {
     } catch (e) {
         alert("インポートに失敗しました（JSON形式が正しいか確認してください）");
     }
+}
+
+function copyDeckData() {
+    const deckData = document.getElementById("deckData");
+    deckData.select();
+    document.execCommand("copy");
+    showToast("デッキデータをコピーしました。");
 }
 
 function goToBattle(deckId) {

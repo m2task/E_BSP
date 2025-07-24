@@ -32,7 +32,10 @@
 <ul id="deckList"></ul>
 
 <h3>デッキデータ（コピー・貼り付け用）</h3>
-<textarea id="deckData" rows="4" placeholder="ここにデッキデータを貼り付けてインポートできます"></textarea>
+<div style="display: flex; align-items: center;">
+    <textarea id="deckData" rows="4" placeholder="ここにデッキデータを貼り付けてインポートできます" style="flex-grow: 1; margin-right: 5px;"></textarea>
+    <button onclick="copyDeckData()">コピー</button>
+</div>
 
 <script src="index.js"></script>
 </body>
