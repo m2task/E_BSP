@@ -216,7 +216,7 @@ export function removeCoresFromSource(cores) {
     }
 
     for (const sourceKey in groupedCores) {
-        const coresToRemoveFromThisSource = groupedCopes[sourceKey];
+        const coresToRemoveFromThisSource = groupedCores[sourceKey];
 
         // Sort cores to remove from this source by index in descending order
         // This is crucial for splicing multiple elements from the same array
