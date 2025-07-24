@@ -319,24 +319,25 @@ export function handleDrop(e) {
 
 export function handleCardDrop(e) {
     const cardId = e.dataTransfer.getData("cardId");
-    const sourceZoneIdFromDataTransfer = e.dataTransfer.getData("sourceZoneId");
+    const sourceZoneIdFromDataTransfer = e.dataTransfer.getData("sourceZoneId"); // 'fieldCards' など
+    // sourceZoneIdFromDataTransfer を DOM 要素として取得し、そのゾーン名を正規化
     const sourceElement = document.getElementById(sourceZoneIdFromDataTransfer);
     const sourceZoneName = getZoneName(sourceElement);
 
     const targetElement = e.target.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea');
+    console.log("targetElement:", targetElement);
     if (!targetElement) return;
 
     const targetZoneName = getZoneName(targetElement);
+    console.log("targetZoneName:", targetZoneName);
 
     if (targetZoneName === 'deck') {
-        return; // デッキへのドロップは handleDeckDrop で処理
+        // デッキへのドロップは handleDeckDrop で処理するため、ここでは何もしない
+        return;
     }
 
-    // 先に位置情報を更新・削除する
     if (targetZoneName === 'field') {
         const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
-        const offsetX = parseFloat(e.dataTransfer.getData("offsetX"));
-        const offsetY = parseFloat(e.dataTransfer.getData("offsetY"));
         cardPositions[cardId] = {
             left: e.clientX - fieldRect.left - offsetX,
             top: e.clientY - fieldRect.top - offsetY
@@ -344,9 +345,7 @@ export function handleCardDrop(e) {
     } else {
         delete cardPositions[cardId];
     }
-
-    // 最後に一度だけ移動処理を呼び出す
-    moveCardData(cardId, sourceZoneName, targetZoneName, e);
+    moveCardData(cardId, sourceZoneName, targetZoneName);
 }
 
 export function openTrashModal() {
