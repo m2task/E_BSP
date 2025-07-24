@@ -90,14 +90,16 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
         // ユーザーがOKした場合、カードは既にソースから削除されているので何もしない
     } else if (targetZoneName === 'field' && sourceZoneId !== 'field') {
         // フィールドにカードを置く場合、コストパッドを表示
-        // フィールドの中央座標を計算
-        const fieldZone = document.getElementById('fieldZone');
-        const fieldRect = fieldZone.getBoundingClientRect();
-        const centerX = fieldRect.left + fieldRect.width / 2;
-        const centerY = fieldRect.top + fieldRect.height / 2;
+        // cardPositions[cardData.id] には、handleCardDrop で計算された最終的な位置が格納されているはず
+        const cardFinalPosition = cardPositions[cardData.id] || { left: 0, top: 0 }; // cardPositionsが未定義の場合のデフォルト値
+
+        // コストパッドの表示位置を計算
+        // カードの右隣に表示するため、カードの幅 (80px) と少しの余白 (例: 10px) を加える
+        const padLeft = cardFinalPosition.left + 80 + 10;
+        const padTop = cardFinalPosition.top;
 
         // showCostPad は event オブジェクトを期待しているので、clientX と clientY を持つオブジェクトを渡す
-        showCostPad(cardData, sourceArray, cardIndex, { clientX: centerX, clientY: centerY }, (cost) => {
+        showCostPad(cardData, sourceArray, cardIndex, { clientX: padLeft, clientY: padTop }, (cost) => {
             if (!payCostFromReserve(cost)) {
                 // コスト支払い失敗時（コア不足）
                 // カードを元のソースエリアに戻す
