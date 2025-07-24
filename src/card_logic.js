@@ -47,7 +47,11 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
     let shouldTransferCoresToReserve = (sourceZoneId === 'field' && targetZoneName !== 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0);
     console.log(`[moveCardData] shouldTransferCoresToReserve: ${shouldTransferCoresToReserve}, Cores on card:`, cardData.coresOnCard);
 
-    if (targetZoneName === 'deck') {
+    if (targetZoneName === 'field' && sourceZoneId === 'field') {
+        // フィールド内の移動なのでコスト支払いは不要
+        const targetArray = getArrayByZoneName(targetZoneName);
+        if (targetArray) targetArray.push(cardData);
+    } else if (targetZoneName === 'deck') {
         let putOnBottom = false;
         if (dropEvent && dropTargetElement) { // ドロップイベントとターゲット要素が渡された場合
             const rect = dropTargetElement.getBoundingClientRect();
@@ -96,7 +100,8 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
             if (targetArray) targetArray.push(cardData);
             renderAll();
         });
-        return; // コストパッドの処理に任せるため、一旦ここでreturn else { // This 'else' block handles all other target zones (hand, trash, burst, life, reserve, count)
+        return; // コストパッドの処理に任せるため、一旦ここでreturn
+    } else { // This 'else' block handles all other target zones (hand, trash, burst, life, reserve, count)
         // 手札に戻す場合は回転状態をリセット
         if (targetZoneName === 'hand') {
             cardData.isRotated = false;

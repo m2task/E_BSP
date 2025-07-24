@@ -268,10 +268,26 @@ export function payCostFromReserve(cost) {
         return false; // 支払い失敗
     }
 
-    for (let i = 0; i < cost; i++) {
-        const core = reserveCores.shift(); // リザーブの先頭からコアを取得
-        trashCores.push(core); // トラッシュに移動
+    let costPaid = 0;
+    const blueCoresInReserve = reserveCores.filter(core => core === 'blue');
+    const otherCoresInReserve = reserveCores.filter(core => core !== 'blue');
+
+    // 青コアから優先的に支払う
+    while (costPaid < cost && blueCoresInReserve.length > 0) {
+        const coreIndex = reserveCores.indexOf('blue');
+        const [core] = reserveCores.splice(coreIndex, 1);
+        trashCores.push(core);
+        blueCoresInReserve.shift();
+        costPaid++;
     }
+
+    // 残りのコストを他のコアで支払う
+    while (costPaid < cost && reserveCores.length > 0) {
+        const core = reserveCores.shift(); // 残っているコア（青以外）を支払う
+        trashCores.push(core);
+        costPaid++;
+    }
+
     renderAll();
     return true; // 支払い成功
 }
