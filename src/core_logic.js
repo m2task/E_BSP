@@ -216,7 +216,7 @@ export function removeCoresFromSource(cores) {
     }
 
     for (const sourceKey in groupedCores) {
-        const coresToRemoveFromThisSource = groupedCores[sourceKey];
+        const coresToRemoveFromThisSource = groupedCopes[sourceKey];
 
         // Sort cores to remove from this source by index in descending order
         // This is crucial for splicing multiple elements from the same array
@@ -258,4 +258,20 @@ export function removeCoresFromSource(cores) {
             }
         }
     }
+}
+
+export function payCostFromReserve(cost) {
+    if (cost <= 0) return true; // コストが0以下の場合は支払い不要
+
+    if (reserveCores.length < cost) {
+        alert(`リザーブのコアが足りません。必要なコア: ${cost}個、現在のリザーブ: ${reserveCores.length}個`);
+        return false; // 支払い失敗
+    }
+
+    for (let i = 0; i < cost; i++) {
+        const core = reserveCores.shift(); // リザーブの先頭からコアを取得
+        trashCores.push(core); // トラッシュに移動
+    }
+    renderAll();
+    return true; // 支払い成功
 }

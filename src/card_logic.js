@@ -2,6 +2,7 @@
 import { deck, hand, field, trash, burst, reserveCores, discardState, openArea, setDeck, setHand, setField, setTrash, setBurst, setReserveCores, setDiscardCounter, setDiscardedCardNames, setDiscardToastTimer, setOpenArea } from './game_data.js';
 import { renderAll } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
+import { payCostFromReserve } from './core_logic.js';
 
 export function drawCard(fromBottom = false) {
     if (deck.length > 0) {
@@ -88,6 +89,20 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
         }
         const targetArray = getArrayByZoneName(targetZoneName);
         if (targetArray) targetArray.push(cardData);
+
+        // フィールドにカードを置いた場合、コストを尋ねる
+        if (targetZoneName === 'field') {
+            const costInput = prompt(`「${cardData.name}」のコストを入力してください:`, '0');
+            const cost = parseInt(costInput);
+            if (!isNaN(cost) && cost >= 0) {
+                if (!payCostFromReserve(cost)) {
+                    // コスト支払い失敗時はカードを元の場所に戻すなどの処理を検討
+                    // 現状はそのままフィールドに置かれる
+                }
+            } else {
+                alert("有効なコストを入力してください。");
+            }
+        }
     }
 
     // コア移動のフラグが立っている場合のみ、コアをリザーブに移動し、カード上のコアを空にする
