@@ -27,15 +27,24 @@ export function drawCard(fromBottom = false) {
 }
 
 export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = null, dropTargetElement = null) {
+    console.log(`[moveCardData] Card ID: ${cardId}, Source Zone: ${sourceZoneId}, Target Zone: ${targetZoneName}`);
     const sourceArray = getArrayByZoneName(sourceZoneId);
-    if (!sourceArray) return;
+    if (!sourceArray) {
+        console.warn(`[moveCardData] Source array not found for zone: ${sourceZoneId}`);
+        return;
+    }
     const cardIndex = sourceArray.findIndex(c => c.id === cardId);
-    if (cardIndex === -1) return;
+    if (cardIndex === -1) {
+        console.warn(`[moveCardData] Card not found in source array: ${cardId}`);
+        return;
+    }
 
     const [cardData] = sourceArray.splice(cardIndex, 1); // カードを一時的にソースから削除
+    console.log(`[moveCardData] Card data extracted:`, cardData);
 
     // コアをリザーブに移動するかどうかのフラグを、移動元がフィールドで、移動先がフィールド以外の場合に設定
     let shouldTransferCoresToReserve = (sourceZoneId === 'field' && targetZoneName !== 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0);
+    console.log(`[moveCardData] shouldTransferCoresToReserve: ${shouldTransferCoresToReserve}, Cores on card:`, cardData.coresOnCard);
 
     if (targetZoneName === 'deck') {
         let putOnBottom = false;
@@ -83,10 +92,14 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
 
     // コア移動のフラグが立っている場合のみ、コアをリザーブに移動し、カード上のコアを空にする
     if (shouldTransferCoresToReserve) {
+        console.log(`[moveCardData] Transferring cores to reserve. Current reserveCores:`, reserveCores);
         cardData.coresOnCard.forEach(core => {
+            console.log(`[moveCardData] Moving core type '${core.type}' to reserve.`);
             reserveCores.push(core.type);
         });
+        console.log(`[moveCardData] Cores moved. New reserveCores:`, reserveCores);
         cardData.coresOnCard = [];
+        console.log(`[moveCardData] Cores on card cleared. cardData.coresOnCard:`, cardData.coresOnCard);
     }
 
     if (sourceZoneId === 'openArea' && openArea.length === 0) {
