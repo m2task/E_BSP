@@ -58,7 +58,6 @@ function addCard() {
             deck.push(name);
         }
         updateList();
-        document.getElementById("cardName").value = "";
     }
 }
 

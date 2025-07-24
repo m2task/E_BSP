@@ -16,7 +16,7 @@
         </select>
     </label>
 </p>
-<input id="cardName" placeholder="カード名 または カード名×ｎ" />
+<input id="cardName" placeholder="カード名 または カード名×ｎ" onkeydown="if(event.key === 'Enter') addCard();" />
 <button onclick="addCard()">追加</button>
 <button onclick="exportDeck()">エクスポート</button>
 <button onclick="importDeck()">インポート</button>
