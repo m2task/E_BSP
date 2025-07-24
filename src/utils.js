@@ -1,6 +1,7 @@
 // src/utils.js
 import { toastTimeout, setToastTimeout } from './game_data.js';
 import { hand, field, trash, burst, lifeCores, reserveCores, countCores, trashCores, openArea } from './game_data.js';
+import { renderAll } from './ui_render.js'; // renderAllをインポート
 
 export function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
@@ -70,49 +71,24 @@ export function showCostPad(cardData, sourceArray, cardIndex, event, callback) {
         const button = document.createElement('div');
         button.className = 'cost-pad-button';
         button.textContent = i;
-        button.onclick = () => {
+        button.onclick = (e) => {
+            e.stopPropagation(); // 親要素へのイベント伝播を停止
             costPad.style.display = 'none';
             callback(i);
         };
         costPad.appendChild(button);
     }
 
-    // 0コストボタン
-    const zeroButton = document.createElement('div');
-    zeroButton.className = 'cost-pad-button';
-    zeroButton.textContent = '0';
-    zeroButton.onclick = () => {
-        costPad.style.display = 'none';
-        callback(0);
-    };
-    costPad.appendChild(zeroButton);
-
-    // キャンセルボタン
-    const cancelButton = document.createElement('div');
-    cancelButton.className = 'cost-pad-button';
-    cancelButton.textContent = 'X';
-    cancelButton.style.gridColumn = 'span 2';
-    cancelButton.onclick = (e) => {
-        e.stopPropagation();
-        costPad.style.display = 'none';
-        // カードを元の場所に戻す
-        sourceArray.splice(cardIndex, 0, cardData);
-        renderAll();
-    };
-    costPad.appendChild(cancelButton);
-
     costPad.style.display = 'grid';
     costPad.style.left = `${event.clientX}px`;
     costPad.style.top = `${event.clientY}px`;
 
-    // パッドの外側をクリックしたら閉じる
+    // パッドの外側をクリックしたらコスト0で召喚
     setTimeout(() => {
         const clickOutsideHandler = (e) => {
             if (!costPad.contains(e.target)) {
                 costPad.style.display = 'none';
-                // カードを元の場所に戻す
-                sourceArray.splice(cardIndex, 0, cardData);
-                renderAll();
+                callback(0); // コスト0でコールバックを実行
                 document.removeEventListener('click', clickOutsideHandler);
             }
         };
