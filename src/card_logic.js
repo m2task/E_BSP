@@ -84,7 +84,12 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
     } else if (targetZoneName === 'field' && sourceZoneId !== 'field') {
         // フィールドにカードを置く場合、コストを尋ねる
         const costInput = prompt(`「${cardData.name}」のコストを入力してください:`, '0');
-        const cost = parseInt(costInput);
+            let processedCostInput = costInput;
+            if (costInput !== null) {
+                // 全角数字を半角数字に変換
+                processedCostInput = costInput.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+            }
+            const cost = parseInt(processedCostInput);
 
         // キャンセルされた場合、または無効な入力の場合
         if (costInput === null || isNaN(cost) || cost < 0) {
