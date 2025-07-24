@@ -1,4 +1,5 @@
 let deck = [];
+let uniqueCardNameOrder = []; // ユニークなカード名が追加された順序を保持
 let currentDeck = 'deck1'; // 現在編集中のデッキ
 let toastTimeout;
 
@@ -19,9 +20,12 @@ function loadDeck() {
         const { deck: savedDeck, includeFirstCard } = JSON.parse(savedData);
         deck = savedDeck || [];
         document.getElementById('includeFirstCard').checked = includeFirstCard || false;
+        // uniqueCardNameOrder を再構築
+        uniqueCardNameOrder = [...new Set(deck)];
     } else {
         deck = [];
         document.getElementById('includeFirstCard').checked = false;
+        uniqueCardNameOrder = [];
     }
     updateList();
 }
@@ -57,6 +61,10 @@ function addCard() {
         for (let i = 0; i < count; i++) {
             deck.push(name);
         }
+        // uniqueCardNameOrder にカード名が存在しない場合のみ追加
+        if (!uniqueCardNameOrder.includes(name)) {
+            uniqueCardNameOrder.push(name);
+        }
         updateList();
     }
 }
@@ -70,7 +78,7 @@ function updateList() {
         cardCounts[card] = (cardCounts[card] || 0) + 1;
     });
 
-    const uniqueCardsInOrder = [...new Set(deck)];
+    const uniqueCardsInOrder = uniqueCardNameOrder.filter(name => cardCounts[name] > 0);
 
     for (const card of uniqueCardsInOrder) {
         const li = document.createElement("li");
@@ -106,6 +114,8 @@ function decrementCard(name) {
 
 function deleteAllOfCard(name) {
     deck = deck.filter(card => card !== name);
+    // uniqueCardNameOrder からも削除
+    uniqueCardNameOrder = uniqueCardNameOrder.filter(cardName => cardName !== name);
     updateList();
 }
 
