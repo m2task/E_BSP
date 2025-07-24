@@ -88,7 +88,7 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
     } else if (targetZoneName === 'field' && sourceZoneId !== 'field') {
         // フィールドにカードを置く場合、コストパッドを表示
         // cardPositions[cardData.id] には、handleCardDrop で計算された最終的な位置が格納されているはず
-        const cardFinalPosition = cardPositions[cardData.id];
+        const cardFinalPosition = cardPositions[cardData.id] || { left: 0, top: 0 }; // cardPositionsが未定義の場合のデフォルト値
 
         // コストパッドの表示位置を計算
         // カードの右隣に表示するため、カードの幅 (80px) と少しの余白 (例: 10px) を加える
