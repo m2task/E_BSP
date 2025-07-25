@@ -143,14 +143,6 @@ export function setupEventListeners() {
 
     document.getElementById('deckDiscardBtn').addEventListener('click', discardDeck);
     document.getElementById('deckOpenBtn').addEventListener('click', openDeck);
-
-    // コストモーダルを閉じるイベントリスナー
-    const costModal = document.getElementById('costModal');
-    costModal.addEventListener('click', (e) => {
-        if (e.target === costModal) {
-            costModal.style.display = 'none';
-        }
-    });
 }
 
 // --- イベントハンドラ --- 
