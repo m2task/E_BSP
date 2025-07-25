@@ -352,7 +352,7 @@ export function openTrashModal() {
     openModal('trashModal', 'trashModalContent', renderTrashModalContent);
 }
 
-function openModal(modalId, contentId, renderContent) {
+export function openModal(modalId, contentId, renderContent) {
     const modal = document.getElementById(modalId);
     renderContent();
     modal.style.display = "flex";
