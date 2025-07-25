@@ -10,17 +10,27 @@ export function shuffle(array) {
 }
 
 export function getZoneName(element) {
+    if (!element) return null;
     const id = element.id;
     if (id.includes('field')) return 'field';
     if (id.includes('hand')) return 'hand';
     if (id.includes('trash')) return 'trash';
     if (id.includes('burst')) return 'burst';
-    if (element && element.classList && element.classList.contains('deck-button')) return 'deck';
+    if (element.classList && element.classList.contains('deck-button')) return 'deck';
     if (id.includes('life')) return 'life';
     if (id.includes('reserve')) return 'reserve';
     if (id.includes('count') || id.includes('deckCore')) return 'count';
     if (id.includes('void')) return 'void';
     if (id.includes('openArea')) return 'openArea';
+
+    // 親要素をたどってゾーン名を探す
+    let parent = element.parentElement;
+    while (parent) {
+        const parentId = parent.id;
+        if (parentId.includes('openArea')) return 'openArea';
+        parent = parent.parentElement;
+    }
+
     return null;
 }
 
