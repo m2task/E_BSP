@@ -357,6 +357,11 @@ export function openModal(modalId, contentId, renderContent) {
     renderContent();
     modal.style.display = "flex";
 
+    // オープンエリアのモーダルはカードがなくなるまで閉じない
+    if (modalId === 'openAreaModal') {
+        return;
+    }
+
     const closeModalOnClick = e => {
         if (!document.getElementById(contentId).contains(e.target)) {
             modal.style.display = "none";
