@@ -231,7 +231,7 @@ export function showCostModal(cardData, callback, cancelCallback) {
     const costGrid = document.getElementById('costGrid');
     costGrid.innerHTML = '';
 
-    for (let i = 1; i <= 9; i++) {
+    for (let i = 1; i <= 8; i++) {
         const button = document.createElement('button');
         button.textContent = i;
         button.addEventListener('click', () => {
@@ -240,6 +240,18 @@ export function showCostModal(cardData, callback, cancelCallback) {
         });
         costGrid.appendChild(button);
     }
+
+    const nButton = document.createElement('button');
+    nButton.textContent = 'n';
+    nButton.addEventListener('click', () => {
+        const customCost = prompt('支払うコストの数を入力してください。', '0');
+        const cost = parseInt(customCost, 10);
+        if (!isNaN(cost) && cost >= 0) {
+            costModal.style.display = 'none';
+            callback(cost);
+        }
+    });
+    costGrid.appendChild(nButton);
 
     costModal.style.display = 'flex';
 
