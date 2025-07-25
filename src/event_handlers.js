@@ -418,10 +418,15 @@ let touchedElement = null; // タッチ開始時の要素を保持
 const DRAG_THRESHOLD = 10; // ドラッグ開始と判定する移動量（ピクセル）
 
 function handleTouchStart(e) {
+    console.log("handleTouchStart called");
     if (e.touches.length !== 1) return; // シングルタッチのみを処理
 
     touchedElement = e.target.closest('.card, .core, #voidCore');
-    if (!touchedElement) return; // カード、コア、ボイドコア以外は無視
+    if (!touchedElement) {
+        console.log("No draggable element touched.");
+        return; // カード、コア、ボイドコア以外は無視
+    }
+    console.log("Touched element:", touchedElement);
 
     e.preventDefault(); // デフォルトのスクロールなどを抑制
 
@@ -467,12 +472,14 @@ function handleTouchStart(e) {
             // 単一コアのドラッグ
             setDraggedCoreData([currentDraggedCoreIdentifier]);
         }
+        console.log("draggedCoreData set:", draggedCoreData);
     }
 
     // touchmove と touchend イベントリスナーを動的に追加
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
 }
+
 
 function startTouchDrag(e, elementToDrag) {
     // ドラッグ開始時の処理
@@ -549,11 +556,13 @@ function handleTouchEnd(e) {
         }
 
         if (dropTarget) {
+            console.log("Drop target found:", dropTarget);
             const originalElement = touchedElement; // タッチ開始時の要素
             const cardElement = originalElement.closest('.card');
             const coreElement = originalElement.closest('.core, #voidCore');
 
             if (cardElement) { // カードのドラッグの場合
+                console.log("Dragging a card.");
                 const cardId = cardElement.dataset.id;
                 // sourceZoneId を正規化して取得
                 const sourceZoneName = getZoneName(cardElement.parentElement);
@@ -563,6 +572,7 @@ function handleTouchEnd(e) {
 
                 if (targetZoneElement) {
                     const targetZoneName = getZoneName(targetZoneElement);
+                    console.log(`Card dropped from ${sourceZoneName} to ${targetZoneName}`);
                     if (targetZoneName === 'field') {
                         const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
                         cardPositions[cardId] = {
@@ -578,28 +588,36 @@ function handleTouchEnd(e) {
                     console.log("Card dropped on another card (not yet supported)");
                 }
             } else if (coreElement) { // コアのドラッグの場合
+                console.log("Dragging a core.");
                 const coresToMove = draggedCoreData; // game_data.js から取得
+                console.log("Cores to move:", coresToMove);
 
                 if (targetCardElement) {
                     // カード上のコアの移動
-                    // handleCoreInternalMoveOnCard または handleCoreDropOnCard を呼び出す
-                    // ここでは簡略化のため handleCoreDropOnCard を使用
+                    console.log("Core dropped on a card.", targetCardElement);
                     handleCoreDropOnCard(e, targetCardElement, coresToMove); // coresToMove を渡す
                 } else if (targetZoneElement) {
                     // ゾーンへのコアの移動
+                    console.log("Core dropped on a zone.", targetZoneElement);
                     handleCoreDropOnZone(e, targetZoneElement, coresToMove); // coresToMove を渡す
+                } else {
+                    console.log("Core dropped on no valid target.");
                 }
                 clearSelectedCores(); // コアのドラッグ終了時に選択を解除
             }
+        } else {
+            console.log("No drop target found.");
         }
     } else {
         // 短いタップの場合（ドラッグと判定されなかった場合）
-        // ここで元の要素に対するクリックイベントを再トリガーする
+        console.log("Short tap detected.");
         if (touchedElement) {
             // コアの場合は handleCoreClick を呼び出す
             if (touchedElement.classList.contains('core') || touchedElement.id === 'voidCore') {
+                console.log("Calling handleCoreClick for core.");
                 handleCoreClick({ target: touchedElement }); // イベントオブジェクトを模倣
             } else {
+                console.log("Calling click() for non-core element.");
                 touchedElement.click();
             }
         }
