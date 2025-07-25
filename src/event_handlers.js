@@ -520,6 +520,15 @@ function handleTouchEnd(e) {
 
                 if (targetZoneElement) {
                     const targetZoneName = getZoneName(targetZoneElement);
+                    if (targetZoneName === 'field') {
+                        const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
+                        cardPositions[cardId] = {
+                            left: currentTouchX - fieldRect.left - touchOffsetX,
+                            top: currentTouchY - fieldRect.top - touchOffsetY
+                        };
+                    } else {
+                        delete cardPositions[cardId];
+                    }
                     moveCardData(cardId, sourceZoneId, targetZoneName);
                 } else if (targetCardElement) {
                     // カードからカードへのドロップは現在未対応
