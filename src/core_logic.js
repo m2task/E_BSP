@@ -245,13 +245,12 @@ export function removeCoresFromSource(cores) {
             }
 
             for (const coreInfo of coresToRemoveFromThisSource) {
-                // Find the actual current index of the core in the array
-                // This is the key change: don't rely on coreInfo.index directly for removal
                 const actualIndex = coreInfo.index; // Assuming coreInfo.type is the actual core value
-                if (actualIndex > -1 && actualIndex < sourceArray.length) {
-                    sourceArray.splice(actualIndex, 1);
-                } else {
+                if (isNaN(actualIndex) || actualIndex < 0 || actualIndex >= sourceArray.length) {
+                    console.error(`Invalid index for core removal in ${sourceArrayName}: ${actualIndex}. CoreInfo:`, coreInfo);
+                    continue; // 無効なインデックスの場合はスキップ
                 }
+                sourceArray.splice(actualIndex, 1);
             }
 
         } else if (sourceKey.startsWith('card:')) {
@@ -262,14 +261,12 @@ export function removeCoresFromSource(cores) {
             }
 
             for (const coreInfo of coresToRemoveFromThisSource) {
-                // For cores on cards, we need to match by type and potentially position if multiple of same type
-                // For now, let's assume we remove the first matching type, or if we need exact match, we need unique IDs for cores.
-                // Given the current structure, matching by type and then splicing the first one found is the most direct.
                 const actualIndex = coreInfo.index; // Assuming coreInfo.type is the actual core value
-                if (actualIndex > -1 && actualIndex < sourceCard.coresOnCard.length) {
-                    sourceCard.coresOnCard.splice(actualIndex, 1);
-                } else {
+                if (isNaN(actualIndex) || actualIndex < 0 || actualIndex >= sourceCard.coresOnCard.length) {
+                    console.error(`Invalid index for core removal on card ${sourceCardId}: ${actualIndex}. CoreInfo:`, coreInfo);
+                    continue; // 無効なインデックスの場合はスキップ
                 }
+                sourceCard.coresOnCard.splice(actualIndex, 1);
             }
         }
     }
