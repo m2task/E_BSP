@@ -246,7 +246,7 @@ body {
 
     .hand-toggle, .trash-toggle {
       text-align: center;
-      padding: 5px;
+      padding: 10px; /* タップしやすいようにパディングを増やす */
       cursor: pointer;
       background: #ddd;
       font-weight: bold;
@@ -254,7 +254,7 @@ body {
     }
 
     .hand-zone-container.collapsed {
-      transform: translateY(100%);
+      transform: translateY(calc(100% - 40px)); /* 閉じたときに開閉ボタンが見えるように調整 */
     }
 
     .open-hand-toggle, .open-trash-toggle {
@@ -264,13 +264,14 @@ body {
       transform: translateX(-50%);
       background: #ddd;
       font-weight: bold;
-      padding: 5px 15px;
+      padding: 10px 20px; /* タップしやすいようにパディングを増やす */
       border-top: 1px solid #999;
       border-left: 1px solid #999;
       border-right: 1px solid #999;
       border-radius: 5px 5px 0 0; /* 上角を丸める */
       cursor: pointer;
       z-index: 99;
+      display: block; /* 常に表示 */
     }
 
     .hidden { display: none; }

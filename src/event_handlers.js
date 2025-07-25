@@ -66,41 +66,29 @@ export function setupEventListeners() {
         }
     });
 
-    // handZoneContainer にマウスイベントを追加
     const handZoneContainer = document.getElementById('handZoneContainer');
     const openHandButton = document.getElementById('openHandButton');
+    const handToggle = document.getElementById('handToggle'); // handToggle要素を取得
 
-    handZoneContainer.addEventListener('mouseover', () => {
-        if (!handPinned) {
-            handZoneContainer.classList.remove('collapsed');
-            openHandButton.classList.add('hidden');
-        }
-    });
-
-    handZoneContainer.addEventListener('mouseleave', () => {
+    // handToggle (手札を閉じるボタン) にクリックイベントを追加
+    handToggle.addEventListener('click', () => {
         if (!handPinned) {
             handZoneContainer.classList.add('collapsed');
             openHandButton.classList.remove('hidden');
         }
     });
 
-    // openHandButton にマウスイベントを追加
-    openHandButton.addEventListener('mouseover', () => {
+    // openHandButton (手札を開くボタン) にクリックイベントを追加
+    openHandButton.addEventListener('click', () => {
         if (!handPinned) {
             handZoneContainer.classList.remove('collapsed');
             openHandButton.classList.add('hidden');
         }
     });
 
-    openHandButton.addEventListener('mouseleave', () => {
-        if (!handPinned) {
-            handZoneContainer.classList.add('collapsed');
-            openHandButton.classList.remove('hidden');
-        }
-    });
-
-    // ドラッグ中のカードが「手札を開く」ボタンの上に来たら手札を開く
-    openHandButton.addEventListener('dragover', () => {
+    // ドラッグ中のカードが「手札を開く」ボタンの上に来たら手札を開く (既存のドラッグオーバー処理は維持)
+    openHandButton.addEventListener('dragover', (e) => {
+        e.preventDefault(); // ドロップを許可するために必要
         if (draggedElement && draggedElement.classList.contains('card') && !handPinned) {
             handZoneContainer.classList.remove('collapsed');
             openHandButton.classList.add('hidden');
@@ -114,11 +102,13 @@ export function setupEventListeners() {
         if (handPinned) {
             pinButton.textContent = '解除';
             handZoneContainer.classList.remove('collapsed'); // 固定したら手札を開く
-            openHandButton.classList.add('hidden');
+            openHandButton.classList.add('hidden'); // 固定中は開くボタンを非表示
         } else {
             pinButton.textContent = '固定';
-            handZoneContainer.classList.add('collapsed'); // 固定解除したら手札を閉じる
-            openHandButton.classList.remove('hidden');
+            // 固定解除時は、手札が閉じている状態であれば開くボタンを表示
+            if (handZoneContainer.classList.contains('collapsed')) {
+                openHandButton.classList.remove('hidden');
+            }
         }
     });
 
