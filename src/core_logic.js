@@ -263,15 +263,37 @@ export function removeCoresFromSource(cores) {
 export function payCostFromReserve(cost) {
     if (cost <= 0) return true; // コストが0以下の場合は支払い不要
 
-    if (reserveCores.length < cost) {
+    const normalCores = reserveCores.filter(core => core === "blue");
+    const soulCores = reserveCores.filter(core => core === "soul");
+
+    if (normalCores.length + soulCores.length < cost) {
         alert(`リザーブのコアが足りません。必要なコア: ${cost}個、現在のリザーブ: ${reserveCores.length}個`);
         return false; // 支払い失敗
     }
 
-    for (let i = 0; i < cost; i++) {
-        const core = reserveCores.shift(); // リザーブの先頭からコアを取得
-        trashCores.push(core); // トラッシュに移動
+    let paidCount = 0;
+    const coresToPay = [];
+
+    // 優先的にノーマルコアを支払う
+    while (paidCount < cost && normalCores.length > 0) {
+        coresToPay.push(normalCores.shift());
+        paidCount++;
     }
+
+    // 足りない分をソウルコアで支払う
+    while (paidCount < cost && soulCores.length > 0) {
+        coresToPay.push(soulCores.shift());
+        paidCount++;
+    }
+
+    // 支払ったコアをトラッシュに移動
+    for (const core of coresToPay) {
+        trashCores.push(core);
+    }
+
+    // 残ったコアでリザーブを再構築
+    reserveCores.splice(0, reserveCores.length, ...normalCores, ...soulCores);
+
     renderAll();
     return true; // 支払い成功
 }
