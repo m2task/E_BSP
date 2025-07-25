@@ -241,15 +241,6 @@ export function showCostModal(cardData, callback, cancelCallback) {
         costGrid.appendChild(button);
     }
 
-    const cancelButton = document.createElement('button');
-    cancelButton.textContent = 'キャンセル';
-    cancelButton.style.gridColumn = '1 / -1'; // 横3列にまたがるように
-    cancelButton.addEventListener('click', () => {
-        costModal.style.display = 'none';
-        if (cancelCallback) cancelCallback();
-    });
-    costGrid.appendChild(cancelButton);
-
     costModal.style.display = 'flex';
 
     const closeModalOnClickOutside = (e) => {

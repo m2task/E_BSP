@@ -62,9 +62,10 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
                 if (targetArray) targetArray.push(cardData);
                 renderAll();
             },
-            () => { // Cancel callback
-                // Canceled, return card to source
-                sourceArray.splice(cardIndex, 0, cardData);
+            () => { // Cancel callback (click outside)
+                // Place card on field without paying cost
+                const targetArray = getArrayByZoneName(targetZoneName);
+                if (targetArray) targetArray.push(cardData);
                 renderAll();
             }
         );
