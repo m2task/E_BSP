@@ -10,13 +10,14 @@ export function handleCoreClick(e) {
         return;
     }
 
-    const coreId = coreElement.dataset.id; // コアのIDを取得
     const coreType = coreElement.dataset.coreType;
+    const index = parseInt(coreElement.dataset.index);
     const sourceCardId = coreElement.dataset.sourceCardId;
 
+
     let coreIdentifier = {
-        id: coreId, // IDを使用
         type: coreType,
+        index: index
     };
 
     if (sourceCardId) {
@@ -25,7 +26,16 @@ export function handleCoreClick(e) {
         coreIdentifier.sourceArrayName = coreElement.parentElement.id;
     }
 
-    const existingIndex = selectedCores.findIndex(c => c.id === coreIdentifier.id); // IDで比較
+
+    const existingIndex = selectedCores.findIndex(c => {
+        if (c.sourceCardId && coreIdentifier.sourceCardId) {
+            return c.sourceCardId === coreIdentifier.sourceCardId && c.index === coreIdentifier.index;
+        } else if (c.sourceArrayName && coreIdentifier.sourceArrayName) {
+            return c.sourceArrayName === coreIdentifier.sourceArrayName && c.index === coreIdentifier.index;
+        }
+        return false;
+    });
+
 
     // Ctrl/Metaキーの有無に関わらず、選択をトグル
     if (existingIndex > -1) {
@@ -41,9 +51,10 @@ export function clearSelectedCores() {
     renderAll(); // 選択状態をクリアしたら再描画してDOMを更新
 }
 
-export function handleCoreDropOnCard(e, targetCardElement, coresToMoveFromTouch = null) {
+export function handleCoreDropOnCard(e, targetCardElement) {
     e.preventDefault();
-    const coresToMove = coresToMoveFromTouch || JSON.parse(e.dataTransfer.getData("cores"));
+    const type = e.dataTransfer.getData("type");
+    const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
     const targetCardId = targetCardElement.dataset.id;
     const targetCard = field.find(card => card.id === targetCardId);
 
@@ -97,9 +108,9 @@ export function handleCoreDropOnCard(e, targetCardElement, coresToMoveFromTouch 
     }
 }
 
-export function handleCoreInternalMoveOnCard(e, targetCardElement, coresToMoveFromTouch = null) {
+export function handleCoreInternalMoveOnCard(e, targetCardElement) {
     e.preventDefault();
-    const coresToMove = coresToMoveFromTouch || JSON.parse(e.dataTransfer.getData("cores"));
+    const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
     const targetCardId = targetCardElement.dataset.id;
     const targetCard = field.find(card => card.id === targetCardId);
 
@@ -127,33 +138,12 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement, coresToMoveFr
     renderAll();
 }
 
-export function handleCoreDropOnZone(e, targetElement, coresToMoveFromTouch = null) {
+export function handleCoreDropOnZone(e, targetElement) {
     const targetZoneName = getZoneName(targetElement);
-    let coresToMove = coresToMoveFromTouch; // タッチイベントから渡されたコアデータ
+    const type = e.dataTransfer.getData("type");
 
-    let type;
-    if (coresToMoveFromTouch) {
-        // タッチイベントの場合
-        if (coresToMoveFromTouch.length > 0 && coresToMoveFromTouch[0].sourceArrayName === 'void') {
-            type = 'voidCore';
-        } else {
-            type = 'core'; // 単一または複数コア
-        }
-    } else {
-        // 標準のドラッグ＆ドロップイベントの場合
-        type = e.dataTransfer.getData("type");
-        if (type === 'multiCore' || type === 'coreFromCard' || type === 'core' || type === 'voidCore') {
-            coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
-        }
-    }
-
-    // coresToMove が null または undefined の場合は空の配列として扱う
-    if (!coresToMove) {
-        coresToMove = [];
-    }
-
-    // voidCore の処理は特別なので最初に処理
     if (type === 'voidCore') {
+        const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
         setVoidChargeCount(0);
         showToast('voidToast', '', true);
 
@@ -168,6 +158,11 @@ export function handleCoreDropOnZone(e, targetElement, coresToMoveFromTouch = nu
         showToast('voidToast', toastMessage);
         renderAll();
         return;
+    }
+
+    let coresToMove = [];
+    if (type === 'multiCore' || type === 'coreFromCard' || type === 'core') {
+        coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
     }
 
     const coresToActuallyMove = [];
@@ -223,6 +218,10 @@ export function removeCoresFromSource(cores) {
     for (const sourceKey in groupedCores) {
         const coresToRemoveFromThisSource = groupedCores[sourceKey];
 
+        // Sort cores to remove from this source by index in descending order
+        // This is crucial for splicing multiple elements from the same array
+        coresToRemoveFromThisSource.sort((a, b) => b.index - a.index);
+
         if (sourceKey.startsWith('array:')) {
             const sourceArrayName = sourceKey.substring(6); // "array:".length
             const sourceArray = getArrayByZoneName(sourceArrayName);
@@ -231,9 +230,12 @@ export function removeCoresFromSource(cores) {
             }
 
             for (const coreInfo of coresToRemoveFromThisSource) {
-                const indexToRemove = sourceArray.findIndex(c => c.id === coreInfo.id);
-                if (indexToRemove > -1) {
-                    sourceArray.splice(indexToRemove, 1);
+                // Find the actual current index of the core in the array
+                // This is the key change: don't rely on coreInfo.index directly for removal
+                const actualIndex = coreInfo.index; // Assuming coreInfo.type is the actual core value
+                if (actualIndex > -1 && actualIndex < sourceArray.length) {
+                    sourceArray.splice(actualIndex, 1);
+                } else {
                 }
             }
 
@@ -245,9 +247,13 @@ export function removeCoresFromSource(cores) {
             }
 
             for (const coreInfo of coresToRemoveFromThisSource) {
-                const indexToRemove = sourceCard.coresOnCard.findIndex(c => c.id === coreInfo.id);
-                if (indexToRemove > -1) {
-                    sourceCard.coresOnCard.splice(indexToRemove, 1);
+                // For cores on cards, we need to match by type and potentially position if multiple of same type
+                // For now, let's assume we remove the first matching type, or if we need exact match, we need unique IDs for cores.
+                // Given the current structure, matching by type and then splicing the first one found is the most direct.
+                const actualIndex = coreInfo.index; // Assuming coreInfo.type is the actual core value
+                if (actualIndex > -1 && actualIndex < sourceCard.coresOnCard.length) {
+                    sourceCard.coresOnCard.splice(actualIndex, 1);
+                } else {
                 }
             }
         }

@@ -418,15 +418,10 @@ let touchedElement = null; // タッチ開始時の要素を保持
 const DRAG_THRESHOLD = 10; // ドラッグ開始と判定する移動量（ピクセル）
 
 function handleTouchStart(e) {
-    console.log("handleTouchStart called");
     if (e.touches.length !== 1) return; // シングルタッチのみを処理
 
     touchedElement = e.target.closest('.card, .core, #voidCore');
-    if (!touchedElement) {
-        console.log("No draggable element touched.");
-        return; // カード、コア、ボイドコア以外は無視
-    }
-    console.log("Touched element:", touchedElement);
+    if (!touchedElement) return; // カード、コア、ボイドコア以外は無視
 
     e.preventDefault(); // デフォルトのスクロールなどを抑制
 
@@ -438,53 +433,10 @@ function handleTouchStart(e) {
 
     setIsDragging(false); // ドラッグ開始フラグをリセット
 
-    // コアの場合、draggedCoreData を設定
-    if (touchedElement.classList.contains('core') || touchedElement.id === 'voidCore') {
-        const coreType = touchedElement.dataset.coreType;
-        const coreId = touchedElement.dataset.id; // コアのIDを取得
-        const sourceCardId = touchedElement.dataset.sourceCardId;
-
-        let currentDraggedCoreIdentifier = {
-            id: coreId, // IDを使用
-            type: coreType,
-        };
-        if (sourceCardId) {
-            currentDraggedCoreIdentifier.sourceCardId = sourceCardId;
-        } else if (touchedElement.parentElement) {
-            currentDraggedCoreIdentifier.sourceArrayName = touchedElement.parentElement.id;
-        }
-
-        // 選択されたコアがある場合は、それらをドラッグ対象とする
-        if (selectedCores.length > 0 && selectedCores.some(c => 
-            (c.sourceCardId && c.sourceCardId === currentDraggedCoreIdentifier.sourceCardId && c.id === currentDraggedCoreIdentifier.id) || // IDで比較
-            (c.sourceArrayName && c.sourceArrayName === currentDraggedCoreIdentifier.sourceArrayName && c.id === currentDraggedCoreIdentifier.id) // IDで比較
-        )) {
-            setDraggedCoreData(selectedCores.map(c => {
-                const coreData = { id: c.id, type: c.type }; // IDを渡す
-                if (c.sourceCardId) { coreData.sourceCardId = c.sourceCardId; }
-                else { coreData.sourceArrayName = c.sourceArrayName; }
-                return coreData;
-            }));
-        } else if (touchedElement.id === 'voidCore') {
-            const coresToMoveCount = voidChargeCount > 0 ? voidChargeCount : 1;
-            // voidCore の場合、createCore を使ってユニークIDを持つコアオブジェクトを生成
-            const voidCores = [];
-            for (let i = 0; i < coresToMoveCount; i++) {
-                voidCores.push(createCore("blue"));
-            }
-            setDraggedCoreData(voidCores.map(core => ({ id: core.id, type: core.type, sourceArrayName: 'void' }))); // IDを渡す
-        } else {
-            // 単一コアのドラッグ
-            setDraggedCoreData([currentDraggedCoreIdentifier]);
-        }
-        console.log("draggedCoreData set:", draggedCoreData);
-    }
-
     // touchmove と touchend イベントリスナーを動的に追加
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
 }
-
 
 function startTouchDrag(e, elementToDrag) {
     // ドラッグ開始時の処理
@@ -547,27 +499,20 @@ function handleTouchEnd(e) {
     if (isDragging) {
         // ドラッグが終了した場合の処理
         if (touchDraggedElement) {
-            // 一時的にドラッグ中の要素を非表示にして、その下の要素を検出
-            touchDraggedElement.style.display = 'none';
-        }
-
-        // ドロップ先の要素を特定
-        const dropTarget = document.elementFromPoint(currentTouchX, currentTouchY);
-
-        // ドラッグ中の要素を再度表示（または削除）
-        if (touchDraggedElement) {
             touchDraggedElement.remove(); // クローンを削除
             setTouchDraggedElement(null);
         }
 
+        // ドロップ先の要素を特定
+        // `document.elementFromPoint` を使用して、ドロップされた位置の要素を取得
+        const dropTarget = document.elementFromPoint(currentTouchX, currentTouchY);
+
         if (dropTarget) {
-            console.log("Drop target found:", dropTarget);
             const originalElement = touchedElement; // タッチ開始時の要素
             const cardElement = originalElement.closest('.card');
             const coreElement = originalElement.closest('.core, #voidCore');
 
             if (cardElement) { // カードのドラッグの場合
-                console.log("Dragging a card.");
                 const cardId = cardElement.dataset.id;
                 // sourceZoneId を正規化して取得
                 const sourceZoneName = getZoneName(cardElement.parentElement);
@@ -577,7 +522,6 @@ function handleTouchEnd(e) {
 
                 if (targetZoneElement) {
                     const targetZoneName = getZoneName(targetZoneElement);
-                    console.log(`Card dropped from ${sourceZoneName} to ${targetZoneName}`);
                     if (targetZoneName === 'field') {
                         const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
                         cardPositions[cardId] = {
@@ -593,41 +537,18 @@ function handleTouchEnd(e) {
                     console.log("Card dropped on another card (not yet supported)");
                 }
             } else if (coreElement) { // コアのドラッグの場合
-                console.log("Dragging a core.");
-                const coresToMove = draggedCoreData; // game_data.js から取得
-                console.log("Cores to move:", coresToMove);
-
-                if (targetCardElement) {
-                    // カード上のコアの移動
-                    console.log("Core dropped on a card.", targetCardElement);
-                    handleCoreDropOnCard(e, targetCardElement, coresToMove); // coresToMove を渡す
-                } else if (targetZoneElement) {
-                    // ゾーンへのコアの移動
-                    console.log("Core dropped on a zone.", targetZoneElement);
-                    handleCoreDropOnZone(e, targetZoneElement, coresToMove); // coresToMove を渡す
-                } else {
-                    console.log("Core dropped on no valid target.");
-                }
-                clearSelectedCores(); // コアのドラッグ終了時に選択を解除
+                // コアのドラッグ処理をここに実装
+                console.log("Core dropped (needs implementation)");
+                // 例: handleCoreDropOnZone(e, targetZoneElement); または handleCoreDropOnCard(e, targetCardElement);
             }
-        } else {
-            console.log("No drop target found.");
         }
     } else {
         // 短いタップの場合（ドラッグと判定されなかった場合）
-        console.log("Short tap detected.");
+        // ここで元の要素に対するクリックイベントを再トリガーする
         if (touchedElement) {
-            // コアの場合は handleCoreClick を呼び出す
-            if (touchedElement.classList.contains('core') || touchedElement.id === 'voidCore') {
-                console.log("Calling handleCoreClick for core.");
-                handleCoreClick({ target: touchedElement }); // イベントオブジェクトを模倣
-            } else {
-                console.log("Calling click() for non-core element.");
-                touchedElement.click();
-            }
+            touchedElement.click();
         }
     }
     setIsDragging(false); // ドラッグフラグをリセット
     touchedElement = null; // タッチ開始要素をリセット
-    setDraggedCoreData(null); // ドラッグ中のコアデータをリセット
 }

@@ -1,5 +1,5 @@
 // main.js
-import { deck, hand, field, cardIdCounter, createCore, setDeck, setHand, setCardIdCounter, setSelectedCores, setLifeCores, setReserveCores, setCountCores, setTrashCores } from './src/game_data.js';
+import { deck, hand, field, cardIdCounter, setDeck, setHand, setCardIdCounter, setSelectedCores, setLifeCores, setReserveCores, setCountCores, setTrashCores } from './src/game_data.js';
 import { setupEventListeners } from './src/event_handlers.js';
 import { renderAll } from './src/ui_render.js';
 import { shuffle } from './src/utils.js';
@@ -14,8 +14,8 @@ function getURLParams() {
 
 function initializeGame() {
     setSelectedCores([]); // 選択されたコアを初期化
-    setLifeCores([createCore("blue"), createCore("blue"), createCore("blue"), createCore("blue"), createCore("blue")]); // ライフコアを初期化
-    setReserveCores([createCore("blue"), createCore("blue"), createCore("blue"), createCore("soul")]); // リザーブコアを初期化
+    setLifeCores(["blue", "blue", "blue", "blue", "blue"]); // ライフコアを初期化
+    setReserveCores(["blue", "blue", "blue", "soul"]); // リザーブコアを初期化
     setCountCores([]); // カウントコアを初期化
     setTrashCores([]); // トラッシュコアを初期化
 
