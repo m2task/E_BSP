@@ -512,11 +512,17 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: none; /* 背景を透明に */
   z-index: 200;
   align-items: center;
   justify-content: center;
-  pointer-events: auto; /* 背景のクリックを有効化 */
+  pointer-events: none; /* クリックを透過 */
+}
+
+/* コスト支払いモーダル専用のオーバーレイ */
+.cost-modal-overlay {
+  background: rgba(0, 0, 0, 0.5); /* 半透明の黒 */
+  pointer-events: auto; /* クリックを捕捉 */
 }
 
 .modal-content {
