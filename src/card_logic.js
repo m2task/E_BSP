@@ -28,104 +28,92 @@ export function drawCard(fromBottom = false) {
 }
 
 export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = null, dropTargetElement = null) {
-    console.log(`[moveCardData] Initiating move for Card ID: ${cardId} from ${sourceZoneId} to ${targetZoneName}`);
-
-    const sourceArray = getArrayByZoneName(sourceZoneId);
-    if (!sourceArray) {
-        console.error(`[moveCardData] Invalid source zone: ${sourceZoneId}`);
-        return;
-    }
-
-    const cardIndex = sourceArray.findIndex(c => c.id === cardId);
-    if (cardIndex === -1) {
-        console.error(`[moveCardData] Card with ID ${cardId} not found in ${sourceZoneId}`);
-        return;
-    }
-
-    const [cardData] = sourceArray.splice(cardIndex, 1);
-    console.log(`[moveCardData] Card data extracted:`, cardData);
-
-    // 非同期処理（フィールドへの移動）
+    // 非同期処理を伴うフィールドへの移動
     if (targetZoneName === 'field' && sourceZoneId !== 'field') {
-        console.log(`[moveCardData] Async path: Moving to field.`);
+        const sourceArray = getArrayByZoneName(sourceZoneId);
+        const cardIndex = sourceArray.findIndex(c => c.id === cardId);
+        if (cardIndex === -1) return;
+        const cardData = sourceArray[cardIndex];
+
         showCostModal(cardData,
             (cost) => { // Success callback (cost paid)
-                console.log(`[moveCardData] Cost paid: ${cost}`);
+                const currentSourceArray = getArrayByZoneName(sourceZoneId);
+                const currentCardIndex = currentSourceArray.findIndex(c => c.id === cardId);
+                if (currentCardIndex === -1) return; // Card is no longer in the source zone
+
                 if (payCostFromReserve(cost)) {
-                    addField(cardData);
+                    const [movedCard] = currentSourceArray.splice(currentCardIndex, 1);
+                    field.push(movedCard);
                 } else {
-                    console.log(`[moveCardData] Cost payment failed. Returning card to ${sourceZoneId}`);
-                    sourceArray.splice(cardIndex, 0, cardData);
+                    // Not enough cores, do nothing, card stays in source
                 }
                 renderAll();
             },
             () => { // Cancel callback (no cost paid)
-                console.log(`[moveCardData] Cost payment cancelled. Moving to field without cost.`);
-                addField(cardData);
+                const currentSourceArray = getArrayByZoneName(sourceZoneId);
+                const currentCardIndex = currentSourceArray.findIndex(c => c.id === cardId);
+                if (currentCardIndex === -1) return; // Card is no longer in the source zone
+
+                const [movedCard] = currentSourceArray.splice(currentCardIndex, 1);
+                field.push(movedCard);
                 renderAll();
             }
         );
     } else {
-        // 同期処理（フィールド以外への移動）
-        console.log(`[moveCardData] Sync path: Moving to ${targetZoneName}`);
-        handleSyncCardMove(cardData, sourceZoneId, targetZoneName, dropEvent, dropTargetElement);
-        renderAll();
-    }
-}
+        // 同期処理（フィールド以外への移動、またはフィールド内移動）
+        const sourceArray = getArrayByZoneName(sourceZoneId);
+        const cardIndex = sourceArray.findIndex(c => c.id === cardId);
+        if (cardIndex === -1) return;
 
-function addField(cardData) {
-    const targetArray = getArrayByZoneName('field');
-    if (targetArray) {
-        targetArray.push(cardData);
-    }
-}
+        const [cardData] = sourceArray.splice(cardIndex, 1);
 
-function handleSyncCardMove(cardData, sourceZoneId, targetZoneName, dropEvent, dropTargetElement) {
-    let shouldTransferCoresToReserve = (sourceZoneId === 'field' && targetZoneName !== 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0);
+        let shouldTransferCoresToReserve = (sourceZoneId === 'field' && targetZoneName !== 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0);
 
-    if (targetZoneName === 'deck') {
-        let putOnBottom = false;
-        if (dropEvent && dropTargetElement) {
-            const rect = dropTargetElement.getBoundingClientRect();
-            const clickY = dropEvent.clientY - rect.top;
-            if (clickY > rect.height * (2 / 3)) {
-                putOnBottom = true;
+        if (targetZoneName === 'deck') {
+            let putOnBottom = false;
+            if (dropEvent && dropTargetElement) {
+                const rect = dropTargetElement.getBoundingClientRect();
+                const clickY = dropEvent.clientY - rect.top;
+                if (clickY > rect.height * (2 / 3)) {
+                    putOnBottom = true;
+                }
+            } else {
+                putOnBottom = confirm(`${cardData.name}をデッキの下に戻しますか？`);
             }
+            if (putOnBottom) {
+                deck.push(cardData);
+                showToast('cardMoveToast', `${cardData.name}をデッキの下に戻しました`);
+            } else {
+                deck.unshift(cardData);
+                showToast('cardMoveToast', `${cardData.name}をデッキの上に戻しました`);
+            }
+        } else if (targetZoneName === 'void') {
+            if (!confirm(`${cardData.name}をゲームから除外していいですか？`)) {
+                sourceArray.splice(cardIndex, 0, cardData); // Cancelled, so return the card
+                return;
+            }
+            // Card is already removed, so we just continue
         } else {
-            putOnBottom = confirm(`${cardData.name}をデッキの下に戻しますか？`);
+            if (targetZoneName === 'hand') {
+                cardData.isRotated = false;
+                cardData.isExhausted = false;
+            }
+            const targetArray = getArrayByZoneName(targetZoneName);
+            if (targetArray) {
+                targetArray.push(cardData);
+            }
         }
-        if (putOnBottom) {
-            deck.push(cardData);
-            showToast('cardMoveToast', `${cardData.name}をデッキの下に戻しました`);
-        } else {
-            deck.unshift(cardData);
-            showToast('cardMoveToast', `${cardData.name}をデッキの上に戻しました`);
-        }
-    } else if (targetZoneName === 'void') {
-        if (!confirm(`${cardData.name}をゲームから除外していいですか？`)) {
-            const sourceArray = getArrayByZoneName(sourceZoneId);
-            const cardIndex = sourceArray.findIndex(c => c.id === cardData.id);
-            sourceArray.splice(cardIndex, 0, cardData);
-            return;
-        }
-    } else {
-        if (targetZoneName === 'hand') {
-            cardData.isRotated = false;
-            cardData.isExhausted = false;
-        }
-        const targetArray = getArrayByZoneName(targetZoneName);
-        if (targetArray) {
-            targetArray.push(cardData);
-        }
-    }
 
-    if (shouldTransferCoresToReserve) {
-        reserveCores.push(...cardData.coresOnCard.map(core => core.type));
-        cardData.coresOnCard = [];
-    }
+        if (shouldTransferCoresToReserve) {
+            reserveCores.push(...cardData.coresOnCard.map(core => core.type));
+            cardData.coresOnCard = [];
+        }
 
-    if (sourceZoneId === 'openArea' && openArea.length === 0) {
-        document.getElementById('openAreaModal').style.display = 'none';
+        if (sourceZoneId === 'openArea' && openArea.length === 0) {
+            document.getElementById('openAreaModal').style.display = 'none';
+        }
+
+        renderAll();
     }
 }
 
