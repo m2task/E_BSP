@@ -514,7 +514,8 @@ function handleTouchEnd(e) {
 
             if (cardElement) { // カードのドラッグの場合
                 const cardId = cardElement.dataset.id;
-                const sourceZoneId = cardElement.parentElement.id;
+                // sourceZoneId を正規化して取得
+                const sourceZoneName = getZoneName(cardElement.parentElement);
 
                 const targetCardElement = dropTarget.closest('.card');
                 const targetZoneElement = dropTarget.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea');
@@ -530,7 +531,7 @@ function handleTouchEnd(e) {
                     } else {
                         delete cardPositions[cardId];
                     }
-                    moveCardData(cardId, sourceZoneId, targetZoneName);
+                    moveCardData(cardId, sourceZoneName, targetZoneName);
                 } else if (targetCardElement) {
                     // カードからカードへのドロップは現在未対応
                     console.log("Card dropped on another card (not yet supported)");

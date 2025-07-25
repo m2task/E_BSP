@@ -29,7 +29,7 @@ export function drawCard(fromBottom = false) {
 }
 
 export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = null, dropTargetElement = null) {
-    // 非同期処理を伴うフィールドへの移動
+    // フィールド以外のゾーンからフィールドへの移動の場合のみコスト支払いモーダルを表示
     if (targetZoneName === 'field' && sourceZoneId !== 'field') {
         const sourceArray = getArrayByZoneName(sourceZoneId);
         const cardIndex = sourceArray.findIndex(c => c.id === cardId);
