@@ -441,12 +441,12 @@ function handleTouchStart(e) {
     // コアの場合、draggedCoreData を設定
     if (touchedElement.classList.contains('core') || touchedElement.id === 'voidCore') {
         const coreType = touchedElement.dataset.coreType;
-        const index = parseInt(touchedElement.dataset.index);
+        const coreId = touchedElement.dataset.id; // コアのIDを取得
         const sourceCardId = touchedElement.dataset.sourceCardId;
 
         let currentDraggedCoreIdentifier = {
+            id: coreId, // IDを使用
             type: coreType,
-            index: index
         };
         if (sourceCardId) {
             currentDraggedCoreIdentifier.sourceCardId = sourceCardId;
@@ -456,18 +456,23 @@ function handleTouchStart(e) {
 
         // 選択されたコアがある場合は、それらをドラッグ対象とする
         if (selectedCores.length > 0 && selectedCores.some(c => 
-            (c.sourceCardId && c.sourceCardId === currentDraggedCoreIdentifier.sourceCardId && c.index === currentDraggedCoreIdentifier.index) ||
-            (c.sourceArrayName && c.sourceArrayName === currentDraggedCoreIdentifier.sourceArrayName && c.index === currentDraggedCoreIdentifier.index)
+            (c.sourceCardId && c.sourceCardId === currentDraggedCoreIdentifier.sourceCardId && c.id === currentDraggedCoreIdentifier.id) || // IDで比較
+            (c.sourceArrayName && c.sourceArrayName === currentDraggedCoreIdentifier.sourceArrayName && c.id === currentDraggedCoreIdentifier.id) // IDで比較
         )) {
             setDraggedCoreData(selectedCores.map(c => {
-                const coreData = { type: c.type, index: c.index };
+                const coreData = { id: c.id, type: c.type }; // IDを渡す
                 if (c.sourceCardId) { coreData.sourceCardId = c.sourceCardId; }
                 else { coreData.sourceArrayName = c.sourceArrayName; }
                 return coreData;
             }));
         } else if (touchedElement.id === 'voidCore') {
             const coresToMoveCount = voidChargeCount > 0 ? voidChargeCount : 1;
-            setDraggedCoreData(Array(coresToMoveCount).fill({ type: "blue", sourceArrayName: 'void', index: -1 }));
+            // voidCore の場合、createCore を使ってユニークIDを持つコアオブジェクトを生成
+            const voidCores = [];
+            for (let i = 0; i < coresToMoveCount; i++) {
+                voidCores.push(createCore("blue"));
+            }
+            setDraggedCoreData(voidCores.map(core => ({ id: core.id, type: core.type, sourceArrayName: 'void' }))); // IDを渡す
         } else {
             // 単一コアのドラッグ
             setDraggedCoreData([currentDraggedCoreIdentifier]);

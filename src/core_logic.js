@@ -10,14 +10,13 @@ export function handleCoreClick(e) {
         return;
     }
 
+    const coreId = coreElement.dataset.id; // コアのIDを取得
     const coreType = coreElement.dataset.coreType;
-    const index = parseInt(coreElement.dataset.index);
     const sourceCardId = coreElement.dataset.sourceCardId;
 
-
     let coreIdentifier = {
+        id: coreId, // IDを使用
         type: coreType,
-        index: index
     };
 
     if (sourceCardId) {
@@ -26,16 +25,7 @@ export function handleCoreClick(e) {
         coreIdentifier.sourceArrayName = coreElement.parentElement.id;
     }
 
-
-    const existingIndex = selectedCores.findIndex(c => {
-        if (c.sourceCardId && coreIdentifier.sourceCardId) {
-            return c.sourceCardId === coreIdentifier.sourceCardId && c.index === coreIdentifier.index;
-        } else if (c.sourceArrayName && coreIdentifier.sourceArrayName) {
-            return c.sourceArrayName === coreIdentifier.sourceArrayName && c.index === coreIdentifier.index;
-        }
-        return false;
-    });
-
+    const existingIndex = selectedCores.findIndex(c => c.id === coreIdentifier.id); // IDで比較
 
     // Ctrl/Metaキーの有無に関わらず、選択をトグル
     if (existingIndex > -1) {
