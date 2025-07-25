@@ -1,6 +1,6 @@
 // src/card_logic.js
 import { deck, hand, field, trash, burst, reserveCores, discardState, openArea, setDeck, setHand, setField, setTrash, setBurst, setReserveCores, setDiscardCounter, setDiscardedCardNames, setDiscardToastTimer, setOpenArea } from './game_data.js';
-import { renderAll, showCostModal } from './ui_render.js';
+import { renderAll, showCostModal, renderOpenArea } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
 import { payCostFromReserve } from './core_logic.js';
 import { openModal } from './event_handlers.js';
