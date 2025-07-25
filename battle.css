@@ -285,6 +285,10 @@ body {
 
       .open-hand-toggle, .open-trash-toggle {
         padding: 10px 20px; /* タップしやすいようにパディングを増やす */
+        /* 中央配置を解除し、右寄せにする */
+        left: auto;
+        right: 20px; /* 右端から20pxの位置に配置 */
+        transform: none; /* translateX(-50%) を解除 */
         display: block; /* 常に表示 */
       }
     }
