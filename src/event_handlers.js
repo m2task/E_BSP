@@ -1,7 +1,7 @@
 // src/event_handlers.js
 import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, handPinned, setHandPinned } from './game_data.js';
 import { renderAll, renderTrashModalContent } from './ui_render.js';
-import { showToast, getZoneName } from './utils.js';
+import { showToast, getZoneName, isMobileDevice } from './utils.js'; // isMobileDevice をインポート
 import { drawCard, moveCardData, openDeck, discardDeck } from './card_logic.js';
 import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone } from './core_logic.js';
 
@@ -68,25 +68,62 @@ export function setupEventListeners() {
 
     const handZoneContainer = document.getElementById('handZoneContainer');
     const openHandButton = document.getElementById('openHandButton');
-    const handToggle = document.getElementById('handToggle'); // handToggle要素を取得
+    const handToggle = document.getElementById('handToggle');
 
-    // handToggle (手札を閉じるボタン) にクリックイベントを追加
-    handToggle.addEventListener('click', () => {
-        if (!handPinned) {
-            handZoneContainer.classList.add('collapsed');
-            openHandButton.classList.remove('hidden');
-        }
-    });
+    if (isMobileDevice()) {
+        // モバイルデバイスの場合：
+        // openHandButton (手札を開くボタン) にクリックイベントを追加
+        openHandButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // イベントの伝播を停止
+            if (!handPinned) {
+                handZoneContainer.classList.remove('collapsed');
+                openHandButton.classList.add('hidden');
+            }
+        });
 
-    // openHandButton (手札を開くボタン) にクリックイベントを追加
-    openHandButton.addEventListener('click', () => {
-        if (!handPinned) {
-            handZoneContainer.classList.remove('collapsed');
-            openHandButton.classList.add('hidden');
-        }
-    });
+        // 手札以外のエリアをタップで手札を閉じる
+        document.addEventListener('click', (e) => {
+            // クリックされた要素が手札コンテナ内、または openHandButton でない場合
+            if (!handZoneContainer.contains(e.target) && e.target !== openHandButton) {
+                // 手札が開いていて、かつ固定されていない場合のみ閉じる
+                if (!handZoneContainer.classList.contains('collapsed') && !handPinned) {
+                    handZoneContainer.classList.add('collapsed');
+                    openHandButton.classList.remove('hidden');
+                }
+            }
+        });
+    } else {
+        // PCの場合：マウスオーバーで開閉
+        handZoneContainer.addEventListener('mouseover', () => {
+            if (!handPinned) {
+                handZoneContainer.classList.remove('collapsed');
+                openHandButton.classList.add('hidden');
+            }
+        });
 
-    // ドラッグ中のカードが「手札を開く」ボタンの上に来たら手札を開く (既存のドラッグオーバー処理は維持)
+        handZoneContainer.addEventListener('mouseleave', () => {
+            if (!handPinned) {
+                handZoneContainer.classList.add('collapsed');
+                openHandButton.classList.remove('hidden');
+            }
+        });
+
+        openHandButton.addEventListener('mouseover', () => {
+            if (!handPinned) {
+                handZoneContainer.classList.remove('collapsed');
+                openHandButton.classList.add('hidden');
+            }
+        });
+
+        openHandButton.addEventListener('mouseleave', () => {
+            if (!handPinned) {
+                handZoneContainer.classList.add('collapsed');
+                openHandButton.classList.remove('hidden');
+            }
+        });
+    }
+
+    // ドラッグ中のカードが「手札を開く」ボタンの上に来たら手札を開く (これはデバイス共通で維持)
     openHandButton.addEventListener('dragover', (e) => {
         e.preventDefault(); // ドロップを許可するために必要
         if (draggedElement && draggedElement.classList.contains('card') && !handPinned) {

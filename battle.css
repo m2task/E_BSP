@@ -246,7 +246,7 @@ body {
 
     .hand-toggle, .trash-toggle {
       text-align: center;
-      padding: 10px; /* タップしやすいようにパディングを増やす */
+      padding: 5px;
       cursor: pointer;
       background: #ddd;
       font-weight: bold;
@@ -254,7 +254,7 @@ body {
     }
 
     .hand-zone-container.collapsed {
-      transform: translateY(calc(100% - 40px)); /* 閉じたときに開閉ボタンが見えるように調整 */
+      transform: translateY(100%);
     }
 
     .open-hand-toggle, .open-trash-toggle {
@@ -264,14 +264,29 @@ body {
       transform: translateX(-50%);
       background: #ddd;
       font-weight: bold;
-      padding: 10px 20px; /* タップしやすいようにパディングを増やす */
+      padding: 5px 15px;
       border-top: 1px solid #999;
       border-left: 1px solid #999;
       border-right: 1px solid #999;
       border-radius: 5px 5px 0 0; /* 上角を丸める */
       cursor: pointer;
       z-index: 99;
-      display: block; /* 常に表示 */
+    }
+
+    /* モバイルデバイス用のスタイル */
+    @media (hover: none) and (pointer: coarse) {
+      .hand-toggle, .trash-toggle {
+        padding: 10px; /* タップしやすいようにパディングを増やす */
+      }
+
+      .hand-zone-container.collapsed {
+        transform: translateY(calc(100% - 40px)); /* 閉じたときに開閉ボタンが見えるように調整 */
+      }
+
+      .open-hand-toggle, .open-trash-toggle {
+        padding: 10px 20px; /* タップしやすいようにパディングを増やす */
+        display: block; /* 常に表示 */
+      }
     }
 
     .hidden { display: none; }

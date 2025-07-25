@@ -71,3 +71,8 @@ export function showToast(toastId, message, hide = false) {
         }, 1000)); // 1秒後に非表示
     }
 }
+
+// モバイルデバイスかどうかを判定する関数
+export function isMobileDevice() {
+    return /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
+}
