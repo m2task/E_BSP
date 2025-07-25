@@ -47,19 +47,42 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
     let shouldTransferCoresToReserve = (sourceZoneId === 'field' && targetZoneName !== 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0);
     console.log(`[moveCardData] shouldTransferCoresToReserve: ${shouldTransferCoresToReserve}, Cores on card:`, cardData.coresOnCard);
 
+    // --- ASYNC PATH: Moving to Field ---
+    if (targetZoneName === 'field' && sourceZoneId !== 'field') {
+        showCostModal(cardData,
+            (cost) => { // Success callback
+                if (!payCostFromReserve(cost)) {
+                    // Payment failed, return card to source
+                    sourceArray.splice(cardIndex, 0, cardData);
+                    renderAll();
+                    return;
+                }
+                // Payment successful, add to field
+                const targetArray = getArrayByZoneName(targetZoneName);
+                if (targetArray) targetArray.push(cardData);
+                renderAll();
+            },
+            () => { // Cancel callback
+                // Canceled, return card to source
+                sourceArray.splice(cardIndex, 0, cardData);
+                renderAll();
+            }
+        );
+        return; // Stop the function here, as the rest is handled by callbacks
+    }
+
+    // --- SYNC PATHS ---
     if (targetZoneName === 'deck') {
         let putOnBottom = false;
-        if (dropEvent && dropTargetElement) { // ドロップイベントとターゲット要素が渡された場合
+        if (dropEvent && dropTargetElement) {
             const rect = dropTargetElement.getBoundingClientRect();
-            const clickY = dropEvent.clientY - rect.top; // ドロップされたY座標
+            const clickY = dropEvent.clientY - rect.top;
             const buttonHeight = rect.height;
             const twoThirdsHeight = buttonHeight * (2 / 3);
-
             if (clickY > twoThirdsHeight) {
-                putOnBottom = true; // 下1/3にドロップされたら下に戻す
+                putOnBottom = true;
             }
         } else {
-            // ドロップイベントがない場合は、従来の確認ダイアログを表示
             if (confirm(`${cardData.name}をデッキの下に戻しますか？`)) {
                 putOnBottom = true;
             }
@@ -73,31 +96,14 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
             showToast('cardMoveToast', `${cardData.name}をデッキの上に戻しました`);
         }
     } else if (targetZoneName === 'void') {
-        // カードをボイドに移動する場合、単にソースから削除し、どこにも追加しない
         if (!confirm(`${cardData.name}をゲームから除外していいですか？`)) {
-            // ユーザーがキャンセルした場合、カードを元の場所に戻す
             sourceArray.splice(cardIndex, 0, cardData);
-            renderAll(); // 元に戻した状態を反映
-            return; // 処理を中断
+            renderAll();
+            return;
         }
-        // ユーザーがOKした場合、カードは既にソースから削除されているので何もしない
-    } else if (targetZoneName === 'field' && sourceZoneId !== 'field') {
-        showCostModal(cardData, (cost) => {
-            if (!payCostFromReserve(cost)) {
-                sourceArray.splice(cardIndex, 0, cardData);
-                renderAll();
-                return;
-            }
-            const targetArray = getArrayByZoneName(targetZoneName);
-            if (targetArray) targetArray.push(cardData);
-            renderAll();
-        }, () => {
-            // キャンセル時のコールバック
-            sourceArray.splice(cardIndex, 0, cardData);
-            renderAll();
-        });
-        return; else { // This 'else' block handles all other target zones (hand, trash, burst, life, reserve, count)
-        // 手札に戻す場合は回転状態をリセット
+        // Card is already removed, so we just continue to the post-move logic
+    } else {
+        // All other sync zones (hand, trash, etc.)
         if (targetZoneName === 'hand') {
             cardData.isRotated = false;
             cardData.isExhausted = false;
@@ -106,7 +112,7 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
         if (targetArray) targetArray.push(cardData);
     }
 
-    // コア移動のフラグが立っている場合のみ、コアをリザーブに移動し、カード上のコアを空にする
+    // --- POST-MOVE LOGIC for all SYNC paths ---
     if (shouldTransferCoresToReserve) {
         console.log(`[moveCardData] Transferring cores to reserve. Current reserveCores:`, reserveCores);
         cardData.coresOnCard.forEach(core => {
