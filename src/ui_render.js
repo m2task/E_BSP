@@ -226,6 +226,42 @@ export function renderTrashModalContent() {
     });
 }
 
+export function showCostModal(cardData, callback, cancelCallback) {
+    const costModal = document.getElementById('costModal');
+    const costGrid = document.getElementById('costGrid');
+    costGrid.innerHTML = '';
+
+    for (let i = 1; i <= 9; i++) {
+        const button = document.createElement('button');
+        button.textContent = i;
+        button.addEventListener('click', () => {
+            costModal.style.display = 'none';
+            callback(i);
+        });
+        costGrid.appendChild(button);
+    }
+
+    const cancelButton = document.createElement('button');
+    cancelButton.textContent = 'キャンセル';
+    cancelButton.style.gridColumn = '1 / -1'; // 横3列にまたがるように
+    cancelButton.addEventListener('click', () => {
+        costModal.style.display = 'none';
+        if (cancelCallback) cancelCallback();
+    });
+    costGrid.appendChild(cancelButton);
+
+    costModal.style.display = 'flex';
+
+    const closeModalOnClickOutside = (e) => {
+        if (e.target === costModal) {
+            costModal.style.display = 'none';
+            if (cancelCallback) cancelCallback();
+            costModal.removeEventListener('click', closeModalOnClickOutside);
+        }
+    };
+    costModal.addEventListener('click', closeModalOnClickOutside);
+}
+
 
 // --- 初期化 ---
 document.addEventListener('DOMContentLoaded', () => {
