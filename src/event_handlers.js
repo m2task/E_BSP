@@ -363,7 +363,7 @@ export function openModal(modalId, contentId, renderContent) {
             document.removeEventListener('mousedown', closeModalOnClick);
         }
     };
-    setTimeout(() => document.addEventListener('mousedown', closeModalOnClick), 0);
+    document.addEventListener('mousedown', closeModalOnClick);
 }
 
 export function addDeckCore() {
