@@ -139,13 +139,45 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement, coresToMoveFr
 
 export function handleCoreDropOnZone(e, targetElement, coresToMoveFromTouch = null) {
     const targetZoneName = getZoneName(targetElement);
-    const type = coresToMoveFromTouch ? (coresToMoveFromTouch[0].sourceArrayName === 'void' ? 'voidCore' : 'core') : e.dataTransfer.getData("type");
+    let coresToMove = coresToMoveFromTouch; // タッチイベントから渡されたコアデータ
 
-    let coresToMove = coresToMoveFromTouch || [];
-    if (!coresToMoveFromTouch) {
-        if (type === 'multiCore' || type === 'coreFromCard' || type === 'core') {
+    let type;
+    if (coresToMoveFromTouch) {
+        // タッチイベントの場合
+        if (coresToMoveFromTouch.length > 0 && coresToMoveFromTouch[0].sourceArrayName === 'void') {
+            type = 'voidCore';
+        } else {
+            type = 'core'; // 単一または複数コア
+        }
+    } else {
+        // 標準のドラッグ＆ドロップイベントの場合
+        type = e.dataTransfer.getData("type");
+        if (type === 'multiCore' || type === 'coreFromCard' || type === 'core' || type === 'voidCore') {
             coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
         }
+    }
+
+    // coresToMove が null または undefined の場合は空の配列として扱う
+    if (!coresToMove) {
+        coresToMove = [];
+    }
+
+    // voidCore の処理は特別なので最初に処理
+    if (type === 'voidCore') {
+        setVoidChargeCount(0);
+        showToast('voidToast', '', true);
+
+        const movedCount = coresToMove.length;
+        for (let i = 0; i < movedCount; i++) {
+            if (targetZoneName === 'trash') trashCores.push("blue");
+            else if (targetZoneName === 'reserve') reserveCores.push("blue");
+            else if (targetZoneName === 'life') lifeCores.push("blue");
+            else if (targetZoneName === 'count') countCores.push("blue");
+        }
+        const toastMessage = `${movedCount}個増やしました`;
+        showToast('voidToast', toastMessage);
+        renderAll();
+        return;
     }
 
     const coresToActuallyMove = [];
