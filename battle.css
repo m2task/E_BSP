@@ -516,7 +516,7 @@ body {
   z-index: 200;
   align-items: center;
   justify-content: center;
-  pointer-events: auto; /* 背景のクリックを有効化 */
+  pointer-events: none; /* 背景はクリックを通す */
 }
 
 .modal-content {
