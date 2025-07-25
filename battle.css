@@ -270,7 +270,7 @@ body {
       border-right: 1px solid #999;
       border-radius: 5px 5px 0 0; /* 上角を丸める */
       cursor: pointer;
-      z-index: 99;
+      z-index: 101; /* hand-zone-container (z-index: 100) より前面に */
     }
 
     /* モバイルデバイス用のスタイル */
@@ -290,6 +290,11 @@ body {
     }
 
     .hidden { display: none; }
+
+    /* 手札が閉じたときに hand-toggle を非表示にする */
+    .hand-zone-container.collapsed .hand-toggle {
+      display: none;
+    }
 
     /* トラッシュ一覧モーダルのスタイル */
     #trashModal {
