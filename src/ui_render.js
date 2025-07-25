@@ -256,6 +256,11 @@ export function showCostModal(cardData, callback, cancelCallback) {
     costModal.style.display = 'flex';
 
     const closeModalOnClickOutside = (e) => {
+        // モーダルコンテンツ自体がクリックされた場合は閉じない
+        if (e.target.closest('.modal-content')) {
+            return;
+        }
+        // モーダルの背景がクリックされた場合のみ閉じる
         if (e.target === costModal) {
             costModal.style.display = 'none';
             if (cancelCallback) cancelCallback();
