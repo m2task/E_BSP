@@ -535,13 +535,18 @@ function handleTouchEnd(e) {
     if (isDragging) {
         // ドラッグが終了した場合の処理
         if (touchDraggedElement) {
-            touchDraggedElement.remove(); // クローンを削除
-            setTouchDraggedElement(null);
+            // 一時的にドラッグ中の要素を非表示にして、その下の要素を検出
+            touchDraggedElement.style.display = 'none';
         }
 
         // ドロップ先の要素を特定
-        // `document.elementFromPoint` を使用して、ドロップされた位置の要素を取得
         const dropTarget = document.elementFromPoint(currentTouchX, currentTouchY);
+
+        // ドラッグ中の要素を再度表示（または削除）
+        if (touchDraggedElement) {
+            touchDraggedElement.remove(); // クローンを削除
+            setTouchDraggedElement(null);
+        }
 
         if (dropTarget) {
             const originalElement = touchedElement; // タッチ開始時の要素
