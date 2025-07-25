@@ -79,7 +79,7 @@ export function renderField() {
                 const coreDiv = document.createElement('div');
                 coreDiv.className = `core ${core.type}`;
                 coreDiv.draggable = true;
-                coreDiv.dataset.index = index; // カード上のコアのインデックス
+                coreDiv.dataset.id = core.id; // コアのIDを設定
                 coreDiv.dataset.coreType = core.type;
                 coreDiv.dataset.sourceCardId = cardData.id; // コアの親カードID
                 coreDiv.style.position = 'absolute';
@@ -92,7 +92,7 @@ export function renderField() {
                 // 選択状態を反映
                 const isSelected = selectedCores.some(c => {
                     // selectedCores内の要素がsourceCardIdを持つ場合のみ比較
-                    return c.sourceCardId && c.sourceCardId === cardData.id && c.index === index;
+                    return c.sourceCardId && c.sourceCardId === cardData.id && c.id === core.id; // IDで比較
                 });
                 if (isSelected) {
                     coreDiv.classList.add('selected');
@@ -127,17 +127,17 @@ export function renderCores(containerId, coreArray) {
     const container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = "";
-    coreArray.forEach((coreType, index) => {
+    coreArray.forEach((core, index) => {
         const div = document.createElement("div");
-        div.className = `core ${coreType}`;
+        div.className = `core ${core.type}`;
         div.draggable = true;
-        div.dataset.index = index;
-        div.dataset.coreType = coreType;
+        div.dataset.id = core.id; // コアのIDを設定
+        div.dataset.coreType = core.type;
         div.addEventListener('click', handleCoreClick); // ここでhandleCoreClickを呼び出す
         // 選択状態を反映
         const isSelected = selectedCores.some(c => {
             // selectedCores内の要素がsourceArrayNameを持つ場合のみ比較
-            return c.sourceArrayName && c.sourceArrayName === containerId && c.index === index;
+            return c.sourceArrayName && c.sourceArrayName === containerId && c.id === core.id; // IDで比較
         });
         if (isSelected) {
             div.classList.add('selected');

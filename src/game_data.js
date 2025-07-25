@@ -6,8 +6,8 @@ export let trash = [];
 export let burst = [];
 export let openArea = [];
 
-export let lifeCores = ["blue", "blue", "blue", "blue", "blue"];
-export let reserveCores = ["blue", "blue", "blue", "soul"];
+export let lifeCores = []; // 初期化時にコアオブジェクトを生成
+export let reserveCores = []; // 初期化時にコアオブジェクトを生成
 export let countCores = [];
 export let trashCores = [];
 
@@ -18,6 +18,12 @@ export let handVisible = true;
 export let handPinned = false;
 export let countShowCountAsNumber = true;
 export let cardIdCounter = 0;
+export let coreIdCounter = 0; // コアのユニークID用カウンター
+
+// コアオブジェクトを生成するヘルパー関数
+export function createCore(type) {
+    return { id: `core-${coreIdCounter++}`, type: type };
+}
 
 // --- ドラッグ情報とカード位置 ---
 export let draggedElement = null;
@@ -26,7 +32,7 @@ export let offsetY = 0;
 export let cardPositions = {}; // { cardId: { left, top } }
 
 // --- コア選択・ドラッグ関連 ---
-export let selectedCores = []; // 選択されたコアの情報を保持 { type: 'blue', sourceArrayName: 'lifeCores', index: 0 }
+export let selectedCores = []; // 選択されたコアの情報を保持 { id: 'core-X', type: 'blue', sourceArrayName: 'lifeCores' } または { id: 'core-X', type: 'blue', sourceCardId: 'card-Y' }
 export let draggedCoreData = null; // ドラッグ中のコアデータ（複数選択対応）
 
 // --- タッチドラッグ関連 ---
@@ -48,10 +54,13 @@ export function setHand(newHand) { hand = newHand; }
 export function setTrash(newTrash) { trash = newTrash; }
 export function setBurst(newBurst) { burst = newBurst; }
 export function setOpenArea(newOpenArea) { openArea = newOpenArea; }
-export function setLifeCores(newLCC) { lifeCores = newLCC; }
-export function setReserveCores(newRCC) { reserveCores = newRCC; }
-export function setCountCores(newDCC) { countCores = newDCC; }
-export function setTrashCores(newTCC) { trashCores = newTCC; }
+
+// コア配列のセッターを更新し、コアオブジェクトを扱うようにする
+export function setLifeCores(cores) { lifeCores = cores.map(core => typeof core === 'string' ? createCore(core) : core); }
+export function setReserveCores(cores) { reserveCores = cores.map(core => typeof core === 'string' ? createCore(core) : core); }
+export function setCountCores(cores) { countCores = cores.map(core => typeof core === 'string' ? createCore(core) : core); }
+export function setTrashCores(cores) { trashCores = cores.map(core => typeof core === 'string' ? createCore(core) : core); }
+
 export function setVoidChargeCount(count) { voidChargeCount = count; }
 export function setToastTimeout(timeout) { toastTimeout = timeout; }
 export function setHandVisible(visible) { handVisible = visible; }

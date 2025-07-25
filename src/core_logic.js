@@ -233,10 +233,6 @@ export function removeCoresFromSource(cores) {
     for (const sourceKey in groupedCores) {
         const coresToRemoveFromThisSource = groupedCores[sourceKey];
 
-        // Sort cores to remove from this source by index in descending order
-        // This is crucial for splicing multiple elements from the same array
-        coresToRemoveFromThisSource.sort((a, b) => b.index - a.index);
-
         if (sourceKey.startsWith('array:')) {
             const sourceArrayName = sourceKey.substring(6); // "array:".length
             const sourceArray = getArrayByZoneName(sourceArrayName);
@@ -245,12 +241,10 @@ export function removeCoresFromSource(cores) {
             }
 
             for (const coreInfo of coresToRemoveFromThisSource) {
-                const actualIndex = coreInfo.index; // Assuming coreInfo.type is the actual core value
-                if (isNaN(actualIndex) || actualIndex < 0 || actualIndex >= sourceArray.length) {
-                    console.error(`Invalid index for core removal in ${sourceArrayName}: ${actualIndex}. CoreInfo:`, coreInfo);
-                    continue; // 無効なインデックスの場合はスキップ
+                const indexToRemove = sourceArray.findIndex(c => c.id === coreInfo.id);
+                if (indexToRemove > -1) {
+                    sourceArray.splice(indexToRemove, 1);
                 }
-                sourceArray.splice(actualIndex, 1);
             }
 
         } else if (sourceKey.startsWith('card:')) {
@@ -261,12 +255,10 @@ export function removeCoresFromSource(cores) {
             }
 
             for (const coreInfo of coresToRemoveFromThisSource) {
-                const actualIndex = coreInfo.index; // Assuming coreInfo.type is the actual core value
-                if (isNaN(actualIndex) || actualIndex < 0 || actualIndex >= sourceCard.coresOnCard.length) {
-                    console.error(`Invalid index for core removal on card ${sourceCardId}: ${actualIndex}. CoreInfo:`, coreInfo);
-                    continue; // 無効なインデックスの場合はスキップ
+                const indexToRemove = sourceCard.coresOnCard.findIndex(c => c.id === coreInfo.id);
+                if (indexToRemove > -1) {
+                    sourceCard.coresOnCard.splice(indexToRemove, 1);
                 }
-                sourceCard.coresOnCard.splice(actualIndex, 1);
             }
         }
     }
