@@ -280,7 +280,7 @@ body {
       }
 
       .hand-zone-container.collapsed {
-        transform: translateY(calc(100% - 40px)); /* 閉じたときに開閉ボタンが見えるように調整 */
+        transform: translateY(100%); /* 完全に非表示にする */
       }
 
       .open-hand-toggle, .open-trash-toggle {

@@ -71,7 +71,16 @@ export function setupEventListeners() {
     const handToggle = document.getElementById('handToggle');
 
     if (isMobileDevice()) {
-        // モバイルデバイスの場合：
+        // モバイルデバイスの場合：タップで開閉
+        // handToggle (手札を閉じるボタン) にクリックイベントを追加
+        handToggle.addEventListener('click', (e) => {
+            e.stopPropagation(); // イベントの伝播を停止
+            if (!handPinned) {
+                handZoneContainer.classList.add('collapsed');
+                openHandButton.classList.remove('hidden');
+            }
+        });
+
         // openHandButton (手札を開くボタン) にクリックイベントを追加
         openHandButton.addEventListener('click', (e) => {
             e.stopPropagation(); // イベントの伝播を停止
