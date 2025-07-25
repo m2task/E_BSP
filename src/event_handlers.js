@@ -1,16 +1,11 @@
 // src/event_handlers.js
-import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, handPinned, setHandPinned } from './game_data.js';
+import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging } from './game_data.js';
 import { renderAll, renderTrashModalContent } from './ui_render.js';
 import { showToast, getZoneName, isMobileDevice } from './utils.js'; // isMobileDevice をインポート
 import { drawCard, moveCardData, openDeck, discardDeck } from './card_logic.js';
 import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone } from './core_logic.js';
 
 export function setupEventListeners() {
-    document.addEventListener('dragstart', handleDragStart);
-    document.addEventListener('dragend', handleDragEnd);
-    document.addEventListener('dragover', (e) => e.preventDefault());
-    document.addEventListener('drop', handleDrop);
-
     // デッキボタンのドラッグイベントリスナーを追加
     const deckButton = document.querySelector('.deck-button');
     deckButton.addEventListener('dragenter', handleDeckDragEnter);
@@ -71,6 +66,10 @@ export function setupEventListeners() {
     const handToggle = document.getElementById('handToggle');
 
     if (isMobileDevice()) {
+        // モバイルデバイスの場合：タッチイベントによるドラッグ＆ドロップ
+        document.addEventListener('touchstart', handleTouchStart, { passive: false });
+        // touchmove と touchend は handleTouchStart 内で動的に追加・削除する
+
         // モバイルデバイスの場合：タップで開閉
         // handToggle (手札を閉じるボタン) にクリックイベントを追加
         handToggle.addEventListener('click', (e) => {
@@ -102,34 +101,11 @@ export function setupEventListeners() {
             }
         });
     } else {
-        // PCの場合：マウスオーバーで開閉
-        handZoneContainer.addEventListener('mouseover', () => {
-            if (!handPinned) {
-                handZoneContainer.classList.remove('collapsed');
-                openHandButton.classList.add('hidden');
-            }
-        });
-
-        handZoneContainer.addEventListener('mouseleave', () => {
-            if (!handPinned) {
-                handZoneContainer.classList.add('collapsed');
-                openHandButton.classList.remove('hidden');
-            }
-        });
-
-        openHandButton.addEventListener('mouseover', () => {
-            if (!handPinned) {
-                handZoneContainer.classList.remove('collapsed');
-                openHandButton.classList.add('hidden');
-            }
-        });
-
-        openHandButton.addEventListener('mouseleave', () => {
-            if (!handPinned) {
-                handZoneContainer.classList.add('collapsed');
-                openHandButton.classList.remove('hidden');
-            }
-        });
+        // PCの場合のみ標準のドラッグ＆ドロップイベントを有効にする
+        document.addEventListener('dragstart', handleDragStart);
+        document.addEventListener('dragend', handleDragEnd);
+        document.addEventListener('dragover', (e) => e.preventDefault());
+        document.addEventListener('drop', handleDrop);
     }
 
     // ドラッグ中のカードが「手札を開く」ボタンの上に来たら手札を開く (これはデバイス共通で維持)
@@ -435,4 +411,133 @@ export function refreshAll() {
     }
 
     renderAll();
+}
+
+// --- タッチイベントハンドラ --- 
+let touchedElement = null; // タッチ開始時の要素を保持
+const DRAG_THRESHOLD = 10; // ドラッグ開始と判定する移動量（ピクセル）
+
+function handleTouchStart(e) {
+    if (e.touches.length !== 1) return; // シングルタッチのみを処理
+
+    touchedElement = e.target.closest('.card, .core, #voidCore');
+    if (!touchedElement) return; // カード、コア、ボイドコア以外は無視
+
+    e.preventDefault(); // デフォルトのスクロールなどを抑制
+
+    // 初期タッチ位置を記録
+    setInitialTouchX(e.touches[0].clientX);
+    setInitialTouchY(e.touches[0].clientY);
+    setCurrentTouchX(e.touches[0].clientX); // 初期値として設定
+    setCurrentTouchY(e.touches[0].clientY); // 初期値として設定
+
+    setIsDragging(false); // ドラッグ開始フラグをリセット
+
+    // touchmove と touchend イベントリスナーを動的に追加
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+}
+
+function startTouchDrag(e, elementToDrag) {
+    // ドラッグ開始時の処理
+    // e.preventDefault(); // handleTouchStart で既に preventDefault しているため不要
+
+    const clone = elementToDrag.cloneNode(true);
+    clone.classList.add('dragging'); // ドラッグ中のスタイルを適用
+    clone.style.position = 'fixed';
+    clone.style.zIndex = '1000';
+    document.body.appendChild(clone);
+    setTouchDraggedElement(clone);
+
+    const rect = elementToDrag.getBoundingClientRect();
+    setTouchOffsetX(e.touches[0].clientX - rect.left);
+    setTouchOffsetY(e.touches[0].clientY - rect.top);
+
+    // クローンの初期位置を設定
+    clone.style.left = `${e.touches[0].clientX - touchOffsetX}px`;
+    clone.style.top = `${e.touches[0].clientY - touchOffsetY}px`;
+
+    setIsDragging(true); // ドラッグ開始
+}
+
+function handleTouchMove(e) {
+    if (e.touches.length !== 1) return; // シングルタッチのみを処理
+
+    setCurrentTouchX(e.touches[0].clientX);
+    setCurrentTouchY(e.touches[0].clientY);
+
+    if (!isDragging) {
+        // ドラッグがまだ開始されていない場合、移動量をチェック
+        const deltaX = Math.abs(currentTouchX - initialTouchX);
+        const deltaY = Math.abs(currentTouchY - initialTouchY);
+
+        if (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD) {
+            // 一定の移動量を超えたらドラッグ開始
+            if (touchedElement) {
+                startTouchDrag(e, touchedElement);
+            }
+        }
+    }
+
+    if (isDragging && touchDraggedElement) {
+        e.preventDefault(); // スクロールなどのデフォルト動作を抑制
+        // クローンを指の位置に合わせて移動
+        touchDraggedElement.style.left = `${currentTouchX - touchOffsetX}px`;
+        touchDraggedElement.style.top = `${currentTouchY - touchOffsetY}px`;
+
+        // ドロップ先のハイライト処理（オプション）
+        // ここにドロップ可能なゾーンをハイライトするロジックを追加できます
+    }
+}
+
+function handleTouchEnd(e) {
+    // イベントリスナーを削除
+    document.removeEventListener('touchmove', handleTouchMove);
+    document.removeEventListener('touchend', handleTouchEnd);
+
+    if (isDragging) {
+        // ドラッグが終了した場合の処理
+        if (touchDraggedElement) {
+            touchDraggedElement.remove(); // クローンを削除
+            setTouchDraggedElement(null);
+        }
+
+        // ドロップ先の要素を特定
+        // `document.elementFromPoint` を使用して、ドロップされた位置の要素を取得
+        const dropTarget = document.elementFromPoint(currentTouchX, currentTouchY);
+
+        if (dropTarget) {
+            const originalElement = touchedElement; // タッチ開始時の要素
+            const cardElement = originalElement.closest('.card');
+            const coreElement = originalElement.closest('.core, #voidCore');
+
+            if (cardElement) { // カードのドラッグの場合
+                const cardId = cardElement.dataset.id;
+                const sourceZoneId = cardElement.parentElement.id;
+
+                const targetCardElement = dropTarget.closest('.card');
+                const targetZoneElement = dropTarget.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea');
+
+                if (targetZoneElement) {
+                    const targetZoneName = getZoneName(targetZoneElement);
+                    moveCardData(cardId, sourceZoneId, targetZoneName);
+                } else if (targetCardElement) {
+                    // カードからカードへのドロップは現在未対応
+                    console.log("Card dropped on another card (not yet supported)");
+                }
+            } else if (coreElement) { // コアのドラッグの場合
+                // コアのドラッグ処理をここに実装
+                console.log("Core dropped (needs implementation)");
+                // 例: handleCoreDropOnZone(e, targetZoneElement); または handleCoreDropOnCard(e, targetCardElement);
+            }
+        }
+    } else {
+        // 短いタップの場合（ドラッグと判定されなかった場合）
+        // ここで元の要素に対するクリックイベントを再トリガーする
+        if (touchedElement) {
+            touchedElement.click();
+        }
+    }
+    setIsDragging(false); // ドラッグフラグをリセット
+    touchedElement = null; // タッチ開始要素をリセット
 }

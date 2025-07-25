@@ -29,6 +29,16 @@ export let cardPositions = {}; // { cardId: { left, top } }
 export let selectedCores = []; // 選択されたコアの情報を保持 { type: 'blue', sourceArrayName: 'lifeCores', index: 0 }
 export let draggedCoreData = null; // ドラッグ中のコアデータ（複数選択対応）
 
+// --- タッチドラッグ関連 ---
+export let touchDraggedElement = null; // タッチでドラッグ中の要素のクローン
+export let initialTouchX = 0;
+export let initialTouchY = 0;
+export let currentTouchX = 0;
+export let currentTouchY = 0;
+export let touchOffsetX = 0;
+export let touchOffsetY = 0;
+export let isDragging = false; // ドラッグ中かどうかを示すフラグ
+
 export const discardState = { counter: 0, names: [], timer: null };
 
 // Setters for game data
@@ -57,3 +67,13 @@ export function setDraggedCoreData(data) { draggedCoreData = data; }
 export function setDiscardCounter(count) { discardState.counter = count; }
 export function setDiscardedCardNames(names) { discardState.names = names; }
 export function setDiscardToastTimer(timer) { discardState.timer = timer; }
+
+// Setters for touch drag data
+export function setTouchDraggedElement(element) { touchDraggedElement = element; }
+export function setInitialTouchX(x) { initialTouchX = x; }
+export function setInitialTouchY(y) { initialTouchY = y; }
+export function setCurrentTouchX(x) { currentTouchX = x; }
+export function setCurrentTouchY(y) { currentTouchY = y; }
+export function setTouchOffsetX(x) { touchOffsetX = x; }
+export function setTouchOffsetY(y) { touchOffsetY = y; }
+export function setIsDragging(dragging) { isDragging = dragging; }
