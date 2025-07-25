@@ -591,20 +591,4 @@ function handleTouchEnd(e) {
                 }
                 clearSelectedCores(); // コアのドラッグ終了時に選択を解除
             }
-        }
-    } else {
-        // 短いタップの場合（ドラッグと判定されなかった場合）
-        // ここで元の要素に対するクリックイベントを再トリガーする
-        if (touchedElement) {
-            // コアの場合は handleCoreClick を呼び出す
-            if (touchedElement.classList.contains('core') || touchedElement.id === 'voidCore') {
-                handleCoreClick({ target: touchedElement }); // イベントオブジェクトを模倣
-            } else {
-                touchedElement.click();
-            }
-        }
-    }
-    setIsDragging(false); // ドラッグフラグをリセット
-    touchedElement = null; // タッチ開始要素をリセット
-    setDraggedCoreData(null); // ドラッグ中のコアデータをリセット
 }

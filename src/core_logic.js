@@ -51,10 +51,9 @@ export function clearSelectedCores() {
     renderAll(); // 選択状態をクリアしたら再描画してDOMを更新
 }
 
-export function handleCoreDropOnCard(e, targetCardElement) {
+export function handleCoreDropOnCard(e, targetCardElement, coresToMoveFromTouch = null) {
     e.preventDefault();
-    const type = e.dataTransfer.getData("type");
-    const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
+    const coresToMove = coresToMoveFromTouch || JSON.parse(e.dataTransfer.getData("cores"));
     const targetCardId = targetCardElement.dataset.id;
     const targetCard = field.find(card => card.id === targetCardId);
 
@@ -108,9 +107,9 @@ export function handleCoreDropOnCard(e, targetCardElement) {
     }
 }
 
-export function handleCoreInternalMoveOnCard(e, targetCardElement) {
+export function handleCoreInternalMoveOnCard(e, targetCardElement, coresToMoveFromTouch = null) {
     e.preventDefault();
-    const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
+    const coresToMove = coresToMoveFromTouch || JSON.parse(e.dataTransfer.getData("cores"));
     const targetCardId = targetCardElement.dataset.id;
     const targetCard = field.find(card => card.id === targetCardId);
 
@@ -138,31 +137,15 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement) {
     renderAll();
 }
 
-export function handleCoreDropOnZone(e, targetElement) {
+export function handleCoreDropOnZone(e, targetElement, coresToMoveFromTouch = null) {
     const targetZoneName = getZoneName(targetElement);
-    const type = e.dataTransfer.getData("type");
+    const type = coresToMoveFromTouch ? (coresToMoveFromTouch[0].sourceArrayName === 'void' ? 'voidCore' : 'core') : e.dataTransfer.getData("type");
 
-    if (type === 'voidCore') {
-        const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
-        setVoidChargeCount(0);
-        showToast('voidToast', '', true);
-
-        const movedCount = coresToMove.length;
-        for (let i = 0; i < movedCount; i++) {
-            if (targetZoneName === 'trash') trashCores.push("blue");
-            else if (targetZoneName === 'reserve') reserveCores.push("blue");
-            else if (targetZoneName === 'life') lifeCores.push("blue");
-            else if (targetZoneName === 'count') countCores.push("blue");
+    let coresToMove = coresToMoveFromTouch || [];
+    if (!coresToMoveFromTouch) {
+        if (type === 'multiCore' || type === 'coreFromCard' || type === 'core') {
+            coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
         }
-        const toastMessage = `${movedCount}個増やしました`;
-        showToast('voidToast', toastMessage);
-        renderAll();
-        return;
-    }
-
-    let coresToMove = [];
-    if (type === 'multiCore' || type === 'coreFromCard' || type === 'core') {
-        coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
     }
 
     const coresToActuallyMove = [];
