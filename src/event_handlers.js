@@ -446,6 +446,7 @@ function startTouchDrag(e, elementToDrag) {
     clone.classList.add('dragging'); // ドラッグ中のスタイルを適用
     clone.style.position = 'fixed';
     clone.style.zIndex = '1000';
+    clone.style.transition = 'none'; // ドラッグ中はトランジションを無効にする
     document.body.appendChild(clone);
     setTouchDraggedElement(clone);
 
