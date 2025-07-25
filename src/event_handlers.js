@@ -349,12 +349,16 @@ export function handleCardDrop(e) {
 }
 
 export function openTrashModal() {
-    const modal = document.getElementById("trashModal");
-    renderTrashModalContent();
+    openModal('trashModal', 'trashModalContent', renderTrashModalContent);
+}
+
+function openModal(modalId, contentId, renderContent) {
+    const modal = document.getElementById(modalId);
+    renderContent();
     modal.style.display = "flex";
 
     const closeModalOnClick = e => {
-        if (!document.getElementById("trashModalContent").contains(e.target)) {
+        if (!document.getElementById(contentId).contains(e.target)) {
             modal.style.display = "none";
             document.removeEventListener('mousedown', closeModalOnClick);
         }

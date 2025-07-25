@@ -3,6 +3,7 @@ import { deck, hand, field, trash, burst, reserveCores, discardState, openArea, 
 import { renderAll, showCostModal } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
 import { payCostFromReserve } from './core_logic.js';
+import { openModal } from './event_handlers.js';
 
 export function drawCard(fromBottom = false) {
     if (deck.length > 0) {
@@ -126,8 +127,7 @@ export function openDeck() {
     const openedCard = deck.shift();
     setOpenArea([...openArea, openedCard]);
 
-    const openAreaModal = document.getElementById('openAreaModal');
-    openAreaModal.style.display = 'flex';
+    openModal('openAreaModal', 'openArea', renderOpenArea);
 
     renderAll();
 }
