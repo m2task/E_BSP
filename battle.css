@@ -508,16 +508,15 @@ body {
 .modal-background {
   display: none;
   position: fixed;
-  top: 10vh;
-  left: 50%;
-  transform: translateX(-50%);
-  width: auto;
-  height: auto;
-  background: none;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
   z-index: 200;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  pointer-events: none; /* 背景はクリックを通す */
+  pointer-events: auto; /* 背景のクリックを有効化 */
 }
 
 .modal-content {
