@@ -28,67 +28,72 @@ export function drawCard(fromBottom = false) {
 }
 
 export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = null, dropTargetElement = null) {
-    console.log(`[moveCardData] Card ID: ${cardId}, Source Zone: ${sourceZoneId}, Target Zone: ${targetZoneName}`);
+    console.log(`[moveCardData] Initiating move for Card ID: ${cardId} from ${sourceZoneId} to ${targetZoneName}`);
+
     const sourceArray = getArrayByZoneName(sourceZoneId);
     if (!sourceArray) {
-        console.warn(`[moveCardData] Source array not found for zone: ${sourceZoneId}`);
+        console.error(`[moveCardData] Invalid source zone: ${sourceZoneId}`);
         return;
     }
+
     const cardIndex = sourceArray.findIndex(c => c.id === cardId);
     if (cardIndex === -1) {
-        console.warn(`[moveCardData] Card not found in source array: ${cardId}`);
+        console.error(`[moveCardData] Card with ID ${cardId} not found in ${sourceZoneId}`);
         return;
     }
 
-    const [cardData] = sourceArray.splice(cardIndex, 1); // カードを一時的にソースから削除
+    const [cardData] = sourceArray.splice(cardIndex, 1);
     console.log(`[moveCardData] Card data extracted:`, cardData);
 
-    // コアをリザーブに移動するかどうかのフラグを、移動元がフィールドで、移動先がフィールド以外の場合に設定
-    let shouldTransferCoresToReserve = (sourceZoneId === 'field' && targetZoneName !== 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0);
-    console.log(`[moveCardData] shouldTransferCoresToReserve: ${shouldTransferCoresToReserve}, Cores on card:`, cardData.coresOnCard);
-
-    // --- ASYNC PATH: Moving to Field ---
+    // 非同期処理（フィールドへの移動）
     if (targetZoneName === 'field' && sourceZoneId !== 'field') {
+        console.log(`[moveCardData] Async path: Moving to field.`);
         showCostModal(cardData,
-            (cost) => { // Success callback
-                if (!payCostFromReserve(cost)) {
-                    // Payment failed, return card to source
+            (cost) => { // Success callback (cost paid)
+                console.log(`[moveCardData] Cost paid: ${cost}`);
+                if (payCostFromReserve(cost)) {
+                    addField(cardData);
+                } else {
+                    console.log(`[moveCardData] Cost payment failed. Returning card to ${sourceZoneId}`);
                     sourceArray.splice(cardIndex, 0, cardData);
-                    renderAll();
-                    return;
                 }
-                // Payment successful, add to field
-                const targetArray = getArrayByZoneName(targetZoneName);
-                if (targetArray) targetArray.push(cardData);
                 renderAll();
             },
-            () => { // Cancel callback (click outside)
-                // Place card on field without paying cost
-                const targetArray = getArrayByZoneName(targetZoneName);
-                if (targetArray) targetArray.push(cardData);
+            () => { // Cancel callback (no cost paid)
+                console.log(`[moveCardData] Cost payment cancelled. Moving to field without cost.`);
+                addField(cardData);
                 renderAll();
             }
         );
-        return; // Stop the function here, as the rest is handled by callbacks
+    } else {
+        // 同期処理（フィールド以外への移動）
+        console.log(`[moveCardData] Sync path: Moving to ${targetZoneName}`);
+        handleSyncCardMove(cardData, sourceZoneId, targetZoneName, dropEvent, dropTargetElement);
+        renderAll();
     }
+}
 
-    // --- SYNC PATHS ---
+function addField(cardData) {
+    const targetArray = getArrayByZoneName('field');
+    if (targetArray) {
+        targetArray.push(cardData);
+    }
+}
+
+function handleSyncCardMove(cardData, sourceZoneId, targetZoneName, dropEvent, dropTargetElement) {
+    let shouldTransferCoresToReserve = (sourceZoneId === 'field' && targetZoneName !== 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0);
+
     if (targetZoneName === 'deck') {
         let putOnBottom = false;
         if (dropEvent && dropTargetElement) {
             const rect = dropTargetElement.getBoundingClientRect();
             const clickY = dropEvent.clientY - rect.top;
-            const buttonHeight = rect.height;
-            const twoThirdsHeight = buttonHeight * (2 / 3);
-            if (clickY > twoThirdsHeight) {
+            if (clickY > rect.height * (2 / 3)) {
                 putOnBottom = true;
             }
         } else {
-            if (confirm(`${cardData.name}をデッキの下に戻しますか？`)) {
-                putOnBottom = true;
-            }
+            putOnBottom = confirm(`${cardData.name}をデッキの下に戻しますか？`);
         }
-
         if (putOnBottom) {
             deck.push(cardData);
             showToast('cardMoveToast', `${cardData.name}をデッキの下に戻しました`);
@@ -98,39 +103,30 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
         }
     } else if (targetZoneName === 'void') {
         if (!confirm(`${cardData.name}をゲームから除外していいですか？`)) {
+            const sourceArray = getArrayByZoneName(sourceZoneId);
+            const cardIndex = sourceArray.findIndex(c => c.id === cardData.id);
             sourceArray.splice(cardIndex, 0, cardData);
-            renderAll();
             return;
         }
-        // Card is already removed, so we just continue to the post-move logic
     } else {
-        // All other sync zones (hand, trash, etc.)
         if (targetZoneName === 'hand') {
             cardData.isRotated = false;
             cardData.isExhausted = false;
         }
         const targetArray = getArrayByZoneName(targetZoneName);
-        if (targetArray) targetArray.push(cardData);
+        if (targetArray) {
+            targetArray.push(cardData);
+        }
     }
 
-    // --- POST-MOVE LOGIC for all SYNC paths ---
     if (shouldTransferCoresToReserve) {
-        console.log(`[moveCardData] Transferring cores to reserve. Current reserveCores:`, reserveCores);
-        cardData.coresOnCard.forEach(core => {
-            console.log(`[moveCardData] Moving core type '${core.type}' to reserve.`);
-            reserveCores.push(core.type);
-        });
-        console.log(`[moveCardData] Cores moved. New reserveCores:`, reserveCores);
+        reserveCores.push(...cardData.coresOnCard.map(core => core.type));
         cardData.coresOnCard = [];
-        console.log(`[moveCardData] Cores on card cleared. cardData.coresOnCard:`, cardData.coresOnCard);
     }
 
     if (sourceZoneId === 'openArea' && openArea.length === 0) {
-        const openAreaModal = document.getElementById('openAreaModal');
-        openAreaModal.style.display = 'none';
+        document.getElementById('openAreaModal').style.display = 'none';
     }
-
-    renderAll();
 }
 
 export function openDeck() {
