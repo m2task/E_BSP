@@ -51,7 +51,7 @@ export function clearSelectedCores() {
     renderAll(); // 選択状態をクリアしたら再描画してDOMを更新
 }
 
-export function handleCoreDropOnCard(e, targetCardElement, coresToMove) {
+export function handleCoreDropOnCard(e, targetCardElement, coresToMove, dropClientX, dropClientY) {
     e.preventDefault();
     const targetCardId = targetCardElement.dataset.id;
     const targetCard = field.find(card => card.id === targetCardId);
@@ -59,22 +59,20 @@ export function handleCoreDropOnCard(e, targetCardElement, coresToMove) {
     if (!targetCard) return;
 
     const cardRect = targetCardElement.getBoundingClientRect();
-    const dropX = e.clientX - cardRect.left;
-    const dropY = e.clientY - cardRect.top;
+    // ドロップされたカード内の相対座標を計算
+    const dropX = dropClientX - cardRect.left;
+    const dropY = dropClientY - cardRect.top;
 
     // typeの代わりにcoresToMoveのsourceArrayNameが'void'かどうかで判断
     if (coresToMove[0] && coresToMove[0].sourceArrayName === 'void') {
         // ボイドコアの場合、チャージ数分の新しい青コアを生成してカードに追加
         const coresToAddCount = coresToMove.length; // coresToMoveにはチャージ数分のダミーコアが入っている
-        const coreOffsetX = 10; // コアの水平方向オフセット
-        const coreOffsetY = 10; // コアの垂直方向オフセット
 
         for (let i = 0; i < coresToAddCount; i++) {
-            const currentCoresOnCardCount = targetCard.coresOnCard.length; // 現在のコア数を取得
             targetCard.coresOnCard.push({
                 type: "blue",
-                x: dropX + (currentCoresOnCardCount * coreOffsetX),
-                y: dropY + (currentCoresOnCardCount * coreOffsetY)
+                x: dropX,
+                y: dropY
             });
         }
         setVoidChargeCount(0); // ボイドコア移動後はチャージをリセット
@@ -84,16 +82,12 @@ export function handleCoreDropOnCard(e, targetCardElement, coresToMove) {
         // 移動元からコアを削除
         removeCoresFromSource(coresToMove);
 
-        const coreOffsetX = 10; // コアの水平方向オフセット
-        const coreOffsetY = 10; // コアの垂直方向オフセット
-
         // カードにコアを追加
         for (const coreInfo of coresToMove) {
-            const currentCoresOnCardCount = targetCard.coresOnCard.length; // 現在のコア数を取得
             targetCard.coresOnCard.push({
                 type: coreInfo.type,
-                x: dropX + (currentCoresOnCardCount * coreOffsetX),
-                y: dropY + (currentCoresOnCardCount * coreOffsetY)
+                x: dropX,
+                y: dropY
             });
         }
     }

@@ -588,7 +588,7 @@ function handleTouchEnd(e) {
                         handleCoreInternalMoveOnCard(e, targetCardElement, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY);
                     } else {
                         // コアをカードにドロップ
-                        handleCoreDropOnCard(e, targetCardElement, coresToMove);
+                        handleCoreDropOnCard(e, targetCardElement, coresToMove, currentTouchX, currentTouchY);
                     }
                 } else if (targetZoneElement) {
                     // コアをゾーンにドロップ
