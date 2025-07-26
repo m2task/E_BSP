@@ -420,7 +420,7 @@ const DRAG_THRESHOLD = 10; // ドラッグ開始と判定する移動量（ピ�
 function handleTouchStart(e) {
     if (e.touches.length !== 1) return; // シングルタッチのみを処理
 
-    touchedElement = e.target.closest('.card, .core, #voidCore');
+    touchedElement = e.target.closest('.core, #voidCore, .card');
     if (!touchedElement) return; // カード、コア、ボイドコア以外は無視
 
     e.preventDefault(); // デフォルトのスクロールなどを抑制
