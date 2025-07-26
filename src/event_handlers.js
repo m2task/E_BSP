@@ -316,14 +316,13 @@ export function handleDrop(e) {
         const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
         if (targetCardElement) {
             // Check if it's an internal move within the same card
-            const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
             if (coresToMove.length === 1 && coresToMove[0].sourceCardId === targetCardElement.dataset.id) {
-                handleCoreInternalMoveOnCard(e, targetCardElement);
+                handleCoreInternalMoveOnCard(e, targetCardElement, e.clientX, e.clientY, offsetX, offsetY);
             } else {
-                handleCoreDropOnCard(e, targetCardElement);
+                handleCoreDropOnCard(e, targetCardElement, coresToMove, e.clientX, e.clientY);
             }
         } else if (targetZoneElement) {
-            handleCoreDropOnZone(e, targetZoneElement);
+            handleCoreDropOnZone(e, targetZoneElement, coresToMove);
         }
     }
     clearSelectedCores(); // ドロップ処理の最後に選択状態をクリア
