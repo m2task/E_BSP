@@ -51,10 +51,10 @@ export function clearSelectedCores() {
     renderAll(); // 選択状態をクリアしたら再描画してDOMを更新
 }
 
-export function handleCoreDropOnCard(e, targetCardElement) {
+export function handleCoreDropOnCard(e, targetCardElement, coresToMove) {
     e.preventDefault();
-    const type = e.dataTransfer.getData("type");
-    const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
+    // const type = e.dataTransfer.getData("type"); // 不要になる
+    // const coresToMove = JSON.parse(e.dataTransfer.getData("cores")); // 引数で受け取る
     const targetCardId = targetCardElement.dataset.id;
     const targetCard = field.find(card => card.id === targetCardId);
 
@@ -64,7 +64,8 @@ export function handleCoreDropOnCard(e, targetCardElement) {
     const dropX = e.clientX - cardRect.left;
     const dropY = e.clientY - cardRect.top;
 
-    if (type === 'voidCore') {
+    // typeの代わりにcoresToMoveのsourceArrayNameが'void'かどうかで判断
+    if (coresToMove[0] && coresToMove[0].sourceArrayName === 'void') {
         // ボイドコアの場合、チャージ数分の新しい青コアを生成してカードに追加
         const coresToAddCount = coresToMove.length; // coresToMoveにはチャージ数分のダミーコアが入っている
         const coreOffsetX = 10; // コアの水平方向オフセット
@@ -101,16 +102,16 @@ export function handleCoreDropOnCard(e, targetCardElement) {
     renderAll();
 
     // 最後にトーストを表示（ボイドからの場合のみ）
-    if (type === 'voidCore') {
+    if (coresToMove[0] && coresToMove[0].sourceArrayName === 'void') {
         const movedCount = coresToMove.length;
         const toastMessage = `${movedCount}個増やしました`;
         showToast('voidToast', toastMessage);
     }
 }
 
-export function handleCoreInternalMoveOnCard(e, targetCardElement) {
+export function handleCoreInternalMoveOnCard(e, targetCardElement, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY) {
     e.preventDefault();
-    const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
+    const coresToMove = draggedCoreData; // グローバル変数から取得
     const targetCardId = targetCardElement.dataset.id;
     const targetCard = field.find(card => card.id === targetCardId);
 
@@ -124,12 +125,9 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement) {
     }
 
     const cardRect = targetCardElement.getBoundingClientRect();
-    const offsetX = parseFloat(e.dataTransfer.getData("offsetX"));
-    const offsetY = parseFloat(e.dataTransfer.getData("offsetY"));
-
-    // ドロップされたカード内の相対座標を計算
-    const newX = e.clientX - cardRect.left - offsetX;
-    const newY = e.clientY - cardRect.top - offsetY;
+    // タッチイベントの座標とオフセットを使用
+    const newX = currentTouchX - cardRect.left - touchOffsetX;
+    const newY = currentTouchY - cardRect.top - touchOffsetY;
 
     // コアのデータを更新
     targetCard.coresOnCard[coreIndexOnCard].x = newX;
@@ -138,12 +136,12 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement) {
     renderAll();
 }
 
-export function handleCoreDropOnZone(e, targetElement) {
+export function handleCoreDropOnZone(e, targetElement, coresToMove) {
     const targetZoneName = getZoneName(targetElement);
-    const type = e.dataTransfer.getData("type");
+    // const type = e.dataTransfer.getData("type"); // 不要になる
 
-    if (type === 'voidCore') {
-        const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
+    // typeの代わりにcoresToMoveのsourceArrayNameが'void'かどうかで判断
+    if (coresToMove[0] && coresToMove[0].sourceArrayName === 'void') {
         setVoidChargeCount(0);
         showToast('voidToast', '', true);
 
@@ -160,10 +158,10 @@ export function handleCoreDropOnZone(e, targetElement) {
         return;
     }
 
-    let coresToMove = [];
-    if (type === 'multiCore' || type === 'coreFromCard' || type === 'core') {
-        coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
-    }
+    // let coresToMove = []; // 引数で受け取る
+    // if (type === 'multiCore' || type === 'coreFromCard' || type === 'core') {
+    //     coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
+    // }
 
     const coresToActuallyMove = [];
     // ボイドへの移動の場合、ソウルコアの確認を行う

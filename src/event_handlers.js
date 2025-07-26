@@ -433,6 +433,23 @@ function handleTouchStart(e) {
 
     setIsDragging(false); // ドラッグ開始フラグをリセット
 
+    // コアの情報をセット
+    if (touchedElement.classList.contains('core')) {
+        const coreType = touchedElement.dataset.coreType;
+        const index = parseInt(touchedElement.dataset.index);
+        const sourceCardId = touchedElement.dataset.sourceCardId;
+
+        const parentCardElement = touchedElement.closest('.card');
+        if (parentCardElement) {
+            setDraggedCoreData([{ type: coreType, sourceCardId: sourceCardId, index: index, x: parseFloat(touchedElement.style.left), y: parseFloat(touchedElement.style.top) }]);
+        } else {
+            setDraggedCoreData([{ type: coreType, sourceArrayName: touchedElement.parentElement.id, index: index }]);
+        }
+    } else if (touchedElement.id === 'voidCore') {
+        const coresToMoveCount = voidChargeCount > 0 ? voidChargeCount : 1;
+        setDraggedCoreData(Array(coresToMoveCount).fill({ type: "blue", sourceArrayName: 'void', index: -1 }));
+    }
+
     // touchmove と touchend イベントリスナーを動的に追加
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
@@ -537,9 +554,23 @@ function handleTouchEnd(e) {
                     console.log("Card dropped on another card (not yet supported)");
                 }
             } else if (coreElement) { // コアのドラッグの場合
-                // コアのドラッグ処理をここに実装
-                console.log("Core dropped (needs implementation)");
-                // 例: handleCoreDropOnZone(e, targetZoneElement); または handleCoreDropOnCard(e, targetCardElement);
+                const coresToMove = draggedCoreData; // handleTouchStartでセット済み
+                const targetCardElement = dropTarget.closest('.card');
+                const targetZoneElement = dropTarget.closest('.zone, .special-zone');
+
+                if (targetCardElement) {
+                    // カード上のコアの内部移動、またはコアをカードにドロップ
+                    if (coresToMove.length === 1 && coresToMove[0].sourceCardId === targetCardElement.dataset.id) {
+                        // カード上のコアの内部移動
+                        handleCoreInternalMoveOnCard(e, targetCardElement, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY);
+                    } else {
+                        // コアをカードにドロップ
+                        handleCoreDropOnCard(e, targetCardElement, coresToMove);
+                    }
+                } else if (targetZoneElement) {
+                    // コアをゾーンにドロップ
+                    handleCoreDropOnZone(e, targetZoneElement, coresToMove);
+                }
             }
         }
     } else {
