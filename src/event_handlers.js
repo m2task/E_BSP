@@ -439,11 +439,34 @@ function handleTouchStart(e) {
         const index = parseInt(touchedElement.dataset.index);
         const sourceCardId = touchedElement.dataset.sourceCardId;
 
-        const parentCardElement = touchedElement.closest('.card');
-        if (parentCardElement) {
-            setDraggedCoreData([{ type: coreType, sourceCardId: sourceCardId, index: index, x: parseFloat(touchedElement.style.left), y: parseFloat(touchedElement.style.top) }]);
-        } else {
-            setDraggedCoreData([{ type: coreType, sourceArrayName: touchedElement.parentElement.id, index: index }]);
+        // 現在ドラッグされているコアが選択されたコアのリストに含まれているかを確認
+        const isDraggedCoreSelected = selectedCores.some(c => {
+            if (c.sourceCardId && sourceCardId) {
+                return c.sourceCardId === sourceCardId && c.index === index;
+            } else if (c.sourceArrayName && touchedElement.parentElement.id) {
+                return c.sourceArrayName === touchedElement.parentElement.id && c.index === index;
+            }
+            return false;
+        });
+
+        if (isDraggedCoreSelected && selectedCores.length > 1) {
+            // 複数のコアが選択されており、ドラッグされたコアがそのうちの1つである場合
+            setDraggedCoreData(selectedCores.map(c => {
+                const coreData = { type: c.type, index: c.index };
+                if (c.sourceCardId) {
+                    coreData.sourceCardId = c.sourceCardId;
+                } else {
+                    coreData.sourceArrayName = c.sourceArrayName;
+                }
+                return coreData;
+            }));
+        } else { // 単一コアのドラッグ（選択されていない場合、または1つだけ選択されていてそれがドラッグされた場合）
+            const parentCardElement = touchedElement.closest('.card');
+            if (parentCardElement) {
+                setDraggedCoreData([{ type: coreType, sourceCardId: sourceCardId, index: index, x: parseFloat(touchedElement.style.left), y: parseFloat(touchedElement.style.top) }]);
+            } else {
+                setDraggedCoreData([{ type: coreType, sourceArrayName: touchedElement.parentElement.id, index: index }]);
+            }
         }
     } else if (touchedElement.id === 'voidCore') {
         const coresToMoveCount = voidChargeCount > 0 ? voidChargeCount : 1;

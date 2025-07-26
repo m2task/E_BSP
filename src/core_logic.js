@@ -53,8 +53,6 @@ export function clearSelectedCores() {
 
 export function handleCoreDropOnCard(e, targetCardElement, coresToMove) {
     e.preventDefault();
-    // const type = e.dataTransfer.getData("type"); // 不要になる
-    // const coresToMove = JSON.parse(e.dataTransfer.getData("cores")); // 引数で受け取る
     const targetCardId = targetCardElement.dataset.id;
     const targetCard = field.find(card => card.id === targetCardId);
 
@@ -138,7 +136,6 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement, currentTouchX
 
 export function handleCoreDropOnZone(e, targetElement, coresToMove) {
     const targetZoneName = getZoneName(targetElement);
-    // const type = e.dataTransfer.getData("type"); // 不要になる
 
     // typeの代わりにcoresToMoveのsourceArrayNameが'void'かどうかで判断
     if (coresToMove[0] && coresToMove[0].sourceArrayName === 'void') {
@@ -157,11 +154,6 @@ export function handleCoreDropOnZone(e, targetElement, coresToMove) {
         renderAll();
         return;
     }
-
-    // let coresToMove = []; // 引数で受け取る
-    // if (type === 'multiCore' || type === 'coreFromCard' || type === 'core') {
-    //     coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
-    // }
 
     const coresToActuallyMove = [];
     // ボイドへの移動の場合、ソウルコアの確認を行う
