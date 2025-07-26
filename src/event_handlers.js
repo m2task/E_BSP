@@ -558,7 +558,7 @@ function handleTouchEnd(e) {
                 const sourceZoneName = getZoneName(cardElement.parentElement);
 
                 const targetCardElement = dropTarget.closest('.card');
-                const targetZoneElement = dropTarget.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea');
+                const targetZoneElement = dropTarget.closest('.zone, .special-zone, #fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea, #reserveZone, #lifeZone, #countZone');
 
                 if (targetZoneElement) {
                     const targetZoneName = getZoneName(targetZoneElement);
