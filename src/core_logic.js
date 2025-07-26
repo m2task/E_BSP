@@ -63,16 +63,26 @@ export function handleCoreDropOnCard(e, targetCardElement, coresToMove, dropClie
     const dropX = dropClientX - cardRect.left;
     const dropY = dropClientY - cardRect.top;
 
-    // typeの代わりにcoresToMoveのsourceArrayNameが'void'かどうかで判断
+    const coreOffsetX = 10; // コアの水平方向オフセット
+    const coreOffsetY = 10; // コアの垂直方向オフセット
+
     if (coresToMove[0] && coresToMove[0].sourceArrayName === 'void') {
-        // ボイドコアの場合、チャージ数分の新しい青コアを生成してカードに追加
         const coresToAddCount = coresToMove.length; // coresToMoveにはチャージ数分のダミーコアが入っている
 
         for (let i = 0; i < coresToAddCount; i++) {
+            let finalX = dropX;
+            let finalY = dropY;
+
+            if (coresToAddCount > 1) { // 複数のコアが追加される場合のみオフセットを適用
+                const currentCoresOnCardCount = targetCard.coresOnCard.length; // 現在のコア数を取得
+                finalX = dropX + (currentCoresOnCardCount * coreOffsetX);
+                finalY = dropY + (currentCoresOnCardCount * coreOffsetY);
+            }
+
             targetCard.coresOnCard.push({
                 type: "blue",
-                x: dropX,
-                y: dropY
+                x: finalX,
+                y: finalY
             });
         }
         setVoidChargeCount(0); // ボイドコア移動後はチャージをリセット
@@ -84,10 +94,19 @@ export function handleCoreDropOnCard(e, targetCardElement, coresToMove, dropClie
 
         // カードにコアを追加
         for (const coreInfo of coresToMove) {
+            let finalX = dropX;
+            let finalY = dropY;
+
+            if (coresToMove.length > 1) { // 複数のコアが追加される場合のみオフセットを適用
+                const currentCoresOnCardCount = targetCard.coresOnCard.length; // 現在のコア数を取得
+                finalX = dropX + (currentCoresOnCardCount * coreOffsetX);
+                finalY = dropY + (currentCoresOnCardCount * coreOffsetY);
+            }
+
             targetCard.coresOnCard.push({
                 type: coreInfo.type,
-                x: dropX,
-                y: dropY
+                x: finalX,
+                y: finalY
             });
         }
     }
