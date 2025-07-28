@@ -92,6 +92,7 @@ function updateList() {
     <span style="min-width: 20px; text-align: center;">${cardCounts[card]}</span>
     <button onclick="incrementCard('${card}')" style="margin-left: 5px; margin-right: 10px;">+</button>
     <span>${card}</span>
+    <button onclick="moveCardUp('${card}')" style="margin-left: 5px;">↑</button>
 </div>
 `;
         ul.appendChild(li);
