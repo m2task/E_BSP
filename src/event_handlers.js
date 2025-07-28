@@ -295,7 +295,7 @@ export function handleDrop(e) {
 
     if (type === 'card') {
         handleCardDrop(e);
-    } else if (type === 'core') {
+    } else if (type === 'core' || type === 'voidCore') { // voidCoreも考慮
         handleCoreDrop(e);
     }
     clearSelectedCores();
@@ -324,9 +324,13 @@ function handleCardDrop(e) {
 }
 
 function handleCoreDrop(e) {
-    const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
     const targetCardElement = e.target.closest('.card');
     const targetZoneElement = e.target.closest('.zone, .special-zone');
+
+    // デバッグアラート
+    alert(`Card found: ${!!targetCardElement}, Zone found: ${!!targetZoneElement}`);
+
+    const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
 
     if (targetCardElement) {
         if (coresToMove.length === 1 && coresToMove[0].sourceCardId === targetCardElement.dataset.id) {
