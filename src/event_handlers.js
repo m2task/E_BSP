@@ -425,11 +425,14 @@ function handleTouchEnd(e) {
 
     if (isDragging) {
         if (touchDraggedElement) {
+            touchDraggedElement.style.display = 'none';
+        }
+        const dropTarget = document.elementFromPoint(currentTouchX, currentTouchY);
+        if (touchDraggedElement) {
             touchDraggedElement.remove();
             setTouchDraggedElement(null);
         }
 
-        const dropTarget = document.elementFromPoint(currentTouchX, currentTouchY);
         if (!dropTarget) {
             setIsDragging(false);
             touchedElement = null;
