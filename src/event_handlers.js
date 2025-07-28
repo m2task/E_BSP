@@ -328,9 +328,8 @@ function handleCoreDrop(e) {
 
     // ★ カードへのドロップを最優先で処理
     if (targetCardElement) {
-        const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));        const isInternalMove = (coresToMove.length === 1 && coresToMove[0].sourceCardId === targetCardElement.dataset.id);
-
-        alert(`coresToMove.length: ${coresToMove.length}\ncoresToMove[0].sourceCardId: ${coresToMove[0].sourceCardId}\ntargetCardElement.dataset.id: ${targetCardElement.dataset.id}\nIs Internal Move: ${isInternalMove}`);
+        const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
+        const isInternalMove = (coresToMove.length === 1 && coresToMove[0].sourceCardId === targetCardElement.dataset.id);
 
         if (isInternalMove) {
             handleCoreInternalMoveOnCard(e, targetCardElement);

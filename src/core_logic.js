@@ -110,6 +110,7 @@ export function handleCoreDropOnCard(e, targetCardElement) {
 }
 
 export function handleCoreInternalMoveOnCard(e, targetCardElement) {
+    alert("handleCoreInternalMoveOnCard called!");
     e.preventDefault();
     const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
     const targetCardId = targetCardElement.dataset.id;
