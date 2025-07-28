@@ -325,11 +325,6 @@ function handleCardDrop(e) {
 
 function handleCoreDrop(e) {
     const targetCardElement = e.target.closest('.card');
-    const targetZoneElement = e.target.closest('.zone, .special-zone');
-
-    // デバッグアラート
-    alert(`Card found: ${!!targetCardElement}, Zone found: ${!!targetZoneElement}`);
-
     const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
 
     if (targetCardElement) {
@@ -338,7 +333,12 @@ function handleCoreDrop(e) {
         } else {
             handleCoreDropOnCard(e, targetCardElement);
         }
-    } else if (targetZoneElement) {
+        return; // カードへのドロップが成功したら、以降のゾーン検索は不要
+    }
+
+    // カード上でない場合のみ、ゾーンへのドロップを試みる
+    const targetZoneElement = e.target.closest('.zone, .special-zone');
+    if (targetZoneElement) {
         handleCoreDropOnZone(e, targetZoneElement);
     }
 }
@@ -348,19 +348,31 @@ function handleCoreDrop(e) {
 let touchedElement = null;
 const DRAG_THRESHOLD = 20;
 
+let longPressTimer = null;
+const LONG_PRESS_DURATION = 300; // 300ms
+
 function handleTouchStart(e) {
     if (e.touches.length !== 1) return;
     const target = e.target.closest('.card, .core, #voidCore');
     if (!target) return;
 
     touchedElement = target;
-    e.preventDefault();
+    // e.preventDefault(); // クリックイベントを発火させるために一旦コメントアウト
 
     setInitialTouchX(e.touches[0].clientX);
     setInitialTouchY(e.touches[0].clientY);
     setCurrentTouchX(e.touches[0].clientX);
     setCurrentTouchY(e.touches[0].clientY);
     setIsDragging(false);
+
+    // 長押しタイマーを開始
+    longPressTimer = setTimeout(() => {
+        // 長押し時間が経過したら、ドラッグを開始する準備ができたことを示す
+        // 実際のドラッグ開始は touchmove で行う
+        longPressTimer = null; // タイマーをクリア
+        // ここでドラッグの準備ができたことを示すフラグを立てても良い
+        // 例: canStartDrag = true;
+    }, LONG_PRESS_DURATION);
 
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
@@ -408,22 +420,51 @@ function handleTouchMove(e) {
     setCurrentTouchX(e.touches[0].clientX);
     setCurrentTouchY(e.touches[0].clientY);
 
-    if (!isDragging) {
-        const deltaX = Math.abs(currentTouchX - initialTouchX);
-        const deltaY = Math.abs(currentTouchY - initialTouchY);
-        if (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD) {
-            startTouchDrag(e);
+    const deltaX = Math.abs(currentTouchX - initialTouchX);
+    const deltaY = Math.abs(currentTouchY - initialTouchY);
+
+    if (isDragging) {
+        // すでにドラッグ中なら、要素を追従させる
+        e.preventDefault();
+        if (touchDraggedElement) {
+            touchDraggedElement.style.left = `${currentTouchX - touchOffsetX}px`;
+            touchDraggedElement.style.top = `${currentTouchY - touchOffsetY}px`;
         }
+        return;
     }
 
-    if (isDragging && touchDraggedElement) {
-        e.preventDefault();
-        touchDraggedElement.style.left = `${currentTouchX - touchOffsetX}px`;
-        touchDraggedElement.style.top = `${currentTouchY - touchOffsetY}px`;
+    // ドラッグ開始判定
+    if (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD) {
+        // 閾値を超えて動いたら、長押しタイマーをクリア（ドラッグではない）
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+
+        // 長押しが完了した後（タイマーがnull）に動き始めたらドラッグ開始
+        // ただし、現状の実装では長押しタイマー完了＝即ドラッグ開始ではないため、
+        // ここでドラッグを開始するロジックが必要。
+        // しかし、今回は「長押ししないとドラッグできない」ようにするため、
+        // タイマーがあるうちはドラッグを開始しない、というロジックに変更する。
+    }
+
+    // 長押しタイマーが完了し、かつ、指が閾値以上動いた場合にドラッグを開始する
+    if (!longPressTimer && !isDragging && (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD)) {
+        startTouchDrag(e);
     }
 }
 
 function handleTouchEnd(e) {
+    // 長押しタイマーが残っていればクリア
+    if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+        // タイマーが残っている ＝ 短いタップなので、クリックイベントを発火
+        if (touchedElement && !isDragging) {
+            touchedElement.click();
+        }
+    }
+
     document.removeEventListener('touchmove', handleTouchMove);
     document.removeEventListener('touchend', handleTouchEnd);
 
@@ -485,8 +526,10 @@ function handleTouchEnd(e) {
             handleCoreDrop(mockEvent);
         }
     } else {
-        if (touchedElement) {
-            touchedElement.click();
+        // ドラッグが発生しなかった場合も、クリックとして扱う
+        // （ただし、長押しタイマーがクリアされた後のタップを除く）
+        if (touchedElement && !longPressTimer) {
+            // touchedElement.click(); // 重複クリックを避けるためコメントアウト
         }
     }
 
