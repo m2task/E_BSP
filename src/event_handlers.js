@@ -186,6 +186,12 @@ function getDraggedCoresInfo(draggedElement) {
     const sourceArrayName = draggedElement.parentElement.id;
     const index = parseInt(draggedElement.dataset.index);
 
+    alert(`Dragged Core Info:
+coreType: ${coreType}
+sourceCardId: ${sourceCardId}
+sourceArrayName: ${sourceArrayName}
+index: ${index}`);
+
     // ドラッグされたコアが複数選択されているかチェック
     const isDraggedCoreSelected = selectedCores.some(c =>
         (c.sourceCardId && c.sourceCardId === sourceCardId && c.index === index) ||
@@ -329,7 +335,6 @@ function handleCoreDrop(e) {
     // ★ カードへのドロップを最優先で処理
     if (targetCardElement) {
         const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
-        alert(`coresToMove: ${JSON.stringify(coresToMove)}\nsourceCardId: ${coresToMove[0] ? coresToMove[0].sourceCardId : 'undefined'}`);
 
         const isInternalMove = (coresToMove.length === 1 && coresToMove[0].sourceCardId === targetCardElement.dataset.id);
 
