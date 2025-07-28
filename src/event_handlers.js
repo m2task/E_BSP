@@ -342,7 +342,7 @@ function handleCoreDrop(e) {
 
 // --- タッチイベントハンドラ ---
 let touchedElement = null;
-const DRAG_THRESHOLD = 10;
+const DRAG_THRESHOLD = 20;
 
 function handleTouchStart(e) {
     if (e.touches.length !== 1) return;
