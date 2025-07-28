@@ -325,11 +325,14 @@ function handleCardDrop(e) {
 
 function handleCoreDrop(e) {
     const targetCardElement = e.target.closest('.card');
+    alert(`Target Card Element is null: ${targetCardElement === null}`);
 
     // ★ カードへのドロップを最優先で処理
     if (targetCardElement) {
         const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
-        if (coresToMove.length === 1 && coresToMove[0].sourceCardId === targetCardElement.dataset.id) {
+        const isInternalMove = (coresToMove.length === 1 && coresToMove[0].sourceCardId === targetCardElement.dataset.id);
+
+        if (isInternalMove) {
             handleCoreInternalMoveOnCard(e, targetCardElement);
         } else {
             handleCoreDropOnCard(e, targetCardElement);
