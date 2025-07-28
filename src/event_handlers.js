@@ -607,21 +607,42 @@ function handleTouchEnd(e) {
                     const coresToMoveCount = voidChargeCount > 0 ? voidChargeCount : 1;
                     coresToMove = Array(coresToMoveCount).fill({ type: "blue", sourceArrayName: 'void', index: -1 });
                     setVoidChargeCount(0);
-                } else if (selectedCores.length > 0) {
-                    coresToMove = selectedCores.map(c => ({ ...c }));
                 } else {
-                    const coreData = { type: coreType, index: index };
-                    if (sourceCardId) {
-                        coreData.sourceCardId = sourceCardId;
+                    // Check if the originally touched core is part of the selected cores
+                    const isTouchedCoreSelected = selectedCores.some(c =>
+                        (c.sourceCardId && c.sourceCardId === sourceCardId && c.index === index) ||
+                        (c.sourceArrayName && c.sourceArrayName === sourceArrayName && c.index === index)
+                    );
+
+                    if (selectedCores.length > 0 && isTouchedCoreSelected) {
+                        // If multiple cores are selected, move all of them
+                        coresToMove = selectedCores.map(c => ({ ...c }));
                     } else {
-                        coreData.sourceArrayName = sourceArrayName;
+                        // Otherwise, move only the single touched core
+                        const coreData = { type: coreType, index: index };
+                        if (sourceCardId) {
+                            coreData.sourceCardId = sourceCardId;
+                        } else {
+                            coreData.sourceArrayName = sourceArrayName;
+                        }
+                        coresToMove.push(coreData);
                     }
-                    coresToMove.push(coreData);
                 }
 
                 if (targetCardElement) {
                     // カードへのドロップ
-                    handleCoreDropOnCard({ dataTransfer: { getData: () => JSON.stringify(coresToMove) } }, targetCardElement);
+                    // Check if it's an internal move
+                    if (coresToMove.length === 1 && coresToMove[0].sourceCardId === targetCardElement.dataset.id) {
+                        // Create a mock event object for internal move
+                        const mockEvent = {
+                            clientX: currentTouchX,
+                            clientY: currentTouchY,
+                            dataTransfer: { getData: (type) => JSON.stringify(coresToMove) }
+                        };
+                        handleCoreInternalMoveOnCard(mockEvent, targetCardElement);
+                    } else {
+                        handleCoreDropOnCard({ dataTransfer: { getData: () => JSON.stringify(coresToMove) } }, targetCardElement);
+                    }
                 } else if (targetZoneElement) {
                     // ゾーンへのドロップ
                     handleCoreDropOnZone({ dataTransfer: { getData: () => JSON.stringify(coresToMove) } }, targetZoneElement);
