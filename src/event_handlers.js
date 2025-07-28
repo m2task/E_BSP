@@ -329,6 +329,8 @@ function handleCoreDrop(e) {
     // ★ カードへのドロップを最優先で処理
     if (targetCardElement) {
         const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
+        alert(`coresToMove: ${JSON.stringify(coresToMove)}\nsourceCardId: ${coresToMove[0] ? coresToMove[0].sourceCardId : 'undefined'}`);
+
         const isInternalMove = (coresToMove.length === 1 && coresToMove[0].sourceCardId === targetCardElement.dataset.id);
 
         if (isInternalMove) {

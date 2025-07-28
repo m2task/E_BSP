@@ -128,8 +128,6 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement) {
     const offsetX = parseFloat(e.dataTransfer.getData("offsetX"));
     const offsetY = parseFloat(e.dataTransfer.getData("offsetY"));
 
-    alert(`Internal Move - offsetX: ${offsetX}, offsetY: ${offsetY}`);
-
     // ドロップされたカード内の相対座標を計算
     const newX = e.clientX - cardRect.left - offsetX;
     const newY = e.clientY - cardRect.top - offsetY;
