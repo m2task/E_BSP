@@ -125,7 +125,10 @@ export function renderBurst() {
 
 export function renderCores(containerId, coreArray) {
     const container = document.getElementById(containerId);
-    if (!container) return;
+    if (!container) {
+        alert(`Error: Container with ID '${containerId}' not found.`);
+        return;
+    }
     container.innerHTML = "";
     coreArray.forEach((coreType, index) => {
         const div = document.createElement("div");
