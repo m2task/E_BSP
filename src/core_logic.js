@@ -134,7 +134,7 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement) {
 
     // コアのデータを更新
     targetCard.coresOnCard[coreIndexOnCard].x = newX;
-    targetCard.coresOnCard[coreIndex[coreIndexOnCard].y = newY;
+    targetCard.coresOnCard[coreIndexOnCard].y = newY;
 
     renderAll();
 }
