@@ -326,10 +326,6 @@ function handleCardDrop(e) {
 function handleCoreDrop(e) {
     const targetCardElement = e.target.closest('.card');
 
-    // --- デバッグここから ---
-    alert(`Drop Target: ${e.target.id || e.target.className}\nCard Found: ${targetCardElement ? (targetCardElement.id || targetCardElement.className) : 'null'}`);
-    // --- デバッグここまで ---
-
     // ★ カードへのドロップを最優先で処理
     if (targetCardElement) {
         const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));

@@ -52,45 +52,47 @@ export function clearSelectedCores() {
 }
 
 export function handleCoreDropOnCard(e, targetCardElement) {
-    e.preventDefault();
-    const type = e.dataTransfer.getData("type");
     const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
     const targetCardId = targetCardElement.dataset.id;
     const targetCard = field.find(card => card.id === targetCardId);
 
     if (!targetCard) return;
 
+    // preventDefault() は実際のイベントオブジェクトにしか存在しないため、存在チェックを行う
+    if (e.preventDefault) {
+        e.preventDefault();
+    }
+
     const cardRect = targetCardElement.getBoundingClientRect();
     const dropX = e.clientX - cardRect.left;
     const dropY = e.clientY - cardRect.top;
+    const type = e.dataTransfer.getData("type");
 
     if (type === 'voidCore') {
         // ボイドコアの場合、チャージ数分の新しい青コアを生成してカードに追加
-        const coresToAddCount = coresToMove.length; // coresToMoveにはチャージ数分のダミーコアが入っている
-        const coreOffsetX = 10; // コアの水平方向オフセット
-        const coreOffsetY = 10; // コアの垂直方向オフセット
+        const coresToAddCount = coresToMove.length;
+        const coreOffsetX = 10;
+        const coreOffsetY = 10;
 
         for (let i = 0; i < coresToAddCount; i++) {
-            const currentCoresOnCardCount = targetCard.coresOnCard.length; // 現在のコア数を取得
+            const currentCoresOnCardCount = targetCard.coresOnCard.length;
             targetCard.coresOnCard.push({
                 type: "blue",
                 x: dropX + (currentCoresOnCardCount * coreOffsetX),
                 y: dropY + (currentCoresOnCardCount * coreOffsetY)
             });
         }
-        setVoidChargeCount(0); // ボイドコア移動後はチャージをリセット
-        showToast('voidToast', '', true); // ボイドトーストを非表示
+        setVoidChargeCount(0);
+        showToast('voidToast', '', true);
     } else {
         // 通常のコア移動の場合
-        // 移動元からコアを削除
         removeCoresFromSource(coresToMove);
 
-        const coreOffsetX = 10; // コアの水平方向オフセット
-        const coreOffsetY = 10; // コアの垂直方向オフセット
+        const coreOffsetX = 10;
+        const coreOffsetY = 10;
 
-        // カードにコアを追加
         for (const coreInfo of coresToMove) {
-            const currentCoresOnCardCount = targetCard.coresOnCard.length; // 現在のコア数を取得
+            const currentCoresOnCardCount = targetCard.coresOnCard.length;
             targetCard.coresOnCard.push({
                 type: coreInfo.type,
                 x: dropX + (currentCoresOnCardCount * coreOffsetX),
@@ -100,7 +102,6 @@ export function handleCoreDropOnCard(e, targetCardElement) {
     }
     renderAll();
 
-    // 最後にトーストを表示（ボイドからの場合のみ）
     if (type === 'voidCore') {
         const movedCount = coresToMove.length;
         const toastMessage = `${movedCount}個増やしました`;
