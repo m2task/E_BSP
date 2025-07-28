@@ -101,6 +101,20 @@ export function setupEventListeners() {
             }
         });
     } else {
+        // PCの場合：マウスエンター/リーブで開閉
+        handZoneContainer.addEventListener('mouseenter', () => {
+            if (!handPinned) {
+                handZoneContainer.classList.remove('collapsed');
+                openHandButton.classList.add('hidden');
+            }
+        });
+
+        handZoneContainer.addEventListener('mouseleave', () => {
+            if (!handPinned) {
+                handZoneContainer.classList.add('collapsed');
+                openHandButton.classList.remove('hidden');
+            }
+        });
         // PCの場合のみ標準のドラッグ＆ドロップイベントを有効にする
         document.addEventListener('dragstart', handleDragStart);
         document.addEventListener('dragend', handleDragEnd);
@@ -537,9 +551,40 @@ function handleTouchEnd(e) {
                     console.log("Card dropped on another card (not yet supported)");
                 }
             } else if (coreElement) { // コアのドラッグの場合
-                // コアのドラッグ処理をここに実装
-                console.log("Core dropped (needs implementation)");
-                // 例: handleCoreDropOnZone(e, targetZoneElement); または handleCoreDropOnCard(e, targetCardElement);
+                const targetCardElement = dropTarget.closest('.card');
+                const targetZoneElement = dropTarget.closest('.zone, .special-zone');
+
+                // ドラッグされたコアのデータを特定
+                const coreType = originalElement.dataset.coreType;
+                const sourceCardId = originalElement.dataset.sourceCardId;
+                const sourceArrayName = originalElement.parentElement.id;
+                const index = parseInt(originalElement.dataset.index);
+
+                let coresToMove = [];
+                if (originalElement.id === 'voidCore') {
+                    const coresToMoveCount = voidChargeCount > 0 ? voidChargeCount : 1;
+                    coresToMove = Array(coresToMoveCount).fill({ type: "blue", sourceArrayName: 'void', index: -1 });
+                    setVoidChargeCount(0);
+                } else if (selectedCores.length > 0) {
+                    coresToMove = selectedCores.map(c => ({ ...c }));
+                } else {
+                    const coreData = { type: coreType, index: index };
+                    if (sourceCardId) {
+                        coreData.sourceCardId = sourceCardId;
+                    } else {
+                        coreData.sourceArrayName = sourceArrayName;
+                    }
+                    coresToMove.push(coreData);
+                }
+
+                if (targetCardElement) {
+                    // カードへのドロップ
+                    handleCoreDropOnCard({ dataTransfer: { getData: () => JSON.stringify(coresToMove) } }, targetCardElement);
+                } else if (targetZoneElement) {
+                    // ゾーンへのドロップ
+                    handleCoreDropOnZone({ dataTransfer: { getData: () => JSON.stringify(coresToMove) } }, targetZoneElement);
+                }
+                clearSelectedCores();
             }
         }
     } else {
