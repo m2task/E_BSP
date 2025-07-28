@@ -176,7 +176,6 @@ function getDraggedCoresInfo(draggedElement) {
     // ボイドコアの場合
     if (draggedElement.id === 'voidCore') {
         const count = voidChargeCount > 0 ? voidChargeCount : 1;
-        // setVoidChargeCount(0); // ここでリセットするのが早すぎたため削除
         return Array(count).fill({ type: "blue", sourceArrayName: 'void', index: -1 });
     }
 
@@ -185,12 +184,6 @@ function getDraggedCoresInfo(draggedElement) {
     const sourceCardId = draggedElement.dataset.sourceCardId;
     const sourceArrayName = draggedElement.parentElement.id;
     const index = parseInt(draggedElement.dataset.index);
-
-    alert(`Dragged Core Info:
-coreType: ${coreType}
-sourceCardId: ${sourceCardId}
-sourceArrayName: ${sourceArrayName}
-index: ${index}`);
 
     // ドラッグされたコアが複数選択されているかチェック
     const isDraggedCoreSelected = selectedCores.some(c =>
@@ -399,6 +392,7 @@ function startTouchDrag(e) {
 
     if (touchedElement.classList.contains('core') || touchedElement.id === 'voidCore') {
         const coresInfo = getDraggedCoresInfo(touchedElement);
+        setDraggedCoreData(coresInfo); // draggedCoreData をセット
         if (coresInfo.length > 1) {
             customDragElement = document.createElement('div');
             customDragElement.style.cssText = `
@@ -518,7 +512,8 @@ function handleTouchEnd(e) {
                 }
             } else if (touchedElement.classList.contains('core') || touchedElement.id === 'voidCore') {
                 // コアのタッチドロップ処理
-                const coresToMove = getDraggedCoresInfo(touchedElement);
+                // draggedCoreData を使用する
+                const coresToMove = draggedCoreData; 
                 const mockEvent = {
                     clientX: currentTouchX,
                     clientY: currentTouchY,
@@ -540,6 +535,7 @@ function handleTouchEnd(e) {
 
     setIsDragging(false);
     touchedElement = null;
+    setDraggedCoreData(null); // ドラッグ終了時にデータをリセット
     clearSelectedCores();
 }
 
