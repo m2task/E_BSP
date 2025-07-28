@@ -460,6 +460,11 @@ function handleTouchEnd(e) {
                 moveCardData(cardId, sourceZoneName, targetZoneName);
             }
         } else if (touchedElement.classList.contains('core') || touchedElement.id === 'voidCore') {
+            // デバッグ情報を表示
+            const targetCardElement = dropTarget.closest('.card');
+            const targetZoneElement = dropTarget.closest('.zone, .special-zone');
+            alert(`Touched: ${touchedElement.id || touchedElement.className}\nDrop Target: ${dropTarget.id || dropTarget.className}\nTarget Card: ${targetCardElement ? (targetCardElement.id || targetCardElement.className) : 'null'}\nTarget Zone: ${targetZoneElement ? (targetZoneElement.id || targetZoneElement.className) : 'null'}`);
+
             // コアのタッチドロップ処理
             const coresToMove = getDraggedCoresInfo(touchedElement);
             const mockEvent = {
