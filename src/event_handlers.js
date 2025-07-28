@@ -171,196 +171,145 @@ export function setupEventListeners() {
     document.getElementById('deckOpenBtn').addEventListener('click', openDeck);
 }
 
-// --- イベントハンドラ --- 
-export function handleDragStart(e) {
-    setDraggedElement(e.target);
-    setTimeout(() => draggedElement.classList.add('dragging'), 0);
-
-    if (draggedElement.classList.contains('card')) {
-        e.dataTransfer.setData("type", "card");
-        e.dataTransfer.setData("cardId", draggedElement.dataset.id);
-        e.dataTransfer.setData("sourceZoneId", draggedElement.parentElement.id);
-        const rect = draggedElement.getBoundingClientRect();
-        setOffsetX(e.clientX - rect.left);
-        setOffsetY(e.clientY - rect.top);
-    } else if (draggedElement.classList.contains('core')) {
-        const coreType = draggedElement.dataset.coreType;
-        const index = parseInt(draggedElement.dataset.index);
-        const sourceCardId = draggedElement.dataset.sourceCardId;
-
-        let currentDraggedCoreIdentifier = {
-            type: coreType,
-            index: index
-        };
-        if (sourceCardId) {
-            currentDraggedCoreIdentifier.sourceCardId = sourceCardId;
-        } else {
-            currentDraggedCoreIdentifier.sourceArrayName = draggedElement.parentElement.id;
-        }
-
-        // 現在ドラッグされているコアが選択されたコアのリストに含まれているかを確認
-        const isDraggedCoreSelected = selectedCores.some(c => {
-            if (c.sourceCardId && currentDraggedCoreIdentifier.sourceCardId) {
-                return c.sourceCardId === currentDraggedCoreIdentifier.sourceCardId && c.index === currentDraggedCoreIdentifier.index;
-            } else if (c.sourceArrayName && currentDraggedCoreIdentifier.sourceArrayName) {
-                return c.sourceArrayName === currentDraggedCoreIdentifier.sourceArrayName && c.index === currentDraggedCoreIdentifier.index;
-            }
-            return false;
-        });
-
-        if (isDraggedCoreSelected && selectedCores.length > 1) {
-            // 複数のコアが選択されており、ドラッグされたコアがそのうちの1つである場合
-            setDraggedCoreData(selectedCores.map(c => {
-                const coreData = { type: c.type, index: c.index };
-                if (c.sourceCardId) {
-                    coreData.sourceCardId = c.sourceCardId;
-                } else {
-                    coreData.sourceArrayName = c.sourceArrayName;
-                }
-                return coreData;
-            }));
-            e.dataTransfer.setData("type", "multiCore");
-            e.dataTransfer.setData("cores", JSON.stringify(draggedCoreData));
-        } else { // 単一コアのドラッグ（選択されていない場合、または1つだけ選択されていてそれがドラッグされた場合）
-            const parentCardElement = draggedElement.closest('.card'); // 親がカードかどうかを再確認
-            if (parentCardElement) {
-                // カード上のコアのドラッグ
-                const rect = draggedElement.getBoundingClientRect();
-                setOffsetX(e.clientX - rect.left);
-                setOffsetY(e.clientY - rect.top);
-                e.dataTransfer.setData("offsetX", offsetX);
-                e.dataTransfer.setData("offsetY", offsetY);
-
-                setDraggedCoreData([{ type: coreType, sourceCardId: sourceCardId, index: index, x: parseFloat(draggedElement.style.left), y: parseFloat(draggedElement.style.top) }]);
-                e.dataTransfer.setData("type", "coreFromCard");
-                e.dataTransfer.setData("cores", JSON.stringify(draggedCoreData));
-            } else {
-                // ゾーンのコアのドラッグ
-                setDraggedCoreData([{ type: coreType, sourceArrayName: draggedElement.parentElement.id, index: index }]);
-                e.dataTransfer.setData("type", "core");
-                e.dataTransfer.setData("coreType", coreType);
-                e.dataTransfer.setData("coreIndex", index);
-                e.dataTransfer.setData("cores", JSON.stringify(draggedCoreData));
-            }
-        }
+// --- 共通コア情報取得関数 ---
+function getDraggedCoresInfo(draggedElement) {
+    // ボイドコアの場合
+    if (draggedElement.id === 'voidCore') {
+        const count = voidChargeCount > 0 ? voidChargeCount : 1;
+        setVoidChargeCount(0); // ドラッグ開始時にチャージをリセット
+        return Array(count).fill({ type: "blue", sourceArrayName: 'void', index: -1 });
     }
-    else if (draggedElement.id === 'voidCore') {
-        // ボイドコアのドラッグ
-        const coresToMoveCount = voidChargeCount > 0 ? voidChargeCount : 1; // チャージ数が0でも1個は移動可能
-        setDraggedCoreData(Array(coresToMoveCount).fill({ type: "blue", sourceArrayName: 'void', index: -1 }));
-        e.dataTransfer.setData("type", "voidCore");
-        e.dataTransfer.setData("cores", JSON.stringify(draggedCoreData));
-        showToast('voidToast', '', true); // ドラッグ開始時にトーストを非表示
+
+    // 通常のコアの場合
+    const coreType = draggedElement.dataset.coreType;
+    const sourceCardId = draggedElement.dataset.sourceCardId;
+    const sourceArrayName = draggedElement.parentElement.id;
+    const index = parseInt(draggedElement.dataset.index);
+
+    // ドラッグされたコアが複数選択されているかチェック
+    const isDraggedCoreSelected = selectedCores.some(c =>
+        (c.sourceCardId && c.sourceCardId === sourceCardId && c.index === index) ||
+        (c.sourceArrayName && c.sourceArrayName === sourceArrayName && c.index === index)
+    );
+
+    if (selectedCores.length > 1 && isDraggedCoreSelected) {
+        // 複数選択されている場合は、選択されたすべてのコアを返す
+        return selectedCores.map(c => ({ ...c }));
+    } else {
+        // 単一のコア、または選択されていないコアをドラッグした場合
+        const coreData = { type: coreType, index: index };
+        if (sourceCardId) {
+            coreData.sourceCardId = sourceCardId;
+        } else {
+            coreData.sourceArrayName = sourceArrayName;
+        }
+        return [coreData];
     }
 }
 
-export function handleDragEnd() {
+// --- PC ドラッグ＆ドロップイベントハンドラ ---
+export function handleDragStart(e) {
+    setDraggedElement(e.target);
+    setTimeout(() => e.target.classList.add('dragging'), 0);
+
+    if (e.target.classList.contains('card')) {
+        e.dataTransfer.setData("type", "card");
+        e.dataTransfer.setData("cardId", e.target.dataset.id);
+        e.dataTransfer.setData("sourceZoneId", e.target.parentElement.id);
+        const rect = e.target.getBoundingClientRect();
+        setOffsetX(e.clientX - rect.left);
+        setOffsetY(e.clientY - rect.top);
+    } else if (e.target.classList.contains('core') || e.target.id === 'voidCore') {
+        const coresToMove = getDraggedCoresInfo(e.target);
+        setDraggedCoreData(coresToMove); // 念のため保持
+
+        e.dataTransfer.setData("type", "core");
+        e.dataTransfer.setData("cores", JSON.stringify(coresToMove));
+
+        // 複数コアのドラッグ時にカスタムイメージを設定
+        if (coresToMove.length > 1) {
+            const dragImage = document.createElement('div');
+            dragImage.style.cssText = `
+                background-color: rgba(0, 123, 255, 0.8); color: white; border-radius: 50%;
+                width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+                font-weight: bold; font-size: 16px; position: absolute; top: -1000px;
+            `;
+            dragImage.textContent = coresToMove.length;
+            document.body.appendChild(dragImage);
+            e.dataTransfer.setDragImage(dragImage, 15, 15);
+            setTimeout(() => document.body.removeChild(dragImage), 0);
+        }
+    }
+}
+
+export function handleDragEnd(e) {
     if (draggedElement) {
         draggedElement.classList.remove('dragging');
         setDraggedElement(null);
     }
     setDraggedCoreData(null);
-    clearSelectedCores(); // ドラッグ終了時に選択を解除
+    clearSelectedCores();
 }
 
-// 新しいデッキドラッグイベントハンドラ
 export function handleDeckDragEnter(e) {
     e.preventDefault();
-    const deckButton = e.currentTarget;
-    deckButton.classList.add('drag-over');
+    e.currentTarget.classList.add('drag-over');
 }
 
 export function handleDeckDragLeave(e) {
     e.preventDefault();
-    const deckButton = e.currentTarget;
-    // 関連要素への移動の場合はクラスを削除しない
-    if (!deckButton.contains(e.relatedTarget)) {
-        deckButton.classList.remove('drag-over', 'highlight-top-zone', 'highlight-bottom-zone');
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+        e.currentTarget.classList.remove('drag-over', 'highlight-top-zone', 'highlight-bottom-zone');
     }
 }
 
 export function handleDeckDragOver(e) {
-    e.preventDefault(); // ドロップを許可するために必要
+    e.preventDefault();
     const deckButton = e.currentTarget;
     const rect = deckButton.getBoundingClientRect();
-    const clientY = e.clientY;
-
-    // デッキボタン内の相対Y座標
-    const relativeY = clientY - rect.top;
-
-    // デッキボタンの高さの2/3を計算
+    const relativeY = e.clientY - rect.top;
     const twoThirdsHeight = rect.height * (2 / 3);
 
-    deckButton.classList.add('drag-over'); // ドラッグオーバー中は常に全体を発光
-
+    deckButton.classList.add('drag-over');
     if (relativeY <= twoThirdsHeight) {
-        // 上2/3にいる場合
         deckButton.classList.add('highlight-top-zone');
         deckButton.classList.remove('highlight-bottom-zone');
     } else {
-        // 下1/3にいる場合
         deckButton.classList.add('highlight-bottom-zone');
         deckButton.classList.remove('highlight-top-zone');
     }
 }
 
-// handleDrop からデッキボタンへのドロップ処理を分離
 export function handleDeckDrop(e) {
     e.preventDefault();
     const deckButton = e.currentTarget;
-    deckButton.classList.remove('drag-over', 'highlight-top-zone', 'highlight-bottom-zone'); // ドロップ後にクラスを削除
-
-    const type = e.dataTransfer.getData("type");
-    if (type === 'card') {
-        const cardId = e.dataTransfer.getData("cardId");
-        const sourceZoneId = e.dataTransfer.getData("sourceZoneId");
-        moveCardData(cardId, sourceZoneId, 'deck', e, deckButton); // ドロップイベントとターゲット要素を渡す
+    deckButton.classList.remove('drag-over', 'highlight-top-zone', 'highlight-bottom-zone');
+    if (e.dataTransfer.getData("type") === 'card') {
+        moveCardData(e.dataTransfer.getData("cardId"), e.dataTransfer.getData("sourceZoneId"), 'deck', e, deckButton);
     }
 }
 
 export function handleDrop(e) {
     e.preventDefault();
     const type = e.dataTransfer.getData("type");
-    const targetCardElement = e.target.closest('.card'); // ドロップ先がカードかどうか
-    const targetZoneElement = e.target.closest('.zone, .special-zone'); // ドロップ先がゾーンかどうか
 
     if (type === 'card') {
         handleCardDrop(e);
-    } else if (type === 'voidCore' || type === 'core' || type === 'multiCore' || type === 'coreFromCard') {
-        const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
-        if (targetCardElement) {
-            // Check if it's an internal move within the same card
-            const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
-            if (coresToMove.length === 1 && coresToMove[0].sourceCardId === targetCardElement.dataset.id) {
-                handleCoreInternalMoveOnCard(e, targetCardElement);
-            } else {
-                handleCoreDropOnCard(e, targetCardElement);
-            }
-        } else if (targetZoneElement) {
-            handleCoreDropOnZone(e, targetZoneElement);
-        }
+    } else if (type === 'core') {
+        handleCoreDrop(e);
     }
-    clearSelectedCores(); // ドロップ処理の最後に選択状態をクリア
+    clearSelectedCores();
 }
 
-export function handleCardDrop(e) {
+function handleCardDrop(e) {
     const cardId = e.dataTransfer.getData("cardId");
-    const sourceZoneIdFromDataTransfer = e.dataTransfer.getData("sourceZoneId"); // 'fieldCards' など
-    // sourceZoneIdFromDataTransfer を DOM 要素として取得し、そのゾーン名を正規化
-    const sourceElement = document.getElementById(sourceZoneIdFromDataTransfer);
-    const sourceZoneName = getZoneName(sourceElement);
-
+    const sourceZoneId = e.dataTransfer.getData("sourceZoneId");
+    const sourceZoneName = getZoneName(document.getElementById(sourceZoneId));
     const targetElement = e.target.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea');
-    console.log("targetElement:", targetElement);
     if (!targetElement) return;
 
     const targetZoneName = getZoneName(targetElement);
-    console.log("targetZoneName:", targetZoneName);
-
-    if (targetZoneName === 'deck') {
-        // デッキへのドロップは handleDeckDrop で処理するため、ここでは何もしない
-        return;
-    }
+    if (targetZoneName === 'deck') return; // デッキへのドロップは専用ハンドラで処理
 
     if (targetZoneName === 'field') {
         const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
@@ -374,6 +323,163 @@ export function handleCardDrop(e) {
     moveCardData(cardId, sourceZoneName, targetZoneName);
 }
 
+function handleCoreDrop(e) {
+    const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
+    const targetCardElement = e.target.closest('.card');
+    const targetZoneElement = e.target.closest('.zone, .special-zone');
+
+    if (targetCardElement) {
+        if (coresToMove.length === 1 && coresToMove[0].sourceCardId === targetCardElement.dataset.id) {
+            handleCoreInternalMoveOnCard(e, targetCardElement);
+        } else {
+            handleCoreDropOnCard(e, targetCardElement);
+        }
+    } else if (targetZoneElement) {
+        handleCoreDropOnZone(e, targetZoneElement);
+    }
+}
+
+
+// --- タッチイベントハンドラ ---
+let touchedElement = null;
+const DRAG_THRESHOLD = 10;
+
+function handleTouchStart(e) {
+    if (e.touches.length !== 1) return;
+    const target = e.target.closest('.card, .core, #voidCore');
+    if (!target) return;
+
+    touchedElement = target;
+    e.preventDefault();
+
+    setInitialTouchX(e.touches[0].clientX);
+    setInitialTouchY(e.touches[0].clientY);
+    setCurrentTouchX(e.touches[0].clientX);
+    setCurrentTouchY(e.touches[0].clientY);
+    setIsDragging(false);
+
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+}
+
+function startTouchDrag(e) {
+    let displayElement = touchedElement;
+    let customDragElement = null;
+
+    if (touchedElement.classList.contains('core') || touchedElement.id === 'voidCore') {
+        const coresInfo = getDraggedCoresInfo(touchedElement);
+        if (coresInfo.length > 1) {
+            customDragElement = document.createElement('div');
+            customDragElement.style.cssText = `
+                background-color: rgba(0, 123, 255, 0.8); color: white; border-radius: 50%;
+                width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+                font-weight: bold; font-size: 16px; pointer-events: none;
+            `;
+            customDragElement.textContent = coresInfo.length;
+            displayElement = customDragElement;
+        }
+    }
+
+    const clone = displayElement.cloneNode(true);
+    clone.classList.add('dragging');
+    clone.style.position = 'fixed';
+    clone.style.zIndex = '1000';
+    clone.style.transition = 'none';
+    document.body.appendChild(clone);
+    setTouchDraggedElement(clone);
+
+    const rect = touchedElement.getBoundingClientRect();
+    setTouchOffsetX(e.touches[0].clientX - rect.left);
+    setTouchOffsetY(e.touches[0].clientY - rect.top);
+
+    clone.style.left = `${e.touches[0].clientX - touchOffsetX}px`;
+    clone.style.top = `${e.touches[0].clientY - touchOffsetY}px`;
+
+    setIsDragging(true);
+}
+
+function handleTouchMove(e) {
+    if (e.touches.length !== 1) return;
+
+    setCurrentTouchX(e.touches[0].clientX);
+    setCurrentTouchY(e.touches[0].clientY);
+
+    if (!isDragging) {
+        const deltaX = Math.abs(currentTouchX - initialTouchX);
+        const deltaY = Math.abs(currentTouchY - initialTouchY);
+        if (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD) {
+            startTouchDrag(e);
+        }
+    }
+
+    if (isDragging && touchDraggedElement) {
+        e.preventDefault();
+        touchDraggedElement.style.left = `${currentTouchX - touchOffsetX}px`;
+        touchDraggedElement.style.top = `${currentTouchY - touchOffsetY}px`;
+    }
+}
+
+function handleTouchEnd(e) {
+    document.removeEventListener('touchmove', handleTouchMove);
+    document.removeEventListener('touchend', handleTouchEnd);
+
+    if (isDragging) {
+        if (touchDraggedElement) {
+            touchDraggedElement.remove();
+            setTouchDraggedElement(null);
+        }
+
+        const dropTarget = document.elementFromPoint(currentTouchX, currentTouchY);
+        if (!dropTarget) {
+            setIsDragging(false);
+            touchedElement = null;
+            return;
+        }
+
+        if (touchedElement.classList.contains('card')) {
+            // カードのタッチドロップ処理
+            const cardId = touchedElement.dataset.id;
+            const sourceZoneName = getZoneName(touchedElement.parentElement);
+            const targetZoneElement = dropTarget.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea');
+
+            if (targetZoneElement) {
+                const targetZoneName = getZoneName(targetZoneElement);
+                if (targetZoneName === 'field') {
+                    const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
+                    cardPositions[cardId] = {
+                        left: currentTouchX - fieldRect.left - touchOffsetX,
+                        top: currentTouchY - fieldRect.top - touchOffsetY
+                    };
+                } else {
+                    delete cardPositions[cardId];
+                }
+                moveCardData(cardId, sourceZoneName, targetZoneName);
+            }
+        } else if (touchedElement.classList.contains('core') || touchedElement.id === 'voidCore') {
+            // コアのタッチドロップ処理
+            const coresToMove = getDraggedCoresInfo(touchedElement);
+            const mockEvent = {
+                clientX: currentTouchX,
+                clientY: currentTouchY,
+                target: dropTarget,
+                dataTransfer: {
+                    getData: (type) => type === "cores" ? JSON.stringify(coresToMove) : ""
+                }
+            };
+            handleCoreDrop(mockEvent);
+        }
+    } else {
+        if (touchedElement) {
+            touchedElement.click();
+        }
+    }
+
+    setIsDragging(false);
+    touchedElement = null;
+    clearSelectedCores();
+}
+
+// --- 汎用モーダルおよびその他 ---
 export function openTrashModal() {
     openModal('trashModal', 'trashModalContent', renderTrashModalContent);
 }
@@ -383,10 +489,7 @@ export function openModal(modalId, contentId, renderContent) {
     renderContent();
     modal.style.display = "flex";
 
-    // オープンエリアのモーダルはカードがなくなるまで閉じない
-    if (modalId === 'openAreaModal') {
-        return;
-    }
+    if (modalId === 'openAreaModal') return;
 
     const closeModalOnClick = e => {
         if (!document.getElementById(contentId).contains(e.target)) {
@@ -408,255 +511,18 @@ export function toggleDeckCoreCount() {
 }
 
 export function refreshAll() {
-    setSelectedCores([]); // 選択されたコアをクリア
+    setSelectedCores([]);
     field.forEach(card => {
         if (card.isExhausted) {
             card.isExhausted = false;
-            card.isRotated = true; // 重疲労から疲労へ
+            card.isRotated = true;
         } else {
             card.isRotated = false;
             card.isExhausted = false;
         }
     });
-
-    // トラッシュのコアをすべてリザーブに移動
     while (trashCores.length > 0) {
         reserveCores.push(trashCores.shift());
     }
-
     renderAll();
-}
-
-// --- タッチイベントハンドラ --- 
-let touchedElement = null; // タッチ開始時の要素を保持
-const DRAG_THRESHOLD = 10; // ドラッグ開始と判定する移動量（ピクセル）
-
-function handleTouchStart(e) {
-    if (e.touches.length !== 1) return; // シングルタッチのみを処理
-
-    touchedElement = e.target.closest('.card, .core, #voidCore');
-    if (!touchedElement) return; // カード、コア、ボイドコア以外は無視
-
-    e.preventDefault(); // デフォルトのスクロールなどを抑制
-
-    // 初期タッチ位置を記録
-    setInitialTouchX(e.touches[0].clientX);
-    setInitialTouchY(e.touches[0].clientY);
-    setCurrentTouchX(e.touches[0].clientX); // 初期値として設定
-    setCurrentTouchY(e.touches[0].clientY); // 初期値として設定
-
-    setIsDragging(false); // ドラッグ開始フラグをリセット
-
-    // touchmove と touchend イベントリスナーを動的に追加
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleTouchEnd);
-}
-
-function startTouchDrag(e, elementToDrag) {
-    let elementToDisplay = elementToDrag; // The element that will be cloned for visual feedback
-    let customDragElement = null; // To hold the temporary custom element
-
-    // Check if we are dragging a core and if multiple cores are selected
-    if (elementToDrag.classList.contains('core') && selectedCores.length > 1) {
-        const sourceCardId = elementToDrag.dataset.sourceCardId;
-        const sourceArrayName = elementToDrag.parentElement.id;
-        const index = parseInt(elementToDrag.dataset.index);
-
-        const isTouchedCoreSelected = selectedCores.some(c =>
-            (c.sourceCardId && c.sourceCardId === sourceCardId && c.index === index) ||
-            (c.sourceArrayName && c.sourceArrayName === sourceArrayName && c.index === index)
-        );
-
-        if (isTouchedCoreSelected) {
-            // Create a custom element to show the number of cores being dragged
-            customDragElement = document.createElement('div');
-            customDragElement.style.cssText = `
-                background-color: rgba(0, 123, 255, 0.8);
-                color: white;
-                border-radius: 50%;
-                width: 30px;
-                height: 30px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: bold;
-                font-size: 16px;
-                position: absolute;
-                left: -9999px;
-                pointer-events: none; /* Prevent it from interfering with drop targets */
-            `;
-            customDragElement.textContent = selectedCores.length;
-            document.body.appendChild(customDragElement);
-            elementToDisplay = customDragElement;
-        }
-    }
-
-    // ドラッグ開始時の処理
-    const clone = elementToDisplay.cloneNode(true);
-
-    // If we created a temporary element, remove it from the DOM
-    if (customDragElement) {
-        customDragElement.remove();
-    }
-
-    clone.classList.add('dragging');
-    clone.style.position = 'fixed';
-    clone.style.zIndex = '1000';
-    clone.style.transition = 'none';
-    document.body.appendChild(clone);
-    setTouchDraggedElement(clone);
-
-    const rect = elementToDrag.getBoundingClientRect();
-    setTouchOffsetX(e.touches[0].clientX - rect.left);
-    setTouchOffsetY(e.touches[0].clientY - rect.top);
-
-    // クローンの初期位置を設定
-    clone.style.left = `${e.touches[0].clientX - touchOffsetX}px`;
-    clone.style.top = `${e.touches[0].clientY - touchOffsetY}px`;
-
-    setIsDragging(true); // ドラッグ開始
-}
-
-function handleTouchMove(e) {
-    if (e.touches.length !== 1) return; // シングルタッチのみを処理
-
-    setCurrentTouchX(e.touches[0].clientX);
-    setCurrentTouchY(e.touches[0].clientY);
-
-    if (!isDragging) {
-        // ドラッグがまだ開始されていない場合、移動量をチェック
-        const deltaX = Math.abs(currentTouchX - initialTouchX);
-        const deltaY = Math.abs(currentTouchY - initialTouchY);
-
-        if (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD) {
-            // 一定の移動量を超えたらドラッグ開始
-            if (touchedElement) {
-                startTouchDrag(e, touchedElement);
-            }
-        }
-    }
-
-    if (isDragging && touchDraggedElement) {
-        e.preventDefault(); // スクロールなどのデフォルト動作を抑制
-        // クローンを指の位置に合わせて移動
-        touchDraggedElement.style.left = `${currentTouchX - touchOffsetX}px`;
-        touchDraggedElement.style.top = `${currentTouchY - touchOffsetY}px`;
-
-        // ドロップ先のハイライト処理（オプション）
-        // ここにドロップ可能なゾーンをハイライトするロジックを追加できます
-    }
-}
-
-function handleTouchEnd(e) {
-    // イベントリスナーを削除
-    document.removeEventListener('touchmove', handleTouchMove);
-    document.removeEventListener('touchend', handleTouchEnd);
-
-    if (isDragging) {
-        // ドラッグが終了した場合の処理
-        if (touchDraggedElement) {
-            touchDraggedElement.remove(); // クローンを削除
-            setTouchDraggedElement(null);
-        }
-
-        // ドロップ先の要素を特定
-        // `document.elementFromPoint` を使用して、ドロップされた位置の要素を取得
-        const dropTarget = document.elementFromPoint(currentTouchX, currentTouchY);
-
-        if (dropTarget) {
-            const originalElement = touchedElement; // タッチ開始時の要素
-            const cardElement = originalElement.closest('.card');
-            const coreElement = originalElement.closest('.core, #voidCore');
-
-            if (cardElement) { // カードのドラッグの場合
-                const cardId = cardElement.dataset.id;
-                // sourceZoneId を正規化して取得
-                const sourceZoneName = getZoneName(cardElement.parentElement);
-
-                const targetCardElement = dropTarget.closest('.card');
-                const targetZoneElement = dropTarget.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea');
-
-                if (targetZoneElement) {
-                    const targetZoneName = getZoneName(targetZoneElement);
-                    if (targetZoneName === 'field') {
-                        const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
-                        cardPositions[cardId] = {
-                            left: currentTouchX - fieldRect.left - touchOffsetX,
-                            top: currentTouchY - fieldRect.top - touchOffsetY
-                        };
-                    } else {
-                        delete cardPositions[cardId];
-                    }
-                    moveCardData(cardId, sourceZoneName, targetZoneName);
-                } else if (targetCardElement) {
-                    // カードからカードへのドロップは現在未対応
-                    console.log("Card dropped on another card (not yet supported)");
-                }
-            } else if (coreElement) { // コアのドラッグの場合
-                const targetCardElement = dropTarget.closest('.card');
-                const targetZoneElement = dropTarget.closest('.zone, .special-zone');
-
-                // ドラッグされたコアのデータを特定
-                const coreType = originalElement.dataset.coreType;
-                const sourceCardId = originalElement.dataset.sourceCardId;
-                const sourceArrayName = originalElement.parentElement.id;
-                const index = parseInt(originalElement.dataset.index);
-
-                let coresToMove = [];
-                if (originalElement.id === 'voidCore') {
-                    const coresToMoveCount = voidChargeCount > 0 ? voidChargeCount : 1;
-                    coresToMove = Array(coresToMoveCount).fill({ type: "blue", sourceArrayName: 'void', index: -1 });
-                    setVoidChargeCount(0);
-                } else {
-                    // Check if the originally touched core is part of the selected cores
-                    const isTouchedCoreSelected = selectedCores.some(c =>
-                        (c.sourceCardId && c.sourceCardId === sourceCardId && c.index === index) ||
-                        (c.sourceArrayName && c.sourceArrayName === sourceArrayName && c.index === index)
-                    );
-
-                    if (selectedCores.length > 0 && isTouchedCoreSelected) {
-                        // If multiple cores are selected, move all of them
-                        coresToMove = selectedCores.map(c => ({ ...c }));
-                    } else {
-                        // Otherwise, move only the single touched core
-                        const coreData = { type: coreType, index: index };
-                        if (sourceCardId) {
-                            coreData.sourceCardId = sourceCardId;
-                        } else {
-                            coreData.sourceArrayName = sourceArrayName;
-                        }
-                        coresToMove.push(coreData);
-                    }
-                }
-
-                if (targetCardElement) {
-                    // カードへのドロップ
-                    // Check if it's an internal move
-                    if (coresToMove.length === 1 && coresToMove[0].sourceCardId === targetCardElement.dataset.id) {
-                        // Create a mock event object for internal move
-                        const mockEvent = {
-                            clientX: currentTouchX,
-                            clientY: currentTouchY,
-                            dataTransfer: { getData: (type) => JSON.stringify(coresToMove) }
-                        };
-                        handleCoreInternalMoveOnCard(mockEvent, targetCardElement);
-                    } else {
-                        handleCoreDropOnCard({ dataTransfer: { getData: () => JSON.stringify(coresToMove) } }, targetCardElement);
-                    }
-                } else if (targetZoneElement) {
-                    // ゾーンへのドロップ
-                    handleCoreDropOnZone({ dataTransfer: { getData: () => JSON.stringify(coresToMove) } }, targetZoneElement);
-                }
-                clearSelectedCores();
-            }
-        }
-    } else {
-        // 短いタップの場合（ドラッグと判定されなかった場合）
-        // ここで元の要素に対するクリックイベントを再トリガーする
-        if (touchedElement) {
-            touchedElement.click();
-        }
-    }
-    setIsDragging(false); // ドラッグフラグをリセット
-    touchedElement = null; // タッチ開始要素をリセット
 }
