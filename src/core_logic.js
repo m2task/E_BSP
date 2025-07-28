@@ -51,38 +51,31 @@ export function clearSelectedCores() {
     renderAll(); // 選択状態をクリアしたら再描画してDOMを更新
 }
 
-export function handleCoreDropOnCard(e, targetCardElement, coresToMove, dropClientX, dropClientY) {
+export function handleCoreDropOnCard(e, targetCardElement) {
     e.preventDefault();
+    const type = e.dataTransfer.getData("type");
+    const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
     const targetCardId = targetCardElement.dataset.id;
     const targetCard = field.find(card => card.id === targetCardId);
 
     if (!targetCard) return;
 
     const cardRect = targetCardElement.getBoundingClientRect();
-    // ドロップされたカード内の相対座標を計算
-    const dropX = dropClientX - cardRect.left;
-    const dropY = dropClientY - cardRect.top;
+    const dropX = e.clientX - cardRect.left;
+    const dropY = e.clientY - cardRect.top;
 
-    const coreOffsetX = 10; // コアの水平方向オフセット
-    const coreOffsetY = 10; // コアの垂直方向オフセット
-
-    if (coresToMove[0] && coresToMove[0].sourceArrayName === 'void') {
+    if (type === 'voidCore') {
+        // ボイドコアの場合、チャージ数分の新しい青コアを生成してカードに追加
         const coresToAddCount = coresToMove.length; // coresToMoveにはチャージ数分のダミーコアが入っている
+        const coreOffsetX = 10; // コアの水平方向オフセット
+        const coreOffsetY = 10; // コアの垂直方向オフセット
 
         for (let i = 0; i < coresToAddCount; i++) {
-            let finalX = dropX;
-            let finalY = dropY;
-
-            if (coresToAddCount > 1) { // 複数のコアが追加される場合のみオフセットを適用
-                const currentCoresOnCardCount = targetCard.coresOnCard.length; // 現在のコア数を取得
-                finalX = dropX + (currentCoresOnCardCount * coreOffsetX);
-                finalY = dropY + (currentCoresOnCardCount * coreOffsetY);
-            }
-
+            const currentCoresOnCardCount = targetCard.coresOnCard.length; // 現在のコア数を取得
             targetCard.coresOnCard.push({
                 type: "blue",
-                x: finalX,
-                y: finalY
+                x: dropX + (currentCoresOnCardCount * coreOffsetX),
+                y: dropY + (currentCoresOnCardCount * coreOffsetY)
             });
         }
         setVoidChargeCount(0); // ボイドコア移動後はチャージをリセット
@@ -92,37 +85,32 @@ export function handleCoreDropOnCard(e, targetCardElement, coresToMove, dropClie
         // 移動元からコアを削除
         removeCoresFromSource(coresToMove);
 
+        const coreOffsetX = 10; // コアの水平方向オフセット
+        const coreOffsetY = 10; // コアの垂直方向オフセット
+
         // カードにコアを追加
         for (const coreInfo of coresToMove) {
-            let finalX = dropX;
-            let finalY = dropY;
-
-            if (coresToMove.length > 1) { // 複数のコアが追加される場合のみオフセットを適用
-                const currentCoresOnCardCount = targetCard.coresOnCard.length; // 現在のコア数を取得
-                finalX = dropX + (currentCoresOnCardCount * coreOffsetX);
-                finalY = dropY + (currentCoresOnCardCount * coreOffsetY);
-            }
-
+            const currentCoresOnCardCount = targetCard.coresOnCard.length; // 現在のコア数を取得
             targetCard.coresOnCard.push({
                 type: coreInfo.type,
-                x: finalX,
-                y: finalY
+                x: dropX + (currentCoresOnCardCount * coreOffsetX),
+                y: dropY + (currentCoresOnCardCount * coreOffsetY)
             });
         }
     }
     renderAll();
 
     // 最後にトーストを表示（ボイドからの場合のみ）
-    if (coresToMove[0] && coresToMove[0].sourceArrayName === 'void') {
+    if (type === 'voidCore') {
         const movedCount = coresToMove.length;
         const toastMessage = `${movedCount}個増やしました`;
         showToast('voidToast', toastMessage);
     }
 }
 
-export function handleCoreInternalMoveOnCard(e, targetCardElement, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY) {
+export function handleCoreInternalMoveOnCard(e, targetCardElement) {
     e.preventDefault();
-    const coresToMove = draggedCoreData; // グローバル変数から取得
+    const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
     const targetCardId = targetCardElement.dataset.id;
     const targetCard = field.find(card => card.id === targetCardId);
 
@@ -136,9 +124,12 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement, currentTouchX
     }
 
     const cardRect = targetCardElement.getBoundingClientRect();
-    // タッチイベントの座標とオフセットを使用
-    const newX = currentTouchX - cardRect.left - touchOffsetX;
-    const newY = currentTouchY - cardRect.top - touchOffsetY;
+    const offsetX = parseFloat(e.dataTransfer.getData("offsetX"));
+    const offsetY = parseFloat(e.dataTransfer.getData("offsetY"));
+
+    // ドロップされたカード内の相対座標を計算
+    const newX = e.clientX - cardRect.left - offsetX;
+    const newY = e.clientY - cardRect.top - offsetY;
 
     // コアのデータを更新
     targetCard.coresOnCard[coreIndexOnCard].x = newX;
@@ -147,11 +138,12 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement, currentTouchX
     renderAll();
 }
 
-export function handleCoreDropOnZone(e, targetElement, coresToMove) {
+export function handleCoreDropOnZone(e, targetElement) {
     const targetZoneName = getZoneName(targetElement);
+    const type = e.dataTransfer.getData("type");
 
-    // typeの代わりにcoresToMoveのsourceArrayNameが'void'かどうかで判断
-    if (coresToMove[0] && coresToMove[0].sourceArrayName === 'void') {
+    if (type === 'voidCore') {
+        const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
         setVoidChargeCount(0);
         showToast('voidToast', '', true);
 
@@ -166,6 +158,11 @@ export function handleCoreDropOnZone(e, targetElement, coresToMove) {
         showToast('voidToast', toastMessage);
         renderAll();
         return;
+    }
+
+    let coresToMove = [];
+    if (type === 'multiCore' || type === 'coreFromCard' || type === 'core') {
+        coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
     }
 
     const coresToActuallyMove = [];
