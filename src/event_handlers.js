@@ -102,7 +102,7 @@ export function setupEventListeners() {
         });
     } else {
         // PCの場合：マウスエンター/リーブで開閉
-        handZoneContainer.addEventListener('mouseenter', () => {
+        openHandButton.addEventListener('mouseenter', () => {
             if (!handPinned) {
                 handZoneContainer.classList.remove('collapsed');
                 openHandButton.classList.add('hidden');
@@ -453,14 +453,56 @@ function handleTouchStart(e) {
 }
 
 function startTouchDrag(e, elementToDrag) {
-    // ドラッグ開始時の処理
-    // e.preventDefault(); // handleTouchStart で既に preventDefault しているため不要
+    let elementToDisplay = elementToDrag; // The element that will be cloned for visual feedback
+    let customDragElement = null; // To hold the temporary custom element
 
-    const clone = elementToDrag.cloneNode(true);
-    clone.classList.add('dragging'); // ドラッグ中のスタイルを適用
+    // Check if we are dragging a core and if multiple cores are selected
+    if (elementToDrag.classList.contains('core') && selectedCores.length > 1) {
+        const sourceCardId = elementToDrag.dataset.sourceCardId;
+        const sourceArrayName = elementToDrag.parentElement.id;
+        const index = parseInt(elementToDrag.dataset.index);
+
+        const isTouchedCoreSelected = selectedCores.some(c =>
+            (c.sourceCardId && c.sourceCardId === sourceCardId && c.index === index) ||
+            (c.sourceArrayName && c.sourceArrayName === sourceArrayName && c.index === index)
+        );
+
+        if (isTouchedCoreSelected) {
+            // Create a custom element to show the number of cores being dragged
+            customDragElement = document.createElement('div');
+            customDragElement.style.cssText = `
+                background-color: rgba(0, 123, 255, 0.8);
+                color: white;
+                border-radius: 50%;
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+                font-size: 16px;
+                position: absolute;
+                left: -9999px;
+                pointer-events: none; /* Prevent it from interfering with drop targets */
+            `;
+            customDragElement.textContent = selectedCores.length;
+            document.body.appendChild(customDragElement);
+            elementToDisplay = customDragElement;
+        }
+    }
+
+    // ドラッグ開始時の処理
+    const clone = elementToDisplay.cloneNode(true);
+
+    // If we created a temporary element, remove it from the DOM
+    if (customDragElement) {
+        customDragElement.remove();
+    }
+
+    clone.classList.add('dragging');
     clone.style.position = 'fixed';
     clone.style.zIndex = '1000';
-    clone.style.transition = 'none'; // ドラッグ中はトランジションを無効にする
+    clone.style.transition = 'none';
     document.body.appendChild(clone);
     setTouchDraggedElement(clone);
 

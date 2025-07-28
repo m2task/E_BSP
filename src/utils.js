@@ -50,7 +50,6 @@ export function getArrayByZoneName(zoneName) {
 }
 
 export function showToast(toastId, message, hide = false) {
-    console.log(`showToast called: ID=${toastId}, Message=${message}, Hide=${hide}`);
     const toastElement = document.getElementById(toastId);
     if (!toastElement) {
         console.error(`Toast element with ID '${toastId}' not found.`);
