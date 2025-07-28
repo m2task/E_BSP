@@ -110,7 +110,6 @@ export function handleCoreDropOnCard(e, targetCardElement) {
 }
 
 export function handleCoreInternalMoveOnCard(e, targetCardElement) {
-    alert("handleCoreInternalMoveOnCard called!");
     e.preventDefault();
     const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
     const targetCardId = targetCardElement.dataset.id;
@@ -128,6 +127,8 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement) {
     const cardRect = targetCardElement.getBoundingClientRect();
     const offsetX = parseFloat(e.dataTransfer.getData("offsetX"));
     const offsetY = parseFloat(e.dataTransfer.getData("offsetY"));
+
+    alert(`Internal Move - offsetX: ${offsetX}, offsetY: ${offsetY}`);
 
     // ドロップされたカード内の相対座標を計算
     const newX = e.clientX - cardRect.left - offsetX;
