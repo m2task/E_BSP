@@ -176,7 +176,7 @@ function getDraggedCoresInfo(draggedElement) {
     // ボイドコアの場合
     if (draggedElement.id === 'voidCore') {
         const count = voidChargeCount > 0 ? voidChargeCount : 1;
-        setVoidChargeCount(0); // ドラッグ開始時にチャージをリセット
+        // setVoidChargeCount(0); // ここでリセットするのが早すぎたため削除
         return Array(count).fill({ type: "blue", sourceArrayName: 'void', index: -1 });
     }
 
@@ -455,18 +455,22 @@ function handleTouchMove(e) {
 }
 
 function handleTouchEnd(e) {
-    // 長押しタイマーが残っていればクリア
+    document.removeEventListener('touchmove', handleTouchMove);
+    document.removeEventListener('touchend', handleTouchEnd);
+
+    // 長押しタイマーが残っているかチェック
     if (longPressTimer) {
         clearTimeout(longPressTimer);
         longPressTimer = null;
-        // タイマーが残っている ＝ 短いタップなので、クリックイベントを発火
-        if (touchedElement && !isDragging) {
+        // ドラッグが開始されていなければ、これはタップと見なす
+        if (!isDragging && touchedElement) {
             touchedElement.click();
+            // タップ処理後は、後続のドロップ処理や状態リセットを行わないようにする
+            setIsDragging(false);
+            touchedElement = null;
+            return; // ここで処理を終了
         }
     }
-
-    document.removeEventListener('touchmove', handleTouchMove);
-    document.removeEventListener('touchend', handleTouchEnd);
 
     if (isDragging) {
         let dropTarget = null;
@@ -475,61 +479,45 @@ function handleTouchEnd(e) {
             dropTarget = document.elementFromPoint(currentTouchX, currentTouchY);
             touchDraggedElement.remove();
             setTouchDraggedElement(null);
-        } else {
-            dropTarget = document.elementFromPoint(currentTouchX, currentTouchY);
         }
 
-        if (!dropTarget) {
-            setIsDragging(false);
-            touchedElement = null;
-            return;
-        }
+        if (dropTarget) {
+            if (touchedElement.classList.contains('card')) {
+                // カードのタッチドロップ処理
+                const cardId = touchedElement.dataset.id;
+                const sourceZoneName = getZoneName(touchedElement.parentElement);
+                const targetZoneElement = dropTarget.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea');
 
-        if (touchedElement.classList.contains('card')) {
-            // カードのタッチドロップ処理
-            const cardId = touchedElement.dataset.id;
-            const sourceZoneName = getZoneName(touchedElement.parentElement);
-            const targetZoneElement = dropTarget.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea');
-
-            if (targetZoneElement) {
-                const targetZoneName = getZoneName(targetZoneElement);
-                if (targetZoneName === 'field') {
-                    const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
-                    cardPositions[cardId] = {
-                        left: currentTouchX - fieldRect.left - touchOffsetX,
-                        top: currentTouchY - fieldRect.top - touchOffsetY
-                    };
-                } else {
-                    delete cardPositions[cardId];
-                }
-                moveCardData(cardId, sourceZoneName, targetZoneName);
-            }
-        } else if (touchedElement.classList.contains('core') || touchedElement.id === 'voidCore') {
-            // コアのタッチドロップ処理
-            const coresToMove = getDraggedCoresInfo(touchedElement);
-            const mockEvent = {
-                clientX: currentTouchX,
-                clientY: currentTouchY,
-                target: dropTarget,
-                dataTransfer: {
-                    getData: (key) => {
-                        if (key === "cores") {
-                            return JSON.stringify(coresToMove);
-                        }
-                        if (key === "type") {
-                            return touchedElement.id === 'voidCore' ? 'voidCore' : 'core';
-                        }
-                        return "";
+                if (targetZoneElement) {
+                    const targetZoneName = getZoneName(targetZoneElement);
+                    if (targetZoneName === 'field') {
+                        const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
+                        cardPositions[cardId] = {
+                            left: currentTouchX - fieldRect.left - touchOffsetX,
+                            top: currentTouchY - fieldRect.top - touchOffsetY
+                        };
+                    } else {
+                        delete cardPositions[cardId];
                     }
+                    moveCardData(cardId, sourceZoneName, targetZoneName);
                 }
-            };
-            handleCoreDrop(mockEvent);
-        }
-    } else {
-        // ドラッグが発生しなかった場合も、クリックとして扱う
-        // （ただし、長押しタイマーがクリアされた後のタップを除く）
-        if (touchedElement && !longPressTimer) {
-            // touchedElement.click(); // 重複クリックを避けるためコメントアウト
+            } else if (touchedElement.classList.contains('core') || touchedElement.id === 'voidCore') {
+                // コアのタッチドロップ処理
+                const coresToMove = getDraggedCoresInfo(touchedElement);
+                const mockEvent = {
+                    clientX: currentTouchX,
+                    clientY: currentTouchY,
+                    target: dropTarget,
+                    dataTransfer: {
+                        getData: (key) => {
+                            if (key === "cores") return JSON.stringify(coresToMove);
+                            if (key === "type") return touchedElement.id === 'voidCore' ? 'voidCore' : 'core';
+                            return "";
+                        }
+                    }
+                };
+                handleCoreDrop(mockEvent);
+            }
         }
     }
 
