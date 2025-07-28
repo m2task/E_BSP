@@ -353,6 +353,11 @@ let longPressTimer = null;
 const LONG_PRESS_DURATION = 300; // 300ms
 
 function handleTouchStart(e) {
+    // 重疲労ボタンが押された場合は、ドラッグ処理を開始せずに通常のクリックイベントに任せる
+    if (e.target.classList.contains('exhaust-button')) {
+        return;
+    }
+
     if (e.touches.length !== 1) return;
     const target = e.target.closest('.card, .core, #voidCore');
     if (!target) return;
@@ -513,6 +518,8 @@ function handleTouchEnd(e) {
                         getData: (key) => {
                             if (key === "cores") return JSON.stringify(coresToMove);
                             if (key === "type") return touchedElement.id === 'voidCore' ? 'voidCore' : 'core';
+                            if (key === "offsetX") return touchOffsetX;
+                            if (key === "offsetY") return touchOffsetY;
                             return "";
                         }
                     }
