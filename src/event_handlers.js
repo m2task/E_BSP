@@ -325,18 +325,19 @@ function handleCardDrop(e) {
 
 function handleCoreDrop(e) {
     const targetCardElement = e.target.closest('.card');
-    const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
 
+    // ★ カードへのドロップを最優先で処理
     if (targetCardElement) {
+        const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
         if (coresToMove.length === 1 && coresToMove[0].sourceCardId === targetCardElement.dataset.id) {
             handleCoreInternalMoveOnCard(e, targetCardElement);
         } else {
             handleCoreDropOnCard(e, targetCardElement);
         }
-        return; // カードへのドロップが成功したら、以降のゾーン検索は不要
+        return; // カードにドロップしたら、ここで処理を終了する
     }
 
-    // カード上でない場合のみ、ゾーンへのドロップを試みる
+    // ★ カード以外の場合、ゾーンへのドロップを試みる
     const targetZoneElement = e.target.closest('.zone, .special-zone');
     if (targetZoneElement) {
         handleCoreDropOnZone(e, targetZoneElement);
