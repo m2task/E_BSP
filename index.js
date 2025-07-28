@@ -100,6 +100,16 @@ function updateList() {
     document.getElementById("cardCount").textContent = `現在のデッキ枚数: ${deck.length}枚`;
 }
 
+function moveCardUp(cardName) {
+    const currentIndex = uniqueCardNameOrder.indexOf(cardName);
+    if (currentIndex > 0) {
+        // uniqueCardNameOrder 内で位置を交換
+        [uniqueCardNameOrder[currentIndex], uniqueCardNameOrder[currentIndex - 1]] = 
+        [uniqueCardNameOrder[currentIndex - 1], uniqueCardNameOrder[currentIndex]];
+        updateList();
+    }
+}
+
 function incrementCard(name) {
     deck.push(name);
     updateList();
@@ -150,6 +160,7 @@ function copyDeckData() {
 }
 
 function goToBattle(deckId) {
+    saveDeck(); // 対戦画面へ遷移する前にデッキを自動保存
     const includeFirstCard = document.getElementById('includeFirstCard').checked;
     window.open(`battle.html?deck=${deckId}&contract=${includeFirstCard}`, '_blank');
 }
