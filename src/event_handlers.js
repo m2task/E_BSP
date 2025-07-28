@@ -424,13 +424,14 @@ function handleTouchEnd(e) {
     document.removeEventListener('touchend', handleTouchEnd);
 
     if (isDragging) {
+        let dropTarget = null;
         if (touchDraggedElement) {
-            touchDraggedElement.style.display = 'none';
-        }
-        const dropTarget = document.elementFromPoint(currentTouchX, currentTouchY);
-        if (touchDraggedElement) {
+            touchDraggedElement.style.pointerEvents = 'none';
+            dropTarget = document.elementFromPoint(currentTouchX, currentTouchY);
             touchDraggedElement.remove();
             setTouchDraggedElement(null);
+        } else {
+            dropTarget = document.elementFromPoint(currentTouchX, currentTouchY);
         }
 
         if (!dropTarget) {
