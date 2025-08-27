@@ -1,5 +1,5 @@
 // src/card_logic.js
-import { deck, hand, field, trash, burst, reserveCores, discardState, openArea, setDeck, setHand, setField, setTrash, setBurst, setReserveCores, setDiscardCounter, setDiscardedCardNames, setDiscardToastTimer, setOpenArea } from './game_data.js';
+import { deck, hand, field, trash, burst, reserveCores, discardState, openArea, cardIdCounter, setCardIdCounter, setDeck, setHand, setField, setTrash, setBurst, setReserveCores, setDiscardCounter, setDiscardedCardNames, setDiscardToastTimer, setOpenArea, cardPositions } from './game_data.js';
 import { renderAll, showCostModal, renderOpenArea } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
 import { payCostFromReserve } from './core_logic.js';
@@ -29,6 +29,25 @@ export function drawCard(fromBottom = false) {
 }
 
 export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = null, dropTargetElement = null) {
+    const sourceArray = getArrayByZoneName(sourceZoneId);
+    const cardIndex = sourceArray.findIndex(c => c.id === cardId);
+    if (cardIndex === -1) return;
+    const cardData = sourceArray[cardIndex];
+
+    // Handle special card logic (if moved from field to non-field, it disappears)
+    if (cardData.isSpecial && sourceZoneId === 'field' && targetZoneName !== 'field') {
+        // Remove the card from the field
+        sourceArray.splice(cardIndex, 1);
+        // Move its cores to the reserve
+        if (cardData.coresOnCard && cardData.coresOnCard.length > 0) {
+            reserveCores.push(...cardData.coresOnCard.map(core => core.type));
+            cardData.coresOnCard = [];
+        }
+        delete cardPositions[cardId];
+        renderAll();
+        return; // Stop further execution
+    }
+
     // フィールド以外のゾーンからフィールドへの移動の場合のみコスト支払いモーダルを表示
     if (targetZoneName === 'field' && sourceZoneId !== 'field' && sourceZoneId !== 'burst') {
         const sourceArray = getArrayByZoneName(sourceZoneId);
@@ -161,4 +180,24 @@ export function discardDeck() {
         setDiscardedCardNames([]);
         setDiscardToastTimer(null);
     }, 350)); // 350msのデバウンス
+}
+
+export function createSpecialCardOnField(cardType, position) {
+    let currentCardId = cardIdCounter;
+    const newCard = {
+        id: `card-${currentCardId++}`,
+        name: cardType === 'token' ? 'トークン' : '転生後',
+        imgDataUrl: null, // No image for special cards
+        isRotated: false,
+        isExhausted: false,
+        coresOnCard: [],
+        isSpecial: true,
+        specialType: cardType
+    };
+    setCardIdCounter(currentCardId);
+
+    field.push(newCard);
+    cardPositions[newCard.id] = position;
+
+    renderAll();
 }

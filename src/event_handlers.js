@@ -2,7 +2,7 @@
 import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging } from './game_data.js';
 import { renderAll, renderTrashModalContent } from './ui_render.js';
 import { showToast, getZoneName, isMobileDevice } from './utils.js'; // isMobileDevice をインポート
-import { drawCard, moveCardData, openDeck, discardDeck } from './card_logic.js';
+import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField } from './card_logic.js';
 import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone } from './core_logic.js';
 
 export function setupEventListeners() {
@@ -169,6 +169,7 @@ export function setupEventListeners() {
 
     document.getElementById('deckDiscardBtn').addEventListener('click', discardDeck);
     document.getElementById('deckOpenBtn').addEventListener('click', openDeck);
+    document.getElementById('deckGaiButton').addEventListener('click', openDeckGaiModal);
 }
 
 // --- 共通コア情報取得関数 ---
@@ -219,7 +220,14 @@ export function handleDragStart(e) {
     setDraggedElement(target);
     setTimeout(() => target.classList.add('dragging'), 0);
 
-    if (target.classList.contains('card')) {
+    if (target.classList.contains('special-card')) {
+        const cardType = target.dataset.cardType;
+        e.dataTransfer.setData("type", "special-card");
+        e.dataTransfer.setData("cardType", cardType);
+        const rect = e.target.getBoundingClientRect();
+        setOffsetX(e.clientX - rect.left);
+        setOffsetY(e.clientY - rect.top);
+    } else if (target.classList.contains('card')) {
         e.dataTransfer.setData("type", "card");
         e.dataTransfer.setData("cardId", e.target.dataset.id);
         e.dataTransfer.setData("sourceZoneId", e.target.parentElement.id);
@@ -324,6 +332,8 @@ export function handleDrop(e) {
         handleCardDrop(mockEvent);
     } else if (type === 'core' || type === 'voidCore') {
         handleCoreDrop(mockEvent);
+    } else if (type === 'special-card') {
+        handleSpecialCardDrop(mockEvent);
     }
     clearSelectedCores();
 }
@@ -381,6 +391,23 @@ function handleCoreDrop(e) {
     const targetZoneElement = e.target.closest('.zone, .special-zone');
     if (targetZoneElement) {
         handleCoreDropOnZone(e, targetZoneElement);
+    }
+}
+
+function handleSpecialCardDrop(e) {
+    const cardType = e.dataTransfer.getData("cardType");
+    const targetElement = e.target.closest('#fieldZone');
+
+    if (targetElement) {
+        const targetZoneName = getZoneName(targetElement);
+        if (targetZoneName === 'field') {
+            const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
+            const position = {
+                left: e.clientX - fieldRect.left - offsetX,
+                top: e.clientY - fieldRect.top - offsetY
+            };
+            createSpecialCardOnField(cardType, position);
+        }
     }
 }
 
@@ -580,6 +607,10 @@ function handleTouchEnd(e) {
 // --- 汎用モーダルおよびその他 ---
 export function openTrashModal() {
     openModal('trashModal', 'trashModalContent', renderTrashModalContent);
+}
+
+export function openDeckGaiModal() {
+    openModal('deckGaiModal', 'deckGaiModalContent', () => {}); // Empty render function for now
 }
 
 export function openModal(modalId, contentId, renderContent) {

@@ -292,7 +292,26 @@ body {
     }
 
     .open-hand-toggle {
-      left: 80px;
+      left: 100px;
+    }
+
+    .open-deckgai-toggle {
+      position: fixed;
+      bottom: 0;
+      right: 20px;
+      background: #ddd;
+      font-weight: bold;
+      padding: 5px 15px;
+      border-top: 1px solid #999;
+      border-left: 1px solid #999;
+      border-right: 1px solid #999;
+      border-radius: 5px 5px 0 0;
+      cursor: pointer;
+      z-index: 101;
+    }
+
+    .special-card {
+      background: #f0c8f0; /* A light purple color */
     }
 
     /* モバイルデバイス用のスタイル */

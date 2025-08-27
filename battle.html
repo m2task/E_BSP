@@ -85,10 +85,23 @@
   <div class="hand-zone" id="handZone"></div>
 </div>
 <div id="openHandButton" class="open-hand-toggle hidden">▲ 手札を開く（<span id="handCount">0</span>枚）</div>
+<div id="deckGaiButton" class="open-deckgai-toggle">デッキ外</div>
 
 <!-- トラッシュモーダル -->
 <div id="trashModal">
   <div id="trashModalContent" style="display:flex; gap:8px;"></div>
+</div>
+
+<!-- デッキ外モーダル -->
+<div id="deckGaiModal" class="modal-background" style="display: none;">
+    <div class="modal-content" id="deckGaiModalContent" style="display:flex; gap:8px;">
+        <div class="card special-card" draggable="true" data-card-type="token">
+            <div class="card-name-fallback">トークン</div>
+        </div>
+        <div class="card special-card" draggable="true" data-card-type="tensei">
+            <div class="card-name-fallback">転生後</div>
+        </div>
+    </div>
 </div>
 
 <div id="cardMoveToast" class="toast-message"></div>
