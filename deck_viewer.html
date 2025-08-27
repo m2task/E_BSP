@@ -113,6 +113,13 @@
 
     <!-- デッキ編集エリア -->
     <div class="deck-editing-area">
+        <div class="save-load-deck-controls">
+            <h3>デッキの保存・読み込み</h3>
+            <input type="text" id="deckNameInput" placeholder="デッキ名を入力">
+            <button id="saveDeckAsButton">名前を付けて保存</button>
+            <button id="overwriteSaveButton">上書き保存</button>
+        </div>
+
         <div class="deck-header-controls">
             <h2>現在の編集デッキ (<span id="total-card-count">0</span>枚)</h2>
             <div class="add-card-by-name-controls">
@@ -123,13 +130,6 @@
         </div>
 
         <div id="deck-editor-container"></div>
-
-        <div class="save-load-deck-controls">
-            <h3>デッキの保存・読み込み</h3>
-            <input type="text" id="deckNameInput" placeholder="デッキ名を入力">
-            <button id="saveDeckAsButton">名前を付けて保存</button>
-            <button id="overwriteSaveButton">上書き保存</button>
-        </div>
     </div>
 
     <script src="deck_viewer.js"></script>

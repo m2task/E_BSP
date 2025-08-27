@@ -36,6 +36,12 @@
         <button id="gapV-increase">↓</button>
     </div>
 
+    <div class="actions" id="action-buttons">
+        <button id="crop-button">切り取り実行</button>
+        <button id="zoom-out-button">-</button>
+        <button id="zoom-in-button">+</button>
+    </div>
+
     <div id="cropper-container">
         <div id="image-container">
             <img id="sourceImage" src="" alt="アップロードされた画像">
@@ -44,10 +50,10 @@
         <div id="overlay-mask"></div>
     </div>
 
-    <div class="actions" id="action-buttons">
-        <button id="crop-button">切り取り実行</button>
-        <button id="zoom-out-button">-</button>
-        <button id="zoom-in-button">+</button>
+    <div class="save-load-deck-controls hidden">
+        <h3>名前を付けてデッキを保存</h3>
+        <input type="text" id="deckNameInput" placeholder="デッキ名を入力">
+        <button id="saveDeckAsButton">名前を付けて保存</button>
     </div>
 
     <div class="deck-header-controls hidden">
@@ -59,12 +65,6 @@
         </div>
     </div>
     <div id="deck-editor-container" class="hidden"></div>
-
-    <div class="save-load-deck-controls hidden">
-        <h3>名前を付けてデッキを保存</h3>
-        <input type="text" id="deckNameInput" placeholder="デッキ名を入力">
-        <button id="saveDeckAsButton">名前を付けて保存</button>
-    </div>
 
     <script src="card_cropper.js"></script>
 </body>
