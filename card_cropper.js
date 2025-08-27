@@ -6,8 +6,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const cropButton = document.getElementById('crop-button');
     const zoomOutButton = document.getElementById('zoom-out-button');
     const zoomInButton = document.getElementById('zoom-in-button');
-    const gapHorizontalInput = document.getElementById('gapHorizontal');
-    const gapVerticalInput = document.getElementById('gapVertical');
+
+    // Gap adjustment buttons and displays
+    const gapHDecreaseBtn = document.getElementById('gapH-decrease');
+    const gapHIncreaseBtn = document.getElementById('gapH-increase');
+    const gapHValueSpan = document.getElementById('gapH-value');
+    const gapVDecreaseBtn = document.getElementById('gapV-decrease');
+    const gapVIncreaseBtn = document.getElementById('gapV-increase');
+    const gapVValueSpan = document.getElementById('gapV-value');
 
     const gridControls = document.getElementById('grid-controls');
     const gapControls = document.getElementById('gap-controls');
@@ -37,6 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
         y: 50,          // Grid top-left Y on screen
         cellWidth: 80,  // Width of one cell
         cellHeight: 110, // Height of one cell
+    };
+
+    const gapState = {
+        horizontal: 16,
+        vertical: 40,
     };
 
     const imageState = {
@@ -173,8 +184,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const rows = parseInt(rowsInput.value, 10);
         const cols = parseInt(colsInput.value, 10);
-        const gapH = parseInt(gapHorizontalInput.value, 10) || 0;
-        const gapV = parseInt(gapVerticalInput.value, 10) || 0;
+        const gapH = gapState.horizontal;
+        const gapV = gapState.vertical;
 
         const totalCellWidth = gridState.cellWidth + gapH;
         const totalCellHeight = gridState.cellHeight + gapV;
@@ -388,8 +399,33 @@ document.addEventListener('DOMContentLoaded', () => {
     // General Controls
     rowsInput.addEventListener('change', drawGridAndHandles);
     colsInput.addEventListener('change', drawGridAndHandles);
-    gapHorizontalInput.addEventListener('input', drawGridAndHandles);
-    gapVerticalInput.addEventListener('input', drawGridAndHandles);
+
+    // New gap control listeners
+    const updateGapDisplayAndDraw = () => {
+        gapHValueSpan.textContent = gapState.horizontal;
+        gapVValueSpan.textContent = gapState.vertical;
+        drawGridAndHandles();
+    };
+
+    gapHDecreaseBtn.addEventListener('click', () => {
+        gapState.horizontal = Math.max(0, gapState.horizontal - 1);
+        updateGapDisplayAndDraw();
+    });
+
+    gapHIncreaseBtn.addEventListener('click', () => {
+        gapState.horizontal++;
+        updateGapDisplayAndDraw();
+    });
+
+    gapVDecreaseBtn.addEventListener('click', () => { // '↑' button
+        gapState.vertical = Math.max(0, gapState.vertical - 1);
+        updateGapDisplayAndDraw();
+    });
+
+    gapVIncreaseBtn.addEventListener('click', () => { // '↓' button
+        gapState.vertical++;
+        updateGapDisplayAndDraw();
+    });
 
 
     imageLoader.addEventListener('change', (e) => {
@@ -415,8 +451,8 @@ document.addEventListener('DOMContentLoaded', () => {
         deckEditorContainer.innerHTML = ''; // Changed from resultsContainer
         const rows = parseInt(rowsInput.value, 10);
         const cols = parseInt(colsInput.value, 10);
-        const gapH = parseInt(gapHorizontalInput.value, 10) || 0;
-        const gapV = parseInt(gapVerticalInput.value, 10) || 0;
+        const gapH = gapState.horizontal;
+        const gapV = gapState.vertical;
 
         const totalCellWidth = gridState.cellWidth + gapH;
         const totalCellHeight = gridState.cellHeight + gapV;
@@ -530,3 +566,15 @@ document.addEventListener('DOMContentLoaded', () => {
         deckNameInput.value = ''; // Clear input field
     });
 });
+
+// --- Local Storage Functions ---
+function saveDeckToLocalStorage() {
+    localStorage.setItem('currentDeck', JSON.stringify(deck));
+}
+
+function loadDeckFromLocalStorage() {
+    const savedDeck = localStorage.getItem('currentDeck');
+    if (savedDeck) {
+        deck = JSON.parse(savedDeck);
+    }
+}

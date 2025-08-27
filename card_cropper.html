@@ -26,10 +26,14 @@
     </div>
 
     <div class="controls" id="gap-controls">
-        <label for="gapHorizontal">カードを左上の枠に合わせたら数値を少しずつ変えて調節してください 左右の間隔:</label>
-        <input type="number" id="gapHorizontal" value="16" min="0">
-        <label for="gapVertical">上下の間隔 (px):</label>
-        <input type="number" id="gapVertical" value="40" min="0">
+        <label>カードを左上の枠に合わせたら数値を少しずつ変えて調節してください 左右の間隔:</label>
+        <button id="gapH-decrease">←</button>
+        <span id="gapH-value" style="display: inline-block; width: 40px; text-align: center; font-weight: bold;">16</span>
+        <button id="gapH-increase">→</button>
+        <label style="margin-left: 20px;">上下の間隔 (px):</label>
+        <button id="gapV-decrease">↑</button>
+        <span id="gapV-value" style="display: inline-block; width: 40px; text-align: center; font-weight: bold;">40</span>
+        <button id="gapV-increase">↓</button>
     </div>
 
     <div id="cropper-container">
