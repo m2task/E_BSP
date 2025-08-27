@@ -208,10 +208,18 @@ function getDraggedCoresInfo(draggedElement) {
 
 // --- PC ドラッグ＆ドロップイベントハンドラ ---
 export function handleDragStart(e) {
-    setDraggedElement(e.target);
-    setTimeout(() => e.target.classList.add('dragging'), 0);
+    const target = e.target;
 
-    if (e.target.classList.contains('card')) {
+    // ドラッグ対象でない要素は無視
+    if (!target.classList.contains('card') && !target.classList.contains('core') && target.id !== 'voidCore') {
+        e.preventDefault();
+        return;
+    }
+
+    setDraggedElement(target);
+    setTimeout(() => target.classList.add('dragging'), 0);
+
+    if (target.classList.contains('card')) {
         e.dataTransfer.setData("type", "card");
         e.dataTransfer.setData("cardId", e.target.dataset.id);
         e.dataTransfer.setData("sourceZoneId", e.target.parentElement.id);
