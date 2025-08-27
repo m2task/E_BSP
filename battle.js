@@ -20,6 +20,7 @@ function initializeGame() {
     setTrashCores([]); // トラッシュコアを初期化
 
     let loadedDeck = [];
+    let useContract = false; // Initialize useContract
     const currentBattleDeckJson = localStorage.getItem('currentBattleDeck');
 
     if (currentBattleDeckJson) {
@@ -27,8 +28,14 @@ function initializeGame() {
         loadedDeck = JSON.parse(currentBattleDeckJson);
         localStorage.removeItem('currentBattleDeck'); // 使用後は削除
         console.log("Loaded Deck from currentBattleDeck (localStorage):", loadedDeck);
+        // For decks loaded from deck_viewer, assume no contract card unless explicitly passed
+        useContract = false; // Or get from loadedDeck if it contains this info
     } else {
         // URLパラメータからデッキ名を読み込み、既存の保存済みデッキを使用
+        const urlParams = getURLParams(); // Get params here
+        const deckName = urlParams.deckName;
+        useContract = urlParams.useContract; // Assign useContract from URL params
+
         const savedData = JSON.parse(localStorage.getItem(deckName)) || {};
         loadedDeck = savedData.deck || [];
         console.log("Loaded Deck from localStorage (via URL param):", loadedDeck);
@@ -36,15 +43,18 @@ function initializeGame() {
     
     // カードデータをオブジェクトに変換
     let currentCardId = cardIdCounter;
-    let newDeck = loadedDeck.map(card => { // 'card' object now contains id, imgDataUrl, quantity, name
-        return {
-            id: `card-${currentCardId++}`,
-            name: card.name,
-            imgDataUrl: card.imgDataUrl, // Pass imgDataUrl
-            isRotated: false,
-            isExhausted: false,
-            coresOnCard: []
-        };
+    let newDeck = [];
+    loadedDeck.forEach(cardData => {
+        for (let i = 0; i < cardData.quantity; i++) {
+            newDeck.push({
+                id: `card-${currentCardId++}`,
+                name: cardData.name,
+                imgDataUrl: cardData.imgDataUrl,
+                isRotated: false,
+                isExhausted: false,
+                coresOnCard: []
+            });
+        }
     });
     setCardIdCounter(currentCardId);
     console.log("New Deck (after mapping):", newDeck); // 追加
