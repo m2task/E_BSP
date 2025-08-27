@@ -241,6 +241,11 @@ export function handleDragStart(e) {
         e.dataTransfer.setData("type", "core");
         e.dataTransfer.setData("cores", JSON.stringify(coresToMove));
 
+        // オフセット情報を設定
+        const rect = e.target.getBoundingClientRect();
+        e.dataTransfer.setData("offsetX", e.clientX - rect.left);
+        e.dataTransfer.setData("offsetY", e.clientY - rect.top);
+
         // 複数コアのドラッグ時にカスタムイメージを設定
         if (coresToMove.length > 1) {
             const dragImage = document.createElement('div');
