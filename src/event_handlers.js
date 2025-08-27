@@ -304,10 +304,20 @@ function handleCardDrop(e) {
     const cardId = e.dataTransfer.getData("cardId");
     const sourceZoneId = e.dataTransfer.getData("sourceZoneId");
     const sourceZoneName = getZoneName(document.getElementById(sourceZoneId));
-    const targetElement = e.target.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea');
+
+    // ドロップされた要素から、最も近いゾーン要素を特定
+    // カード自体にドロップされた場合でも、その親のゾーンを実際のターゲットとする
+    const targetElement = e.target.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea, .card'); // .card も含める
     if (!targetElement) return;
 
-    const targetZoneName = getZoneName(targetElement);
+    let actualTargetZoneElement = targetElement;
+    // もしドロップされたのがカード要素であれば、その親要素（ゾーン）を実際のターゲットとする
+    if (targetElement.classList.contains('card')) {
+        actualTargetZoneElement = targetElement.parentElement.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea');
+    }
+    if (!actualTargetZoneElement) return; // 適切なゾーンが見つからなければ処理を中断
+
+    const targetZoneName = getZoneName(actualTargetZoneElement);
     if (targetZoneName === 'deck') return; // デッキへのドロップは専用ハンドラで処理
 
     if (targetZoneName === 'field') {
