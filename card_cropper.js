@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.textBaseline = 'middle';
         ctx.fillText(text, width / 2, height / 2); // Center text
 
-        return canvas.toDataURL('image/png');
+        return canvas.toDataURL('image/jpeg', 0.8); // PNGからJPEGに変更し圧縮
     }
 
     // New: Renders the deck in the deckEditorContainer
@@ -485,7 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 canvas.height = sHeight;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(sourceImage, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
-                const imgDataUrl = canvas.toDataURL('image/png');
+                const imgDataUrl = canvas.toDataURL('image/jpeg', 0.8); // PNGからJPEGに変更し圧縮
 
                 // New: Add to deck logic
                 const existingCardIndex = deck.findIndex(card => card.imgDataUrl === imgDataUrl);
