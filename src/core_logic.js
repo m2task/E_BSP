@@ -1,5 +1,5 @@
 // src/core_logic.js
-import { lifeCores, reserveCores, countCores, trashCores, field, voidChargeCount, selectedCores, draggedCoreData, setVoidChargeCount, setSelectedCores, setDraggedCoreData } from './game_data.js';
+import { lifeCores, reserveCores, countCores, trashCores, field, voidChargeCount, selectedCores, draggedCoreData, setVoidChargeCount, setSelectedCores, setDraggedCoreData, draggedElement } from './game_data.js';
 import { renderAll } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
 
@@ -135,6 +135,11 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement) {
     // コアのデータを更新
     targetCard.coresOnCard[coreIndexOnCard].x = newX;
     targetCard.coresOnCard[coreIndexOnCard].y = newY;
+
+    // ドラッグされた要素の表示を元に戻す
+    if (draggedElement) {
+        draggedElement.style.display = 'block';
+    }
 
     renderAll();
 }
