@@ -208,10 +208,10 @@ function getDraggedCoresInfo(draggedElement) {
 
 // --- PC ドラッグ＆ドロップイベントハンドラ ---
 export function handleDragStart(e) {
-    const target = e.target;
+    const target = e.target.closest('.card, .core, #voidCore');
 
     // ドラッグ対象でない要素は無視
-    if (!target.classList.contains('card') && !target.classList.contains('core') && target.id !== 'voidCore') {
+    if (!target) {
         e.preventDefault();
         return;
     }
