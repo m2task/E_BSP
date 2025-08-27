@@ -5,9 +5,21 @@ import { handleCoreClick } from './core_logic.js'; // 修正: event_handlers.js 
 export function createCardElement(cardData) {
     const div = document.createElement('div');
     div.className = 'card';
-    div.textContent = cardData.name;
     div.draggable = true;
     div.dataset.id = cardData.id;
+
+    if (cardData.imgDataUrl) {
+        const img = document.createElement('img');
+        img.src = cardData.imgDataUrl;
+        img.alt = cardData.name || 'Card Image';
+        div.appendChild(img);
+    } else {
+        // Fallback for cards without imgDataUrl (e.g., if only name is provided)
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'card-name-fallback';
+        nameDiv.textContent = cardData.name;
+        div.appendChild(nameDiv);
+    }
 
     const exhaustBtn = document.createElement('button');
     exhaustBtn.className = 'exhaust-button';

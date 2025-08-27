@@ -1,0 +1,275 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+h1, h2, h3 {
+    color: black;
+}
+
+.controls, .actions, .add-card-by-name-controls, .save-load-deck-controls {
+    background-color: #fff;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.controls label, .add-card-by-name-controls label, .save-load-deck-controls label {
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.controls input[type="number"], .controls input[type="file"],
+.add-card-by-name-controls input[type="text"], .save-load-deck-controls input[type="text"] {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    flex-grow: 1;
+    max-width: 200px;
+}
+
+.actions button, .add-card-by-name-controls button, .save-load-deck-controls button {
+    background-color: #e0e0e0; /* 灰色 */
+    color: black; /* 黒文字 */
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.actions button:hover, .add-card-by-name-controls button:hover, .save-load-deck-controls button:hover {
+    background-color: #c0c0c0; /* ホバー時の少し濃い灰色 */
+}
+
+#cropper-container {
+    position: relative;
+    width: 100%;
+    height: 500px; /* 固定の高さ */
+    border: 1px solid #ccc;
+    overflow: hidden; /* 画像のパン・ズーム用 */
+    background-color: #e0e0e0; /* 背景色 */
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#image-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    cursor: grab;
+}
+
+#image-container.grabbing {
+    cursor: grabbing;
+}
+
+#sourceImage {
+    display: block;
+    max-width: none; /* 画像の拡大を許可 */
+    max-height: none; /* 画像の拡大を許可 */
+    position: absolute;
+    transform-origin: 0 0; /* 左上を原点に */
+}
+
+#grid-handles-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* デフォルトではイベントを透過 */
+}
+
+.grid-cell-visual {
+    position: absolute;
+    border: 1px solid rgba(255, 0, 0, 0.5); /* 赤い枠 */
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.gap-visual {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.5); /* グレーのギャップ */
+    pointer-events: none;
+}
+
+.handle {
+    position: absolute;
+    background-color: transparent; /* 背景を透明に */
+    border: none; /* 枠線をなくす */
+    cursor: grab;
+    pointer-events: all;
+    z-index: 10;
+}
+
+.move-handle {
+    cursor: grab;
+}
+
+.resize-handle-v {
+    cursor: ew-resize; /* 左右リサイズカーソル */
+    width: 10px;
+}
+
+.resize-handle-h {
+    cursor: ns-resize; /* 上下リサイズカーソル */
+    height: 10px;
+}
+
+#overlay-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* マスクはイベントを透過 */
+    z-index: 5; /* グリッドより奥、画像より手前 */
+}
+
+.mask-pane {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.7); /* 暗いオーバーレイ */
+}
+
+#deck-editor-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    min-height: 100px; /* 最低限の高さ */
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.deck-card-item {
+    border: 1px solid #ddd;
+    padding: 5px;
+    border-radius: 4px;
+    text-align: center;
+    background-color: #f9f9f9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.deck-card-item img {
+    width: 80px; /* card_cropper.js のデフォルトサイズに合わせる */
+    height: 110px; /* card_cropper.js のデフォルトサイズに合わせる */
+    display: block;
+    margin-bottom: 5px;
+}
+
+.card-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 5px;
+}
+
+.card-controls button {
+    background-color: #e0e0e0; /* 灰色 */
+    color: black; /* 黒文字 */
+    border: none;
+    padding: 5px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.card-controls button:hover {
+    background-color: #c0c0c0; /* ホバー時の少し濃い灰色 */
+}
+
+.card-quantity {
+    font-weight: bold;
+    color: black;
+    min-width: 25px;
+    text-align: center;
+}
+
+.delete-button {
+    background-color: #dc3545 !important; /* 赤 */
+    color: white !important; /* 白文字 */
+}
+
+.delete-button:hover {
+    background-color: #c82333 !important;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ナビゲーションバーのスタイル (ユーザーの要望により残す) */
+.main-nav {
+    background-color: #333; /* 背景色 */
+    padding: 10px 0; /* 上下のパディング */
+    margin-bottom: 20px; /* 下のマージン */
+}
+
+.main-nav ul {
+    list-style: none; /* リストのマーカーを削除 */
+    padding: 0;
+    margin: 0;
+    display: flex; /* Flexboxを使って横並びにする */
+    justify-content: center; /* 中央揃え */
+}
+
+.main-nav li {
+    margin: 0 15px; /* リンク間のスペース */
+}
+
+.main-nav a {
+    color: white; /* 文字色 */
+    text-decoration: none; /* 下線を削除 */
+    font-weight: bold; /* 太字 */
+    padding: 5px 10px; /* リンクのパディング */
+    border-radius: 5px; /* 角を丸くする */
+    transition: background-color 0.3s ease; /* ホバー時のアニメーション */
+}
+
+.main-nav a:hover {
+    background-color: #555; /* ホバー時の背景色 */
+}
+
+.deck-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px; /* Adjust as needed */
+    margin-bottom: 20px;
+}
+
+.deck-header-controls h2 {
+    margin: 0; /* Remove default margin from h2 */
+}
+
+.deck-header-controls .add-card-by-name-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+    background-color: transparent;
+}
+
+.deck-header-controls .add-card-by-name-controls h3 {
+    margin: 0;
+    font-size: 1em;
+}
+

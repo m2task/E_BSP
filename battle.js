@@ -19,18 +19,35 @@ function initializeGame() {
     setCountCores([]); // カウントコアを初期化
     setTrashCores([]); // トラッシュコアを初期化
 
-    const { deckName, useContract } = getURLParams();
+    let loadedDeck = [];
+    const currentBattleDeckJson = localStorage.getItem('currentBattleDeck');
 
-    // ローカルストレージからデッキデータを読み込む
-    const savedData = JSON.parse(localStorage.getItem(deckName)) || {};
-    const loadedDeck = savedData.deck || [];
+    if (currentBattleDeckJson) {
+        // deck_viewer.htmlから渡されたデッキデータを使用
+        loadedDeck = JSON.parse(currentBattleDeckJson);
+        localStorage.removeItem('currentBattleDeck'); // 使用後は削除
+        console.log("Loaded Deck from currentBattleDeck (localStorage):", loadedDeck);
+    } else {
+        // URLパラメータからデッキ名を読み込み、既存の保存済みデッキを使用
+        const savedData = JSON.parse(localStorage.getItem(deckName)) || {};
+        loadedDeck = savedData.deck || [];
+        console.log("Loaded Deck from localStorage (via URL param):", loadedDeck);
+    }
     
     // カードデータをオブジェクトに変換
     let currentCardId = cardIdCounter;
-    let newDeck = loadedDeck.map(name => {
-        return { id: `card-${currentCardId++}`, name, isRotated: false, isExhausted: false, coresOnCard: [] };
+    let newDeck = loadedDeck.map(card => { // 'card' object now contains id, imgDataUrl, quantity, name
+        return {
+            id: `card-${currentCardId++}`,
+            name: card.name,
+            imgDataUrl: card.imgDataUrl, // Pass imgDataUrl
+            isRotated: false,
+            isExhausted: false,
+            coresOnCard: []
+        };
     });
     setCardIdCounter(currentCardId);
+    console.log("New Deck (after mapping):", newDeck); // 追加
 
     // 契約カードの処理
     let initialHandSize = 4;
