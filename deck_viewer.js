@@ -136,16 +136,44 @@ document.addEventListener('DOMContentLoaded', () => {
             const listItem = document.createElement('li');
             listItem.dataset.deckName = deckName; // Store deck name for selection
 
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'deck-checkbox';
+            checkbox.dataset.deckName = deckName;
+            checkbox.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+            listItem.appendChild(checkbox);
+
             const battleButton = document.createElement('button');
             battleButton.textContent = 'このデッキで対戦';
             battleButton.className = 'battle-button'; // Add a class for styling
             battleButton.dataset.deckName = deckName;
             battleButton.addEventListener('click', (e) => {
                 e.stopPropagation(); // Prevent listItem click event
+
+                const checkbox = e.target.closest('li').querySelector('.deck-checkbox');
+                const isChecked = checkbox.checked;
+
                 const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '{}');
                 const selectedDeckData = savedDecks[deckName];
+
                 if (selectedDeckData) {
-                    localStorage.setItem('currentBattleDeck', JSON.stringify(selectedDeckData));
+                    const deckCopy = JSON.parse(JSON.stringify(selectedDeckData));
+
+                    // Clear any existing contract card flags
+                    deckCopy.forEach(card => {
+                        if (card.isContractCard) {
+                            delete card.isContractCard;
+                        }
+                    });
+
+                    if (isChecked && deckCopy.length > 0) {
+                        // Mark the first card as the contract card
+                        deckCopy[0].isContractCard = true;
+                    }
+
+                    localStorage.setItem('currentBattleDeck', JSON.stringify(deckCopy));
                     window.location.href = 'battle.html';
                 } else {
                     alert('選択されたデッキが見つかりませんでした。');

@@ -13,66 +13,67 @@ function getURLParams() {
 }
 
 function initializeGame() {
-    setSelectedCores([]); // 選択されたコアを初期化
-    setLifeCores(["blue", "blue", "blue", "blue", "blue"]); // ライフコアを初期化
-    setReserveCores(["blue", "blue", "blue", "soul"]); // リザーブコアを初期化
-    setCountCores([]); // カウントコアを初期化
-    setTrashCores([]); // トラッシュコアを初期化
+    setSelectedCores([]);
+    setLifeCores(["blue", "blue", "blue", "blue", "blue"]);
+    setReserveCores(["blue", "blue", "blue", "soul"]);
+    setCountCores([]);
+    setTrashCores([]);
+    setHand([]); // Clear hand at the beginning
 
-    let loadedDeck = [];
-    let useContract = false; // Initialize useContract
     const currentBattleDeckJson = localStorage.getItem('currentBattleDeck');
-
-    if (currentBattleDeckJson) {
-        // deck_viewer.htmlから渡されたデッキデータを使用
-        loadedDeck = JSON.parse(currentBattleDeckJson);
-        localStorage.removeItem('currentBattleDeck'); // 使用後は削除
-        console.log("Loaded Deck from currentBattleDeck (localStorage):", loadedDeck);
-        // For decks loaded from deck_viewer, assume no contract card unless explicitly passed
-        useContract = false; // Or get from loadedDeck if it contains this info
-    } else {
-        // URLパラメータからデッキ名を読み込み、既存の保存済みデッキを使用
-        const urlParams = getURLParams(); // Get params here
-        const deckName = urlParams.deckName;
-        useContract = urlParams.useContract; // Assign useContract from URL params
-
-        const savedData = JSON.parse(localStorage.getItem(deckName)) || {};
-        loadedDeck = savedData.deck || [];
-        console.log("Loaded Deck from localStorage (via URL param):", loadedDeck);
+    if (!currentBattleDeckJson) {
+        console.error("No battle deck found in localStorage.");
+        // Optionally, load a default deck or show an error
+        renderAll();
+        return;
     }
-    
-    // カードデータをオブジェクトに変換
+
+    const loadedDeck = JSON.parse(currentBattleDeckJson);
+    localStorage.removeItem('currentBattleDeck'); // Clean up
+
+    // Expand deck from quantities and preserve isContractCard flag
     let currentCardId = cardIdCounter;
-    let newDeck = [];
+    let fullDeck = [];
     loadedDeck.forEach(cardData => {
         for (let i = 0; i < cardData.quantity; i++) {
-            newDeck.push({
+            const newCard = {
                 id: `card-${currentCardId++}`,
                 name: cardData.name,
                 imgDataUrl: cardData.imgDataUrl,
                 isRotated: false,
                 isExhausted: false,
                 coresOnCard: []
-            });
+            };
+            // If this is the first instance of a contract card, mark it.
+            if (cardData.isContractCard && i === 0) {
+                newCard.isContractCard = true;
+            }
+            fullDeck.push(newCard);
         }
     });
     setCardIdCounter(currentCardId);
-    console.log("New Deck (after mapping):", newDeck); // 追加
 
-    // 契約カードの処理
-    let initialHandSize = 4;
-    if (useContract && newDeck.length > 0) {
-        const contractCard = newDeck.shift(); // デッキの最初のカードを契約カードとして取得
-        hand.push(contractCard); // 手札に加える
-    }
-    
-    setDeck(newDeck);
-    shuffle(deck);
+    // Separate contract card from the deck
+    const contractCardIndex = fullDeck.findIndex(card => card.isContractCard);
+    let deckToShuffle = [...fullDeck];
+    let initialHand = [];
 
-    // 初期手札を引く
-    while (hand.length < initialHandSize && deck.length > 0) {
-        hand.push(deck.shift());
+    if (contractCardIndex > -1) {
+        // If contract card is found
+        const contractCard = deckToShuffle.splice(contractCardIndex, 1)[0];
+        initialHand.push(contractCard); // Add contract card to hand first
     }
+
+    // Shuffle the rest of the deck
+    shuffle(deckToShuffle);
+    setDeck(deckToShuffle);
+
+    // Draw cards until hand size is 4
+    const initialHandSize = 4;
+    while (initialHand.length < initialHandSize && deck.length > 0) {
+        initialHand.push(deck.shift());
+    }
+    setHand(initialHand);
 
     console.log("Initialized Deck:", deck);
     console.log("Initialized Hand:", hand);
