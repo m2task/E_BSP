@@ -12,6 +12,7 @@ export function createCardElement(cardData) {
         const img = document.createElement('img');
         img.src = cardData.imgDataUrl;
         img.alt = cardData.name || 'Card Image';
+        img.draggable = false; // 画像自体のドラッグを禁止する
         div.appendChild(img);
     } else {
         // Fallback for cards without imgDataUrl (e.g., if only name is provided)
