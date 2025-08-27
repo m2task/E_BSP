@@ -298,12 +298,32 @@ export function handleDeckDrop(e) {
 
 export function handleDrop(e) {
     e.preventDefault();
+
+    // ドラッグ中の要素を一時的に非表示にして、ドロップ先の要素を正確に取得する
+    let dropTarget = null;
+    if (draggedElement) {
+        draggedElement.style.pointerEvents = 'none';
+        dropTarget = document.elementFromPoint(e.clientX, e.clientY);
+        draggedElement.style.pointerEvents = 'auto'; // 元に戻す
+    } else {
+        dropTarget = e.target;
+    }
+
+    // 新しいイベントオブジェクトを作成して、ターゲットを差し替える
+    const mockEvent = {
+        target: dropTarget,
+        preventDefault: () => e.preventDefault(),
+        dataTransfer: e.dataTransfer,
+        clientX: e.clientX,
+        clientY: e.clientY
+    };
+
     const type = e.dataTransfer.getData("type");
 
     if (type === 'card') {
-        handleCardDrop(e);
-    } else if (type === 'core' || type === 'voidCore') { // voidCoreも考慮
-        handleCoreDrop(e);
+        handleCardDrop(mockEvent);
+    } else if (type === 'core' || type === 'voidCore') {
+        handleCoreDrop(mockEvent);
     }
     clearSelectedCores();
 }
