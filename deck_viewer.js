@@ -152,8 +152,10 @@ document.addEventListener('DOMContentLoaded', () => {
             battleButton.addEventListener('click', (e) => {
                 e.stopPropagation(); // Prevent listItem click event
                 const isChecked = e.target.closest('li').querySelector('.deck-checkbox').checked;
+                const url = `battle.html?deckName=${encodeURIComponent(deckName)}&useContract=${isChecked}`;
+                alert("Navigating to: " + url);
                 // Pass deck name and contract card preference to battle.html
-                window.location.href = `battle.html?deckName=${encodeURIComponent(deckName)}&useContract=${isChecked}`;
+                window.location.href = url;
             });
             listItem.appendChild(battleButton);
 

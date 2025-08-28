@@ -13,6 +13,8 @@ function getURLParams() {
 }
 
 async function initializeGame() {
+    console.log("Battle.js loaded. URL:", window.location.href);
+    console.log("URL Search Params:", window.location.search);
     setSelectedCores([]);
     setLifeCores(["blue", "blue", "blue", "blue", "blue"]);
     setReserveCores(["blue", "blue", "blue", "soul"]);
