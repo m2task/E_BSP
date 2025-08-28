@@ -46,8 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const gapState = {
-        horizontal: 16,
-        vertical: 40,
+        horizontal: 10,
+        vertical: 20,
     };
 
     const imageState = {

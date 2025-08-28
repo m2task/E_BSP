@@ -18,9 +18,9 @@
     <h1>カード一括切り取りツール (v2: プロトタイプ追従方式)</h1>
     <div class="controls" id="grid-controls">
         <label for="rows">行数 (縦):</label>
-        <input type="number" id="rows" value="2" min="1">
+        <input type="number" id="rows" value="4" min="1">
         <label for="cols">列数 (横):</label>
-        <input type="number" id="cols" value="11" min="1">
+        <input type="number" id="cols" value="5" min="1">
         <label for="imageLoader">画像ファイルを選択:</label>
         <input type="file" id="imageLoader" accept="image/*">
     </div>
@@ -28,11 +28,11 @@
     <div class="controls" id="gap-controls">
         <label>カードを左上の枠に合わせたら数値を少しずつ変えて調節してください 左右の間隔:</label>
         <button id="gapH-decrease">←</button>
-        <span id="gapH-value" style="display: inline-block; width: 40px; text-align: center; font-weight: bold;">16</span>
+        <span id="gapH-value" style="display: inline-block; width: 40px; text-align: center; font-weight: bold;">10</span>
         <button id="gapH-increase">→</button>
         <label style="margin-left: 20px;">上下の間隔 (px):</label>
         <button id="gapV-decrease">↑</button>
-        <span id="gapV-value" style="display: inline-block; width: 40px; text-align: center; font-weight: bold;">40</span>
+        <span id="gapV-value" style="display: inline-block; width: 40px; text-align: center; font-weight: bold;">20</span>
         <button id="gapV-increase">↓</button>
     </div>
 
