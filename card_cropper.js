@@ -541,40 +541,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         renderDeck();
-        saveDeckToLocalStorage();
         cardNameInput.value = ''; // Clear input field
     });
 
     // New: Save deck with a given name
-    saveDeckAsButton.addEventListener('click', () => {
+    saveDeckAsButton.addEventListener('click', async () => {
         const deckName = deckNameInput.value.trim();
         if (deckName === '') {
             alert('デッキ名を入力してください。');
             return;
         }
+        if (deck.length === 0) {
+            alert('デッキにカードがありません。');
+            return;
+        }
 
-        // Load existing saved decks
-        let savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '{}');
-
-        // Save current deck with the given name
-        savedDecks[deckName] = deck;
-
-        // Save updated saved decks back to localStorage
-        localStorage.setItem('savedDecks', JSON.stringify(savedDecks));
-
-        alert(`デッキ「${deckName}」を保存しました。`);
-        deckNameInput.value = ''; // Clear input field
+        try {
+            await window.cardGameDB.saveDeck(deckName, deck);
+            alert(`デッキ「${deckName}」を保存しました。`);
+            deckNameInput.value = ''; // Clear input field
+        } catch (error) {
+            console.error('デッキの保存に失敗しました:', error);
+            alert('デッキの保存に失敗しました。');
+        }
     });
 });
-
-// --- Local Storage Functions ---
-function saveDeckToLocalStorage() {
-    localStorage.setItem('currentDeck', JSON.stringify(deck));
-}
-
-function loadDeckFromLocalStorage() {
-    const savedDeck = localStorage.getItem('currentDeck');
-    if (savedDeck) {
-        deck = JSON.parse(savedDeck);
-    }
-}

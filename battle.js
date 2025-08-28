@@ -12,7 +12,7 @@ function getURLParams() {
     };
 }
 
-function initializeGame() {
+async function initializeGame() {
     setSelectedCores([]);
     setLifeCores(["blue", "blue", "blue", "blue", "blue"]);
     setReserveCores(["blue", "blue", "blue", "soul"]);
@@ -20,16 +20,36 @@ function initializeGame() {
     setTrashCores([]);
     setHand([]); // Clear hand at the beginning
 
-    const currentBattleDeckJson = localStorage.getItem('currentBattleDeck');
-    if (!currentBattleDeckJson) {
-        console.error("No battle deck found in localStorage.");
+    const params = new URLSearchParams(window.location.search);
+    const deckName = params.get('deckName');
+    const useContract = params.get('useContract') === 'true';
+
+    if (!deckName) {
+        console.error("No deck name found in URL.");
+        renderAll();
+        return;
+    }
+
+    const loadedDeck = await window.cardGameDB.loadDeck(deckName);
+
+    if (!loadedDeck) {
+        console.error("No battle deck found in IndexedDB.");
         // Optionally, load a default deck or show an error
         renderAll();
         return;
     }
 
-    const loadedDeck = JSON.parse(currentBattleDeckJson);
-    localStorage.removeItem('currentBattleDeck'); // Clean up
+    // Set contract card flag if needed
+    if (useContract && loadedDeck.length > 0) {
+        // Clear any existing contract card flags first
+        loadedDeck.forEach(card => {
+            if (card.isContractCard) {
+                delete card.isContractCard;
+            }
+        });
+        // Mark the first card as the contract card
+        loadedDeck[0].isContractCard = true;
+    }
 
     // Expand deck from quantities and preserve isContractCard flag
     let currentCardId = cardIdCounter;

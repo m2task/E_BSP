@@ -120,18 +120,18 @@ document.addEventListener('DOMContentLoaded', () => {
         renderEditedDeck();
     }
 
-    function renderDeckList() {
+    async function renderDeckList() {
         deckList.innerHTML = ''; // Clear existing list
-        const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '{}');
+        const savedDecks = await window.cardGameDB.getAllDecks();
 
-        if (Object.keys(savedDecks).length === 0) {
+        if (!savedDecks || savedDecks.length === 0) {
             deckList.innerHTML = '<p>保存されたデッキはありません。</p>';
             return;
         }
 
-        for (const deckName in savedDecks) {
-            const deckData = savedDecks[deckName];
-            const totalCards = deckData.reduce((sum, card) => sum + card.quantity, 0);
+        for (const deckData of savedDecks) {
+            const deckName = deckData.name;
+            const totalCards = deckData.data.reduce((sum, card) => sum + card.quantity, 0);
 
             const listItem = document.createElement('li');
             listItem.dataset.deckName = deckName; // Store deck name for selection
@@ -151,33 +151,9 @@ document.addEventListener('DOMContentLoaded', () => {
             battleButton.dataset.deckName = deckName;
             battleButton.addEventListener('click', (e) => {
                 e.stopPropagation(); // Prevent listItem click event
-
-                const checkbox = e.target.closest('li').querySelector('.deck-checkbox');
-                const isChecked = checkbox.checked;
-
-                const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '{}');
-                const selectedDeckData = savedDecks[deckName];
-
-                if (selectedDeckData) {
-                    const deckCopy = JSON.parse(JSON.stringify(selectedDeckData));
-
-                    // Clear any existing contract card flags
-                    deckCopy.forEach(card => {
-                        if (card.isContractCard) {
-                            delete card.isContractCard;
-                        }
-                    });
-
-                    if (isChecked && deckCopy.length > 0) {
-                        // Mark the first card as the contract card
-                        deckCopy[0].isContractCard = true;
-                    }
-
-                    localStorage.setItem('currentBattleDeck', JSON.stringify(deckCopy));
-                    window.location.href = 'battle.html';
-                } else {
-                    alert('選択されたデッキが見つかりませんでした。');
-                }
+                const isChecked = e.target.closest('li').querySelector('.deck-checkbox').checked;
+                // Pass deck name and contract card preference to battle.html
+                window.location.href = `battle.html?deckName=${encodeURIComponent(deckName)}&useContract=${isChecked}`;
             });
             listItem.appendChild(battleButton);
 
@@ -188,19 +164,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const deleteButton = document.createElement('button');
             deleteButton.textContent = '削除';
             deleteButton.dataset.deckName = deckName;
-            deleteButton.addEventListener('click', (e) => {
+            deleteButton.addEventListener('click', async (e) => {
                 e.stopPropagation(); // Prevent listItem click event
                 if (confirm(`デッキ「${deckName}」を本当に削除しますか？`)) {
-                    delete savedDecks[deckName];
-                    localStorage.setItem('savedDecks', JSON.stringify(savedDecks));
+                    await window.cardGameDB.deleteDeck(deckName);
                     renderDeckList(); // Re-render the list
-                    clearSelectedDeckDisplay(); // Clear displayed deck if deleted
+                    // Clear displayed deck if deleted
+                    if (currentEditingDeckName === deckName) {
+                        deck = [];
+                        currentEditingDeckName = null;
+                        renderEditedDeck();
+                    }
                 }
             });
 
             listItem.appendChild(deleteButton);
 
-            listItem.addEventListener('click', () => {
+            listItem.addEventListener('click', async () => {
                 if (currentEditingDeckName === deckName) {
                     // 同じデッキがクリックされた場合は編集モードを解除
                     deck = []; // デッキをクリア
@@ -208,9 +188,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderEditedDeck(); // 編集エリアを更新
                     return;
                 }
-                deck = [...deckData]; // Copy the array to avoid direct reference issues
-                renderEditedDeck();
-                currentEditingDeckName = deckName; // Update current editing deck name
+                const loadedDeck = await window.cardGameDB.loadDeck(deckName);
+                if(loadedDeck) {
+                    deck = [...loadedDeck]; // Copy the array to avoid direct reference issues
+                    renderEditedDeck();
+                    currentEditingDeckName = deckName; // Update current editing deck name
+                } else {
+                    alert('デッキの読み込みに失敗しました。');
+                }
             });
             deckList.appendChild(listItem);
         }
@@ -248,45 +233,43 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Event Listener for saving deck with a given name
-    saveDeckAsButton.addEventListener('click', () => {
+    saveDeckAsButton.addEventListener('click', async () => {
         const deckName = deckNameInput.value.trim();
         if (deckName === '') {
             alert('デッキ名を入力してください。');
             return;
         }
+        if (deck.length === 0) {
+            alert('デッキにカードがありません。');
+            return;
+        }
 
-        let savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '{}');
-
-        savedDecks[deckName] = deck;
-
-        localStorage.setItem('savedDecks', JSON.stringify(savedDecks));
-
-        alert(`デッキ「${deckName}」を保存しました。`);
-        deckNameInput.value = '';
-        renderDeckList(); // Update the list of saved decks
-        currentEditingDeckName = deckName; // Set current editing deck name after saving
+        try {
+            await window.cardGameDB.saveDeck(deckName, deck);
+            alert(`デッキ「${deckName}」を保存しました。`);
+            deckNameInput.value = '';
+            renderDeckList(); // Update the list of saved decks
+            currentEditingDeckName = deckName; // Set current editing deck name after saving
+        } catch (error) {
+            console.error('デッキの保存に失敗しました:', error);
+            alert('デッキの保存に失敗しました。');
+        }
     });
 
     // Event Listener for overwrite save
-    overwriteSaveButton.addEventListener('click', () => {
+    overwriteSaveButton.addEventListener('click', async () => {
         if (currentEditingDeckName === null) {
             alert('上書き保存するには、まずデッキを読み込むか、名前を付けて保存してください。');
             return;
         }
 
-        let savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '{}');
-
-        if (!savedDecks[currentEditingDeckName]) {
-            alert(`エラー: デッキ「${currentEditingDeckName}」が見つかりません。名前を付けて保存してください。`);
-            currentEditingDeckName = null; // Reset
-            return;
+        try {
+            await window.cardGameDB.saveDeck(currentEditingDeckName, deck);
+            alert(`デッキ「${currentEditingDeckName}」を上書き保存しました。`);
+            renderDeckList(); // Update the list of saved decks
+        } catch (error) {
+            console.error('デッキの上書き保存に失敗しました:', error);
+            alert('デッキの上書き保存に失敗しました。');
         }
-
-        savedDecks[currentEditingDeckName] = deck; // Overwrite
-
-        localStorage.setItem('savedDecks', JSON.stringify(savedDecks));
-
-        alert(`デッキ「${currentEditingDeckName}」を上書き保存しました。`);
-        renderDeckList(); // Update the list of saved decks
     });
 });
