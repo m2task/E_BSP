@@ -56,8 +56,8 @@ body {
     }
 
     .deck-button {
-      width: 100px;
-      height: 140px;
+      width: 120px;
+      height: 170px;
       background: #ccc;
       text-align: center;
       line-height: 140px;
@@ -132,8 +132,8 @@ body {
     }
 
     .card {
-      width: 80px;
-      height: 120px;
+      width: 100px;
+      height: 150px;
       background: #ddf;
       border-radius: 8px;
       box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
@@ -247,8 +247,8 @@ body {
     }
 
     .hand-card {
-      width: 80px;
-      height: 120px;
+      width: 100px;
+      height: 150px;
       background: #cfc;
       text-align: center;
       line-height: 1.2em;
@@ -395,8 +395,8 @@ body {
 
     #burstCard, #trashCard {
       position: relative;
-      height: 130px;
-      min-width: 100px;
+      height: 160px;
+      min-width: 120px;
     }
 
     .card.burst-stack {
@@ -413,7 +413,7 @@ body {
 
     #fieldCards {
       position: relative;
-      min-height: 140px;
+      min-height: 170px;
       min-width: 300px;
     }
     .core-drop-mini {
