@@ -1,6 +1,4 @@
-import { openDb, saveDeck, getAllDecks, deleteDeck } from './src/db.js';
-
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
     const rowsInput = document.getElementById('rows');
     const colsInput = document.getElementById('cols');
@@ -516,7 +514,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initial Draw
     drawGridAndHandles();
-    // renderDeck(); // New: Initial render of the empty deck - this will be called after migration
+    renderDeck(); // New: Initial render of the empty deck
 
     // New: Add card by name
     addCardByNameButton.addEventListener('click', () => {
@@ -543,56 +541,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         renderDeck();
-        // saveDeckToLocalStorage(); // Removed, as currentDeck is not persistently saved anymore
+        saveDeckToLocalStorage();
         cardNameInput.value = ''; // Clear input field
     });
 
-    // The saveDeckAsButton event listener was already updated in Replacement 2.
-    // The old string for this replacement includes the old saveDeckAsButton listener,
-    // so I need to make sure the new string reflects the already applied change.
-    // I will use the content of the file after Replacement 2 as the base for the old string.
-
-    // --- Migration Logic ---
-    async function migrateLocalStorageCropperDecksToIndexedDB() {
-        const localStorageDecks = localStorage.getItem('savedDecks');
-        if (localStorageDecks) {
-            const parsedDecks = JSON.parse(localStorageDecks);
-            for (const deckName in parsedDecks) {
-                if (Object.hasOwnProperty.call(parsedDecks, deckName)) {
-                    await saveDeck(deckName, parsedDecks[deckName]);
-                }
-            }
-            localStorage.removeItem('savedDecks'); // Remove after migration
-            console.log('Migrated cropper decks from localStorage to IndexedDB.');
+    // New: Save deck with a given name
+    saveDeckAsButton.addEventListener('click', () => {
+        const deckName = deckNameInput.value.trim();
+        if (deckName === '') {
+            alert('デッキ名を入力してください。');
+            return;
         }
-    }
 
-    // --- Handle currentDeck in localStorage ---
-    // The 'currentDeck' in localStorage seems to be for temporary editing state within card_cropper.
-    // Since we are moving to IndexedDB for persistent storage, this temporary 'currentDeck'
-    // can either be removed or handled differently. For now, I will remove its loading/saving
-    // as it might conflict with the new IndexedDB flow for 'savedDecks'.
-    // If the user wants to preserve the "last edited deck" state, we can implement that
-    // using IndexedDB for a single "current editing deck" entry.
-    // For now, I'll remove the functions and calls.
+        // Load existing saved decks
+        let savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '{}');
 
-    // Initial load of deck from localStorage (removed)
-    // loadDeckFromLocalStorage(); // Removed
-    // renderDeck(); // Called after migration
+        // Save current deck with the given name
+        savedDecks[deckName] = deck;
 
-    // Run migration and then render
-    await migrateLocalStorageCropperDecksToIndexedDB();
-    renderDeck(); // Initial render of the empty deck or migrated deck
+        // Save updated saved decks back to localStorage
+        localStorage.setItem('savedDecks', JSON.stringify(savedDecks));
+
+        alert(`デッキ「${deckName}」を保存しました。`);
+        deckNameInput.value = ''; // Clear input field
+    });
 });
 
-// --- Local Storage Functions (Removed) ---
-// function saveDeckToLocalStorage() { // Removed
-//     localStorage.setItem('currentDeck', JSON.stringify(deck));
-// }
+// --- Local Storage Functions ---
+function saveDeckToLocalStorage() {
+    localStorage.setItem('currentDeck', JSON.stringify(deck));
+}
 
-// function loadDeckFromLocalStorage() { // Removed
-//     const savedDeck = localStorage.getItem('currentDeck');
-//     if (savedDeck) {
-//         deck = JSON.parse(savedDeck);
-//     }
-// }
+function loadDeckFromLocalStorage() {
+    const savedDeck = localStorage.getItem('currentDeck');
+    if (savedDeck) {
+        deck = JSON.parse(savedDeck);
+    }
+}

@@ -1,6 +1,4 @@
-import { openDb, saveDeck, getAllDecks, deleteDeck } from './src/db.js';
-
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
     const deckList = document.getElementById('deck-list');
     const selectedDeckCardsContainer = document.getElementById('selected-deck-cards');
 
@@ -122,9 +120,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderEditedDeck();
     }
 
-    async function renderDeckList() { // Make renderDeckList async
+    function renderDeckList() {
         deckList.innerHTML = ''; // Clear existing list
-        const savedDecks = await getAllDecks(); // Use getAllDecks()
+        const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '{}');
 
         if (Object.keys(savedDecks).length === 0) {
             deckList.innerHTML = '<p>保存されたデッキはありません。</p>';
@@ -151,13 +149,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             battleButton.textContent = 'このデッキで対戦';
             battleButton.className = 'battle-button'; // Add a class for styling
             battleButton.dataset.deckName = deckName;
-            battleButton.addEventListener('click', async (e) => { // Make async
+            battleButton.addEventListener('click', (e) => {
                 e.stopPropagation(); // Prevent listItem click event
 
                 const checkbox = e.target.closest('li').querySelector('.deck-checkbox');
                 const isChecked = checkbox.checked;
 
-                const savedDecks = await getAllDecks(); // Use getAllDecks()
+                const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '{}');
                 const selectedDeckData = savedDecks[deckName];
 
                 if (selectedDeckData) {
@@ -190,16 +188,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             const deleteButton = document.createElement('button');
             deleteButton.textContent = '削除';
             deleteButton.dataset.deckName = deckName;
-            deleteButton.addEventListener('click', async (e) => { // Make async
+            deleteButton.addEventListener('click', (e) => {
                 e.stopPropagation(); // Prevent listItem click event
                 if (confirm(`デッキ「${deckName}」を本当に削除しますか？`)) {
-                    try {
-                        await deleteDeck(deckName); // Use deleteDeck()
-                        renderDeckList(); // Re-render the list
-                        // clearSelectedDeckDisplay(); // This function doesn't exist in the provided code, so commenting out.
-                    } catch (error) {
-                        alert(`デッキの削除に失敗しました: ${error}`);
-                    }
+                    delete savedDecks[deckName];
+                    localStorage.setItem('savedDecks', JSON.stringify(savedDecks));
+                    renderDeckList(); // Re-render the list
+                    clearSelectedDeckDisplay(); // Clear displayed deck if deleted
                 }
             });
 
@@ -222,26 +217,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Initial render
-    // Migration logic
-    async function migrateLocalStorageToIndexedDB() {
-        const localStorageDecks = localStorage.getItem('savedDecks');
-        if (localStorageDecks) {
-            const parsedDecks = JSON.parse(localStorageDecks);
-            for (const deckName in parsedDecks) {
-                if (Object.hasOwnProperty.call(parsedDecks, deckName)) {
-                    await saveDeck(deckName, parsedDecks[deckName]);
-                }
-            }
-            localStorage.removeItem('savedDecks'); // Remove after migration
-            console.log('Migrated decks from localStorage to IndexedDB.');
-        }
-    }
-
-    // Run migration and then render
-    await migrateLocalStorageToIndexedDB();
     renderDeckList();
     renderEditedDeck(); // Initial render of the empty edited deck
-});
 
     // Event Listener for adding card by name
     addCardByNameButton.addEventListener('click', () => {
@@ -271,45 +248,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Event Listener for saving deck with a given name
-    saveDeckAsButton.addEventListener('click', async () => { // Make async
+    saveDeckAsButton.addEventListener('click', () => {
         const deckName = deckNameInput.value.trim();
         if (deckName === '') {
             alert('デッキ名を入力してください。');
             return;
         }
 
-        try {
-            await saveDeck(deckName, deck); // Use saveDeck()
-            alert(`デッキ「${deckName}」を保存しました。`);
-            deckNameInput.value = '';
-            renderDeckList(); // Update the list of saved decks
-            currentEditingDeckName = deckName; // Set current editing deck name after saving
-        } catch (error) {
-            alert(`デッキの保存に失敗しました: ${error}`);
-        }
+        let savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '{}');
+
+        savedDecks[deckName] = deck;
+
+        localStorage.setItem('savedDecks', JSON.stringify(savedDecks));
+
+        alert(`デッキ「${deckName}」を保存しました。`);
+        deckNameInput.value = '';
+        renderDeckList(); // Update the list of saved decks
+        currentEditingDeckName = deckName; // Set current editing deck name after saving
     });
 
     // Event Listener for overwrite save
-    overwriteSaveButton.addEventListener('click', async () => { // Make async
+    overwriteSaveButton.addEventListener('click', () => {
         if (currentEditingDeckName === null) {
             alert('上書き保存するには、まずデッキを読み込むか、名前を付けて保存してください。');
             return;
         }
 
-        try {
-            // Check if the deck exists before overwriting (optional, saveDeck handles both create/update)
-            const existingDecks = await getAllDecks();
-            if (!existingDecks[currentEditingDeckName]) {
-                alert(`エラー: デッキ「${currentEditingDeckName}」が見つかりません。名前を付けて保存してください。`);
-                currentEditingDeckName = null; // Reset
-                return;
-            }
+        let savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '{}');
 
-            await saveDeck(currentEditingDeckName, deck); // Use saveDeck()
-            alert(`デッキ「${currentEditingDeckName}」を上書き保存しました。`);
-            renderDeckList(); // Update the list of saved decks
-        } catch (error) {
-            alert(`デッキの上書き保存に失敗しました: ${error}`);
+        if (!savedDecks[currentEditingDeckName]) {
+            alert(`エラー: デッキ「${currentEditingDeckName}」が見つかりません。名前を付けて保存してください。`);
+            currentEditingDeckName = null; // Reset
+            return;
         }
+
+        savedDecks[currentEditingDeckName] = deck; // Overwrite
+
+        localStorage.setItem('savedDecks', JSON.stringify(savedDecks));
+
+        alert(`デッキ「${currentEditingDeckName}」を上書き保存しました。`);
+        renderDeckList(); // Update the list of saved decks
     });
 });
