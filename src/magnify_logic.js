@@ -5,8 +5,8 @@ const loupe = document.getElementById('magnifying-loupe');
 const magnifiedImage = document.getElementById('magnified-card-image');
 
 // プレビューパネルの固定サイズ
-const PREVIEW_WIDTH = 56; // 80px * 0.7
-const PREVIEW_HEIGHT = 84; // 120px * 0.7
+const PREVIEW_WIDTH = 120; // 80px * 1.5
+const PREVIEW_HEIGHT = 180; // 120px * 1.5
 const OFFSET = 10; // カードとプレビューパネルの間のオフセット
 
 function getCardData(cardId) {
