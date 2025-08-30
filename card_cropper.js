@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // New: Creates a card image (data URL) from text
-    function createCardImageFromText(text, width = 80, height = 110) {
+    function createCardImageFromText(text, width = 200, height = 300) { // プレビューパネルのサイズに合わせて高解像度化
         const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
