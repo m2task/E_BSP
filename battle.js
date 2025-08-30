@@ -3,7 +3,6 @@ import { deck, hand, field, cardIdCounter, setDeck, setHand, setCardIdCounter, s
 import { setupEventListeners } from './src/event_handlers.js';
 import { renderAll } from './src/ui_render.js';
 import { shuffle } from './src/utils.js';
-import { setupMagnifier } from './src/magnify_logic.js';
 
 function getURLParams() {
     const params = new URLSearchParams(window.location.search);
@@ -106,5 +105,4 @@ async function initializeGame() {
 document.addEventListener('DOMContentLoaded', () => {
     initializeGame();
     setupEventListeners();
-    setupMagnifier();
 });

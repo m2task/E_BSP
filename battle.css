@@ -670,12 +670,3 @@ body {
   background-repeat: no-repeat;
 }
 
-/* 拡大モード中のカーソル */
-body.magnify-mode-active {
-  cursor: crosshair; /* より分かりやすいカーソルに変更 */
-}
-
-/* 拡大鏡ボタンのスタイル調整 */
-#toggle-magnify-btn.active {
-  color: #007bff; /* アクティブな時に青色にする */
-}

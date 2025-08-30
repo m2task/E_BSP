@@ -1,11 +1,10 @@
 // src/magnify_logic.js
-import { draggedElement, isDragging, isMagnifyModeActive, setIsMagnifyModeActive, field, hand, trash, burst, openArea } from './game_data.js';
+import { draggedElement, isDragging, field, hand, trash, burst, openArea } from './game_data.js';
 
 let zoomLevel = 2;
 let loupeSize = 180;
 
 const loupe = document.getElementById('magnifying-loupe');
-const toggleBtn = document.getElementById('toggle-magnify-btn');
 
 function getCardData(cardId) {
     const allCardArrays = [field, hand, trash, burst, openArea];
@@ -40,7 +39,7 @@ function handleCardMouseMove(e) {
 
 function handleCardMouseOver(e) {
     if (draggedElement || isDragging) {
-        return;
+        return; // Do not show magnifier while dragging
     }
 
     const cardElement = e.currentTarget;
@@ -69,7 +68,7 @@ function handleCardMouseOut() {
 }
 
 function handleWheel(e) {
-    if (!isMagnifyModeActive || loupe.style.display === 'none') return;
+    if (loupe.style.display === 'none') return;
 
     e.preventDefault();
 
@@ -94,10 +93,7 @@ function handleWheel(e) {
 }
 
 export function updateMagnifierEventListeners() {
-    if (!isMagnifyModeActive) return;
-
     document.querySelectorAll('#fieldCards .card, #handZone .card, #trashModalContent .card, #openArea .card, #burstCard .card').forEach(card => {
-        // To prevent adding listeners multiple times, we can use a flag
         if (card.dataset.magnifyListenersAttached) return;
 
         card.addEventListener('mouseover', handleCardMouseOver);
@@ -106,35 +102,4 @@ export function updateMagnifierEventListeners() {
         card.addEventListener('wheel', handleWheel, { passive: false });
         card.dataset.magnifyListenersAttached = 'true';
     });
-}
-
-function removeAllMagnifierListeners() {
-    document.querySelectorAll('#fieldCards .card, #handZone .card, #trashModalContent .card, #openArea .card, #burstCard .card').forEach(card => {
-        card.removeEventListener('mouseover', handleCardMouseOver);
-        card.removeEventListener('mouseout', handleCardMouseOut);
-        card.removeEventListener('mousemove', handleCardMouseMove);
-        card.removeEventListener('wheel', handleWheel);
-        delete card.dataset.magnifyListenersAttached;
-    });
-}
-
-function toggleMagnifyMode() {
-    const newMode = !isMagnifyModeActive;
-    setIsMagnifyModeActive(newMode);
-    
-    document.body.classList.toggle('magnify-mode-active', newMode);
-    toggleBtn.classList.toggle('active', newMode);
-
-    if (newMode) {
-        updateMagnifierEventListeners();
-    } else {
-        removeAllMagnifierListeners();
-        handleCardMouseOut();
-    }
-}
-
-export function setupMagnifier() {
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', toggleMagnifyMode);
-    }
 }

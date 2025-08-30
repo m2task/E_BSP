@@ -19,8 +19,7 @@ export let handPinned = false;
 export let countShowCountAsNumber = true;
 export let cardIdCounter = 0;
 
-// --- 拡大鏡モード ---
-export let isMagnifyModeActive = false;
+
 
 // --- ドラッグ情報とカード位置 ---
 export let draggedElement = null;
@@ -61,7 +60,6 @@ export function setHandVisible(visible) { handVisible = visible; }
 export function setHandPinned(pinned) { handPinned = pinned; }
 export function setCountShowCountAsNumber(showAsNumber) { countShowCountAsNumber = showAsNumber; }
 export function setCardIdCounter(counter) { cardIdCounter = counter; }
-export function setIsMagnifyModeActive(active) { isMagnifyModeActive = active; }
 export function setDraggedElement(element) { draggedElement = element; }
 export function setOffsetX(x) { offsetX = x; }
 export function setOffsetY(y) { offsetY = y; }
