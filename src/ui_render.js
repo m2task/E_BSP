@@ -8,6 +8,13 @@ export function createCardElement(cardData) {
     div.draggable = true;
     div.dataset.id = cardData.id;
 
+    if (cardData.isSpecial) {
+        div.classList.add('special-card');
+        if (cardData.specialType) {
+            div.dataset.cardType = cardData.specialType;
+        }
+    }
+
     if (cardData.imgDataUrl) {
         const img = document.createElement('img');
         img.src = cardData.imgDataUrl;
