@@ -188,14 +188,12 @@ body {
       clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); /* 六角形 */
       width: 21px;
       height: 21px;
-      filter: drop-shadow(0px 0px 1.5px black); /* 縁取り */
     }
     .core.soul {
       position: relative;
       width: 22px;
       height: 22px;
       cursor: grab;
-      filter: drop-shadow(0px 0px 1.5px black); /* 縁取り */
     }
 
     .core.soul::before {
