@@ -64,9 +64,17 @@ export function handleCoreDropOnCard(e, targetCardElement) {
     }
 
     const cardRect = targetCardElement.getBoundingClientRect();
-    const dropX = e.clientX - cardRect.left;
-    const dropY = e.clientY - cardRect.top;
+    let dropX = e.clientX - cardRect.left;
+    let dropY = e.clientY - cardRect.top;
     const type = e.dataTransfer.getData("type");
+
+    // コアの寸法を定義
+    const coreWidth = 20;
+    const coreHeight = 20;
+
+    // ドロップ位置をカードの境界内に制限
+    dropX = Math.max(0, Math.min(dropX, cardRect.width - coreWidth));
+    dropY = Math.max(0, Math.min(dropY, cardRect.height - coreHeight));
 
     if (type === 'voidCore') {
         // ボイドコアの場合、チャージ数分の新しい青コアを生成してカードに追加
@@ -76,10 +84,17 @@ export function handleCoreDropOnCard(e, targetCardElement) {
 
         for (let i = 0; i < coresToAddCount; i++) {
             const currentCoresOnCardCount = targetCard.coresOnCard.length;
+            let newX = dropX + (currentCoresOnCardCount * coreOffsetX);
+            let newY = dropY + (currentCoresOnCardCount * coreOffsetY);
+
+            // Clamp final position
+            newX = Math.max(0, Math.min(newX, cardRect.width - coreWidth));
+            newY = Math.max(0, Math.min(newY, cardRect.height - coreHeight));
+
             targetCard.coresOnCard.push({
                 type: "blue",
-                x: dropX + (currentCoresOnCardCount * coreOffsetX),
-                y: dropY + (currentCoresOnCardCount * coreOffsetY)
+                x: newX,
+                y: newY
             });
         }
         setVoidChargeCount(0);
@@ -93,10 +108,17 @@ export function handleCoreDropOnCard(e, targetCardElement) {
 
         for (const coreInfo of coresToMove) {
             const currentCoresOnCardCount = targetCard.coresOnCard.length;
+            let newX = dropX + (currentCoresOnCardCount * coreOffsetX);
+            let newY = dropY + (currentCoresOnCardCount * coreOffsetY);
+
+            // Clamp final position
+            newX = Math.max(0, Math.min(newX, cardRect.width - coreWidth));
+            newY = Math.max(0, Math.min(newY, cardRect.height - coreHeight));
+
             targetCard.coresOnCard.push({
                 type: coreInfo.type,
-                x: dropX + (currentCoresOnCardCount * coreOffsetX),
-                y: dropY + (currentCoresOnCardCount * coreOffsetY)
+                x: newX,
+                y: newY
             });
         }
     }
@@ -128,8 +150,16 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement) {
     const offsetY = parseFloat(e.dataTransfer.getData("offsetY"));
 
     // ドロップされたカード内の相対座標を計算
-    const newX = e.clientX - cardRect.left - offsetX;
-    const newY = e.clientY - cardRect.top - offsetY;
+    let newX = e.clientX - cardRect.left - offsetX;
+    let newY = e.clientY - cardRect.top - offsetY;
+
+    // コアの寸法を定義 (CSSと一致させる)
+    const coreWidth = 20;
+    const coreHeight = 20;
+
+    // 座標をカードの境界内に制限
+    newX = Math.max(0, Math.min(newX, cardRect.width - coreWidth));
+    newY = Math.max(0, Math.min(newY, cardRect.height - coreHeight));
 
     // コアのデータを更新
     targetCard.coresOnCard[coreIndexOnCard].x = newX;
