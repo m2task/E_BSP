@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // New: Creates a card image (data URL) from text
-    function createCardImageFromText(text, width = 200, height = 300) { // プレビューパネルのサイズに合わせて高解像度化
+    function createCardImageFromText(text, width = 80, height = 110) {
         const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.textBaseline = 'middle';
         ctx.fillText(text, width / 2, height / 2); // Center text
 
-        return canvas.toDataURL('image/png'); // PNGに変更
+        return canvas.toDataURL('image/jpeg', 0.8); // PNGからJPEGに変更し圧縮
     }
 
     // New: Renders the deck in the deckEditorContainer
