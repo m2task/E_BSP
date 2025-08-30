@@ -35,7 +35,7 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
     const cardData = sourceArray[cardIndex];
 
     // Handle special card logic (if moved from field to non-field, it disappears)
-    if (cardData.isSpecial && sourceZoneId === 'field' && targetZoneName !== 'field') {
+    if (cardData.isSpecial && targetZoneName !== 'field') {
         // Remove the card from the field
         sourceArray.splice(cardIndex, 1);
         // Move its cores to the reserve
