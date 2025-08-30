@@ -1,6 +1,7 @@
 // src/ui_render.js
 import { deck, hand, field, trash, burst, lifeCores, reserveCores, countCores, trashCores, selectedCores, cardPositions, countShowCountAsNumber, openArea, handPinned } from './game_data.js';
 import { handleCoreClick } from './core_logic.js'; // 修正: event_handlers.js から core_logic.js に変更
+import { updateMagnifierEventListeners } from './magnify_logic.js';
 
 export function createCardElement(cardData) {
     const div = document.createElement('div');
@@ -237,6 +238,9 @@ export function renderAll() {
     if (document.getElementById("trashModal").style.display === "flex") {
         renderTrashModalContent();
     }
+
+    // Update magnifier listeners on all cards after every render
+    updateMagnifierEventListeners();
 }
 
 export function renderOpenArea() {
