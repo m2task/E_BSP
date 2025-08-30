@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.textBaseline = 'middle';
         ctx.fillText(text, width / 2, height / 2); // Center text
 
-        return canvas.toDataURL('image/jpeg', 0.8); // PNGからJPEGに変更し圧縮
+        return canvas.toDataURL('image/png'); // PNGに変更
     }
 
     // New: Renders the deck in the deckEditorContainer
