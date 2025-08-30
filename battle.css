@@ -648,3 +648,9 @@ body {
   border-color: #007bff;
   box-shadow: 0 0 6px #007bff33;
 }
+
+/* フィールドの転生後カードのサイズを手札と同じにする */
+#fieldCards .card[data-card-type="tensei"] {
+  width: 80px;
+  height: 120px;
+}
