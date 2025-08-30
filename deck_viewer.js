@@ -138,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
+            checkbox.checked = true; // デフォルトでチェック状態にする
             checkbox.className = 'deck-checkbox';
             checkbox.dataset.deckName = deckName;
             checkbox.addEventListener('click', (e) => {

@@ -90,6 +90,8 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
         let shouldTransferCoresToReserve = (sourceZoneId === 'field' && targetZoneName !== 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0);
 
         if (targetZoneName === 'deck') {
+            // デッキに移動する場合、コアをリザーブに送るフラグを立てる
+            shouldTransferCoresToReserve = true;
             let putOnBottom = false;
             if (dropEvent && dropTargetElement) {
                 const rect = dropTargetElement.getBoundingClientRect();
