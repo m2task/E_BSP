@@ -100,7 +100,6 @@ export function handleCoreDropOnCard(e, targetCardElement) {
             });
         }
     }
-    renderAll();
 
     if (type === 'voidCore') {
         const movedCount = coresToMove.length;
@@ -141,7 +140,6 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement) {
         draggedElement.style.display = 'block';
     }
 
-    renderAll();
 }
 
 export function handleCoreDropOnZone(e, targetElement) {
