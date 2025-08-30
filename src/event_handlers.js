@@ -344,6 +344,7 @@ export function handleDrop(e) {
         handleSpecialCardDrop(mockEvent);
     }
     clearSelectedCores();
+    setDraggedElement(null); // ドロップ直後にドラッグ状態を強制的にクリア
 }
 
 function handleCardDrop(e) {

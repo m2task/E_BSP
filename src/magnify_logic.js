@@ -107,8 +107,5 @@ export function updateMagnifierEventListeners() {
         card.addEventListener('mouseout', handleCardMouseOut);
         card.addEventListener('mousemove', handleCardMouseMove);
         card.addEventListener('wheel', handleWheel, { passive: false });
-
-        // DEBUG: 枠線を赤くして、リスナーが設定されたことを視覚的に確認
-        card.style.border = '2px solid red';
     });
 }
