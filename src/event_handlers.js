@@ -220,20 +220,23 @@ export function handleDragStart(e) {
     setDraggedElement(target);
     setTimeout(() => target.classList.add('dragging'), 0);
 
-    if (target.classList.contains('special-card')) {
-        const cardType = target.dataset.cardType;
-        e.dataTransfer.setData("type", "special-card");
-        e.dataTransfer.setData("cardType", cardType);
-        const rect = e.target.getBoundingClientRect();
-        setOffsetX(e.clientX - rect.left);
-        setOffsetY(e.clientY - rect.top);
-    } else if (target.classList.contains('card')) {
-        e.dataTransfer.setData("type", "card");
-        e.dataTransfer.setData("cardId", e.target.dataset.id);
-        e.dataTransfer.setData("sourceZoneId", e.target.parentElement.id);
-        const rect = e.target.getBoundingClientRect();
-        setOffsetX(e.clientX - rect.left);
-        setOffsetY(e.clientY - rect.top);
+    if (target.classList.contains('card')) {
+        // If it's a special card from the modal (it won't have a cardId yet)
+        if (target.classList.contains('special-card') && !target.dataset.id) {
+            const cardType = target.dataset.cardType;
+            e.dataTransfer.setData("type", "special-card");
+            e.dataTransfer.setData("cardType", cardType);
+            const rect = e.target.getBoundingClientRect();
+            setOffsetX(e.clientX - rect.left);
+            setOffsetY(e.clientY - rect.top);
+        } else { // It's a normal card or a special card already on the field
+            e.dataTransfer.setData("type", "card");
+            e.dataTransfer.setData("cardId", e.target.dataset.id);
+            e.dataTransfer.setData("sourceZoneId", e.target.parentElement.id);
+            const rect = e.target.getBoundingClientRect();
+            setOffsetX(e.clientX - rect.left);
+            setOffsetY(e.clientY - rect.top);
+        }
     } else if (e.target.classList.contains('core') || e.target.id === 'voidCore') {
         const coresToMove = getDraggedCoresInfo(e.target);
         setDraggedCoreData(coresToMove); // 念のため保持
