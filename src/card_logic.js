@@ -163,7 +163,6 @@ export function discardDeck() {
     trash.push(discardedCard);
 
     setDiscardCounter(discardState.counter + 1);
-    setDiscardedCardNames([...discardState.names, discardedCard.name]);
 
     renderAll();
 
@@ -174,12 +173,11 @@ export function discardDeck() {
 
     // 新しいタイマーを設定
     setDiscardToastTimer(setTimeout(() => {
-        const message = `${discardState.counter}枚破棄しました。\n${discardState.names.join("、")}`;
+        const message = `${discardState.counter}枚破棄しました。`;
         showToast('cardMoveToast', message);
         
         // カウンターとリストをリセット
         setDiscardCounter(0);
-        setDiscardedCardNames([]);
         setDiscardToastTimer(null);
     }, 350)); // 350msのデバウンス
 }

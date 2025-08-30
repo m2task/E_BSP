@@ -132,7 +132,17 @@ export function renderField() {
 
 export function renderTrash() {
     const trashFrame = document.getElementById("trashCard");
-    trashFrame.innerHTML = trash.length > 0 ? `<div class='card'>${trash[trash.length - 1].name}</div>` : "";
+    trashFrame.innerHTML = ""; // Clear it
+    if (trash.length > 0) {
+        const topCardData = trash[trash.length - 1];
+        if (topCardData) { // Check if the card data exists
+            const cardElement = createCardElement(topCardData);
+            // The card in the trash pile view is just a preview, not interactive.
+            cardElement.draggable = false;
+            cardElement.style.cursor = 'default'; // Change cursor to indicate not interactive
+            trashFrame.appendChild(cardElement);
+        }
+    }
 }
 
 export function renderBurst() {
