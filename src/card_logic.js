@@ -4,7 +4,7 @@ import { renderAll, showCostModal, renderOpenArea } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
 import { payCostFromReserve } from './core_logic.js';
 import { openModal } from './event_handlers.js';
-import { handleCardMouseOut } from './magnify_logic.js';
+import { hideMagnifier } from './magnify_logic.js';
 
 export function drawCard(fromBottom = false) {
     if (deck.length > 0) {
@@ -88,7 +88,7 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
 
         const [cardData] = sourceArray.splice(cardIndex, 1);
 
-        handleCardMouseOut(); // NEW: Hide magnifier immediately
+        hideMagnifier(); // NEW: Hide magnifier immediately
 
         let shouldTransferCoresToReserve = (sourceZoneId === 'field' && targetZoneName !== 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0);
 

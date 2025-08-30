@@ -43,6 +43,10 @@ function handleCardMouseOut() {
     loupe.style.display = 'none';
 }
 
+export function hideMagnifier() {
+    handleCardMouseOut();
+}
+
 export function updateMagnifierEventListeners() {
     const cards = document.querySelectorAll('#fieldCards .card, #handZone .card, #trashModalContent .card, #openArea .card, #burstCard .card');
     
