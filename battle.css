@@ -655,18 +655,22 @@ body {
   height: 120px;
 }
 
-/* 拡大鏡のスタイル */
+/* 拡大プレビューパネルのスタイル */
 #magnifying-loupe {
   position: fixed;
-  width: 180px;
-  height: 180px;
-  border: 4px solid #666;
-  border-radius: 8px; /* 四角形に角丸 */
-  box-shadow: 5px 5px 10px rgba(0,0,0,0.4);
-  overflow: hidden;
+  width: 56px;  /* 80px * 0.7 */
+  height: 84px; /* 120px * 0.7 */
+  border: 2px solid #333;
+  border-radius: 5px;
+  box-shadow: 3px 3px 8px rgba(0,0,0,0.4);
   z-index: 1100;
   display: none;
-  pointer-events: none; /* レンズ自体はクリックできないようにする */
-  background-repeat: no-repeat;
+  pointer-events: none;
+  background-color: #000;
+}
+
+#magnifying-loupe img {
+  width: 100%;
+  height: 100%;
 }
 

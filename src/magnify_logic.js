@@ -1,10 +1,13 @@
 // src/magnify_logic.js
 import { draggedElement, isDragging, field, hand, trash, burst, openArea } from './game_data.js';
 
-let zoomLevel = 2;
-let loupeSize = 180;
-
 const loupe = document.getElementById('magnifying-loupe');
+const magnifiedImage = document.getElementById('magnified-card-image');
+
+// プレビューパネルの固定サイズ
+const PREVIEW_WIDTH = 56; // 80px * 0.7
+const PREVIEW_HEIGHT = 84; // 120px * 0.7
+const OFFSET = 10; // カードとプレビューパネルの間のオフセット
 
 function getCardData(cardId) {
     const allCardArrays = [field, hand, trash, burst, openArea];
@@ -15,31 +18,10 @@ function getCardData(cardId) {
     return null;
 }
 
-function updateLoupePosition(e) {
-    loupe.style.left = `${e.clientX - loupeSize / 2}px`;
-    loupe.style.top = `${e.clientY - loupeSize / 2}px`;
-}
-
-function handleCardMouseMove(e) {
-    if (loupe.style.display === 'none') return;
-
-    updateLoupePosition(e);
-
-    const cardElement = e.currentTarget;
-    const cardRect = cardElement.getBoundingClientRect();
-
-    const x = e.clientX - cardRect.left;
-    const y = e.clientY - cardRect.top;
-
-    const bgX = - (x * zoomLevel - loupeSize / 2);
-    const bgY = - (y * zoomLevel - loupeSize / 2);
-
-    loupe.style.backgroundPosition = `${bgX}px ${bgY}px`;
-}
-
 function handleCardMouseOver(e) {
     if (draggedElement || isDragging) {
-        return; // Do not show magnifier while dragging
+        loupe.style.display = 'none'; // ドラッグ中は非表示を徹底
+        return;
     }
 
     const cardElement = e.currentTarget;
@@ -51,61 +33,53 @@ function handleCardMouseOver(e) {
         return;
     }
 
-    const img = new Image();
-    img.src = cardData.imgDataUrl;
-    img.onload = () => {
-        loupe.style.backgroundImage = `url(${cardData.imgDataUrl})`;
-        loupe.style.backgroundSize = `${img.width * zoomLevel}px ${img.height * zoomLevel}px`;
-        loupe.style.display = 'block';
-    };
+    magnifiedImage.src = cardData.imgDataUrl;
 
-    updateLoupePosition(e);
+    const cardRect = cardElement.getBoundingClientRect();
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+
+    let previewLeft;
+    let previewTop = cardRect.top; // カードの上端に合わせる
+
+    // 右側に表示できるかチェック
+    if (cardRect.right + OFFSET + PREVIEW_WIDTH <= viewportWidth) {
+        previewLeft = cardRect.right + OFFSET;
+    } else {
+        // 右側にはみ出す場合、左側に表示
+        previewLeft = cardRect.left - OFFSET - PREVIEW_WIDTH;
+        // 左側にはみ出す場合、画面左端に固定
+        if (previewLeft < 0) {
+            previewLeft = 0;
+        }
+    }
+
+    // プレビューが画面下にはみ出す場合、調整
+    if (previewTop + PREVIEW_HEIGHT > window.innerHeight) {
+        previewTop = window.innerHeight - PREVIEW_HEIGHT - OFFSET; // 下端に合わせる
+        if (previewTop < 0) previewTop = 0; // 上にはみ出さないように
+    }
+
+    loupe.style.left = `${previewLeft}px`;
+    loupe.style.top = `${previewTop}px`;
+    loupe.style.display = 'block';
 }
 
 function handleCardMouseOut() {
     loupe.style.display = 'none';
-    loupe.style.backgroundImage = 'none';
-}
-
-function handleWheel(e) {
-    if (loupe.style.display === 'none') return;
-
-    e.preventDefault();
-
-    if (e.deltaY < 0) {
-        zoomLevel = Math.min(5, zoomLevel + 0.2);
-    } else {
-        zoomLevel = Math.max(1.5, zoomLevel - 0.2);
-    }
-
-    const cardElement = e.currentTarget;
-    const cardId = cardElement.dataset.id;
-    const cardData = getCardData(cardId);
-
-    if (cardData && cardData.imgDataUrl) {
-        const img = new Image();
-        img.src = cardData.imgDataUrl;
-        img.onload = () => {
-            loupe.style.backgroundSize = `${img.width * zoomLevel}px ${img.height * zoomLevel}px`;
-            handleCardMouseMove(e);
-        }
-    }
 }
 
 export function updateMagnifierEventListeners() {
     const cards = document.querySelectorAll('#fieldCards .card, #handZone .card, #trashModalContent .card, #openArea .card, #burstCard .card');
     
     cards.forEach(card => {
-        // Remove old listeners to prevent duplication, then add them back.
-        // This is a robust way to handle re-renders.
+        // 既存のリスナーを削除してから追加し、重複を防ぐ
         card.removeEventListener('mouseover', handleCardMouseOver);
         card.removeEventListener('mouseout', handleCardMouseOut);
-        card.removeEventListener('mousemove', handleCardMouseMove);
-        card.removeEventListener('wheel', handleWheel);
+        // mousemove と wheel はこのモードでは不要なので削除
+        card.removeEventListener('mousemove', () => {}); // ダミー関数で削除
+        card.removeEventListener('wheel', () => {}); // ダミー関数で削除
 
         card.addEventListener('mouseover', handleCardMouseOver);
         card.addEventListener('mouseout', handleCardMouseOut);
-        card.addEventListener('mousemove', handleCardMouseMove);
-        card.addEventListener('wheel', handleWheel, { passive: false });
     });
 }
