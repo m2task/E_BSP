@@ -658,6 +658,8 @@ body {
 /* 拡大プレビューパネルのスタイル */
 #magnifying-loupe {
   position: fixed;
+  left: 135px;  /* 左カラムの右端 + オフセット */
+  top: 50px;   /* ボイドゾーンの上端付近に合わせる */
   width: 200px;  /* 80px * 2.5 */
   height: 300px; /* 120px * 2.5 */
   border: 2px solid #333;

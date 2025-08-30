@@ -35,32 +35,7 @@ function handleCardMouseOver(e) {
 
     magnifiedImage.src = cardData.imgDataUrl;
 
-    const cardRect = cardElement.getBoundingClientRect();
-    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
-
-    let previewLeft;
-    let previewTop = cardRect.top; // カードの上端に合わせる
-
-    // 右側に表示できるかチェック
-    if (cardRect.right + OFFSET + PREVIEW_WIDTH <= viewportWidth) {
-        previewLeft = cardRect.right + OFFSET;
-    } else {
-        // 右側にはみ出す場合、左側に表示
-        previewLeft = cardRect.left - OFFSET - PREVIEW_WIDTH;
-        // 左側にはみ出す場合、画面左端に固定
-        if (previewLeft < 0) {
-            previewLeft = 0;
-        }
-    }
-
-    // プレビューが画面下にはみ出す場合、調整
-    if (previewTop + PREVIEW_HEIGHT > window.innerHeight) {
-        previewTop = window.innerHeight - PREVIEW_HEIGHT - OFFSET; // 下端に合わせる
-        if (previewTop < 0) previewTop = 0; // 上にはみ出さないように
-    }
-
-    loupe.style.left = `${previewLeft}px`;
-    loupe.style.top = `${previewTop}px`;
+    // 位置はCSSで固定されるため、ここでは表示するだけ
     loupe.style.display = 'block';
 }
 
