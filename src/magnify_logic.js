@@ -21,7 +21,7 @@ function updateLoupePosition(e) {
 }
 
 function handleCardMouseMove(e) {
-    if (!loupe.style.backgroundImage) return;
+    if (loupe.style.display === 'none') return;
 
     updateLoupePosition(e);
 
@@ -93,13 +93,19 @@ function handleWheel(e) {
 }
 
 export function updateMagnifierEventListeners() {
-    document.querySelectorAll('#fieldCards .card, #handZone .card, #trashModalContent .card, #openArea .card, #burstCard .card').forEach(card => {
-        if (card.dataset.magnifyListenersAttached) return;
+    const cards = document.querySelectorAll('#fieldCards .card, #handZone .card, #trashModalContent .card, #openArea .card, #burstCard .card');
+    
+    cards.forEach(card => {
+        // Remove old listeners to prevent duplication, then add them back.
+        // This is a robust way to handle re-renders.
+        card.removeEventListener('mouseover', handleCardMouseOver);
+        card.removeEventListener('mouseout', handleCardMouseOut);
+        card.removeEventListener('mousemove', handleCardMouseMove);
+        card.removeEventListener('wheel', handleWheel);
 
         card.addEventListener('mouseover', handleCardMouseOver);
         card.addEventListener('mouseout', handleCardMouseOut);
         card.addEventListener('mousemove', handleCardMouseMove);
         card.addEventListener('wheel', handleWheel, { passive: false });
-        card.dataset.magnifyListenersAttached = 'true';
     });
 }
