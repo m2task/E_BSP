@@ -485,7 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 canvas.height = sHeight;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(sourceImage, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
-                const imgDataUrl = canvas.toDataURL('image/png'); // PNG形式で保存
+                const imgDataUrl = canvas.toDataURL('image/jpeg', 0.9); // JPEG形式で保存、圧縮率0.9
 
                 // New: Add to deck logic
                 const existingCardIndex = deck.findIndex(card => card.imgDataUrl === imgDataUrl);
