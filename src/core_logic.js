@@ -1,5 +1,5 @@
 // src/core_logic.js
-import { lifeCores, reserveCores, countCores, trashCores, field, voidChargeCount, selectedCores, draggedCoreData, setVoidChargeCount, setSelectedCores, setDraggedCoreData, draggedElement } from './game_data.js';
+import { lifeCores, reserveCores, countCores, trashCores, field, voidChargeCount, selectedCores, draggedCoreData, setVoidChargeCount, setSelectedCores, setDraggedCoreData, draggedElement, coreIdCounter, setCoreIdCounter } from './game_data.js';
 import { renderAll } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
 
@@ -10,38 +10,25 @@ export function handleCoreClick(e) {
         return;
     }
 
+    const coreId = coreElement.dataset.coreId; // coreId を取得
     const coreType = coreElement.dataset.coreType;
-    const index = parseInt(coreElement.dataset.index);
-    const sourceCardId = coreElement.dataset.sourceCardId;
+    const sourceCardId = coreElement.dataset.sourceCardId; // カード上のコアの場合
 
-
-    let coreIdentifier = {
-        type: coreType,
-        index: index
-    };
-
+    // 選択されたコアの情報を構築
+    let clickedCore = { id: coreId, type: coreType };
     if (sourceCardId) {
-        coreIdentifier.sourceCardId = sourceCardId;
+        clickedCore.sourceCardId = sourceCardId;
     } else {
-        coreIdentifier.sourceArrayName = coreElement.parentElement.id;
+        clickedCore.sourceArrayName = coreElement.parentElement.id;
     }
 
-
-    const existingIndex = selectedCores.findIndex(c => {
-        if (c.sourceCardId && coreIdentifier.sourceCardId) {
-            return c.sourceCardId === coreIdentifier.sourceCardId && c.index === coreIdentifier.index;
-        } else if (c.sourceArrayName && coreIdentifier.sourceArrayName) {
-            return c.sourceArrayName === coreIdentifier.sourceArrayName && c.index === coreIdentifier.index;
-        }
-        return false;
-    });
-
+    const existingIndex = selectedCores.findIndex(c => c.id === coreId); // IDで検索
 
     // Ctrl/Metaキーの有無に関わらず、選択をトグル
     if (existingIndex > -1) {
         selectedCores.splice(existingIndex, 1);
     } else {
-        selectedCores.push(coreIdentifier);
+        selectedCores.push(clickedCore);
     }
     renderAll();
 }
@@ -92,9 +79,11 @@ export function handleCoreDropOnCard(e, targetCardElement) {
 
     if (type === 'voidCore') {
         const coresToAddCount = coresToMove.length;
+        let currentCoreId = coreIdCounter; // coreIdCounter を取得
         for (let i = 0; i < coresToAddCount; i++) {
-            targetCard.coresOnCard.push({ type: "blue", x: dropX, y: dropY });
+            targetCard.coresOnCard.push({ id: `core-${currentCoreId++}`, type: "blue", x: dropX, y: dropY }); // IDを付与
         }
+        setCoreIdCounter(currentCoreId); // coreIdCounter を更新
         setVoidChargeCount(0);
         showToast('voidToast', '', true);
         const toastMessage = `${coresToAddCount}個増やしました`;
@@ -102,9 +91,11 @@ export function handleCoreDropOnCard(e, targetCardElement) {
     } else {
         removeCoresFromSource(coresToMove);
         for (const coreInfo of coresToMove) {
-            targetCard.coresOnCard.push({ type: coreInfo.type, x: dropX, y: dropY });
+            // コアオブジェクト全体を渡す
+            targetCard.coresOnCard.push({ ...coreInfo, x: dropX, y: dropY });
         }
     }
+    renderAll(); // コアの追加後に再描画
 }
 
 export function handleCoreInternalMoveOnCard(e, targetCardElement) {
@@ -116,9 +107,9 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement) {
     if (!targetCard || coresToMove.length !== 1) return;
 
     const coreInfo = coresToMove[0];
-    const coreIndexOnCard = coreInfo.index;
-
-    if (coreIndexOnCard === undefined || coreIndexOnCard < 0 || coreIndexOnCard >= targetCard.coresOnCard.length) {
+    // IDでコアを検索
+    const coreToMoveOnCard = targetCard.coresOnCard.find(c => c.id === coreInfo.id);
+    if (!coreToMoveOnCard) {
         return;
     }
 
@@ -154,12 +145,13 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement) {
     newX = Math.max(0, Math.min(newX, clampWidth - coreWidth));
     newY = Math.max(0, Math.min(newY, clampHeight - coreHeight));
 
-    targetCard.coresOnCard[coreIndexOnCard].x = newX;
-    targetCard.coresOnCard[coreIndexOnCard].y = newY;
+    coreToMoveOnCard.x = newX; // 直接コアオブジェクトのプロパティを更新
+    coreToMoveOnCard.y = newY; // 直接コアオブジェクトのプロパティを更新
 
     if (draggedElement) {
         draggedElement.style.display = 'block';
     }
+    renderAll(); // コアの位置変更後に再描画
 }
 
 export function handleCoreDropOnZone(e, targetElement) {
@@ -172,12 +164,15 @@ export function handleCoreDropOnZone(e, targetElement) {
         showToast('voidToast', '', true);
 
         const movedCount = coresToMove.length;
+        let currentCoreId = coreIdCounter; // coreIdCounter を取得
         for (let i = 0; i < movedCount; i++) {
-            if (targetZoneName === 'trash') trashCores.push("blue");
-            else if (targetZoneName === 'reserve') reserveCores.push("blue");
-            else if (targetZoneName === 'life') lifeCores.push("blue");
-            else if (targetZoneName === 'count') countCores.push("blue");
+            const newCore = { id: `core-${currentCoreId++}`, type: "blue" }; // IDを付与
+            if (targetZoneName === 'trash') trashCores.push(newCore);
+            else if (targetZoneName === 'reserve') reserveCores.push(newCore);
+            else if (targetZoneName === 'life') lifeCores.push(newCore);
+            else if (targetZoneName === 'count') countCores.push(newCore);
         }
+        setCoreIdCounter(currentCoreId); // coreIdCounter を更新
         const toastMessage = `${movedCount}個増やしました`;
         showToast('voidToast', toastMessage);
         renderAll();
@@ -214,7 +209,7 @@ export function handleCoreDropOnZone(e, targetElement) {
     const targetArray = (targetZoneName === 'trash') ? trashCores : getArrayByZoneName(targetZoneName);
     if (targetArray) {
         for (const coreInfo of coresToActuallyMove) {
-            targetArray.push(coreInfo.type);
+            targetArray.push(coreInfo); // コアオブジェクト全体をプッシュ
         }
     }
 
@@ -242,10 +237,6 @@ export function removeCoresFromSource(cores) {
     for (const sourceKey in groupedCores) {
         const coresToRemoveFromThisSource = groupedCores[sourceKey];
 
-        // Sort cores to remove from this source by index in descending order
-        // This is crucial for splicing multiple elements from the same array
-        coresToRemoveFromThisSource.sort((a, b) => b.index - a.index);
-
         if (sourceKey.startsWith('array:')) {
             const sourceArrayName = sourceKey.substring(6); // "array:".length
             const sourceArray = getArrayByZoneName(sourceArrayName);
@@ -254,12 +245,9 @@ export function removeCoresFromSource(cores) {
             }
 
             for (const coreInfo of coresToRemoveFromThisSource) {
-                // Find the actual current index of the core in the array
-                // This is the key change: don't rely on coreInfo.index directly for removal
-                const actualIndex = coreInfo.index; // Assuming coreInfo.type is the actual core value
-                if (actualIndex > -1 && actualIndex < sourceArray.length) {
-                    sourceArray.splice(actualIndex, 1);
-                } else {
+                const indexToRemove = sourceArray.findIndex(c => c.id === coreInfo.id); // IDで検索
+                if (indexToRemove > -1) {
+                    sourceArray.splice(indexToRemove, 1);
                 }
             }
 
@@ -271,13 +259,9 @@ export function removeCoresFromSource(cores) {
             }
 
             for (const coreInfo of coresToRemoveFromThisSource) {
-                // For cores on cards, we need to match by type and potentially position if multiple of same type
-                // For now, let's assume we remove the first matching type, or if we need exact match, we need unique IDs for cores.
-                // Given the current structure, matching by type and then splicing the first one found is the most direct.
-                const actualIndex = coreInfo.index; // Assuming coreInfo.type is the actual core value
-                if (actualIndex > -1 && actualIndex < sourceCard.coresOnCard.length) {
-                    sourceCard.coresOnCard.splice(actualIndex, 1);
-                } else {
+                const indexToRemove = sourceCard.coresOnCard.findIndex(c => c.id === coreInfo.id); // IDで検索
+                if (indexToRemove > -1) {
+                    sourceCard.coresOnCard.splice(indexToRemove, 1);
                 }
             }
         }
@@ -287,8 +271,9 @@ export function removeCoresFromSource(cores) {
 export function payCostFromReserve(cost) {
     if (cost <= 0) return true; // コストが0以下の場合は支払い不要
 
-    const normalCores = reserveCores.filter(core => core === "blue");
-    const soulCores = reserveCores.filter(core => core === "soul");
+    // コアオブジェクトの配列としてフィルタリング
+    const normalCores = reserveCores.filter(core => core.type === "blue");
+    const soulCores = reserveCores.filter(core => core.type === "soul");
 
     if (normalCores.length + soulCores.length < cost) {
         alert(`リザーブのコアが足りません。必要なコア: ${cost}個、現在のリザーブ: ${reserveCores.length}個`);
@@ -312,12 +297,95 @@ export function payCostFromReserve(cost) {
 
     // 支払ったコアをトラッシュに移動
     for (const core of coresToPay) {
-        trashCores.push(core);
+        trashCores.push(core); // コアオブジェクト全体をプッシュ
     }
 
     // 残ったコアでリザーブを再構築
-    reserveCores.splice(0, reserveCores.length, ...normalCores, ...soulCores);
+    setReserveCores([...normalCores, ...soulCores]); // setReserveCores を使用して更新
 
     renderAll();
     return true; // 支払い成功
+}
+
+export function handleCoreDragStart(e, coreId, coreType, sourceArrayName, sourceCardId) {
+    e.stopPropagation();
+    const coreElement = e.target.closest('.core');
+    const isSelected = coreElement.classList.contains('selected');
+    let coresToDrag = [];
+
+    if (isSelected) {
+        coresToDrag = [...selectedCores];
+    }
+    else {
+        const coreIdentifier = { id: coreId, type: coreType }; // IDを付与
+        if (sourceCardId) {
+            coreIdentifier.sourceCardId = sourceCardId;
+        }
+        else {
+            coreIdentifier.sourceArrayName = sourceArrayName;
+        }
+        coresToDrag = [coreIdentifier];
+    }
+
+    e.dataTransfer.setData("cores", JSON.stringify(coresToDrag));
+    e.dataTransfer.setData("type", "multiCore");
+
+    if (sourceCardId) {
+        e.dataTransfer.setData("type", "coreFromCard");
+        const cardRect = coreElement.closest('.card').getBoundingClientRect();
+        const coreRect = coreElement.getBoundingClientRect();
+        const offsetX = e.clientX - coreRect.left;
+        const offsetY = e.clientY - coreRect.top;
+        e.dataTransfer.setData("offsetX", offsetX);
+        e.dataTransfer.setData("offsetY", offsetY);
+    }
+    else {
+        e.dataTransfer.setData("type", "core");
+    }
+
+    setDraggedCoreData({
+        cores: coresToDrag,
+        sourceArrayName: sourceArrayName,
+        sourceCardId: sourceCardId
+    });
+
+    setTimeout(() => {
+        if (draggedElement) {
+            draggedElement.style.display = 'none';
+        }
+    }, 0);
+}
+
+export function handleVoidCoreDragStart(e) {
+    const voidCoreElement = document.getElementById('voidCore');
+    const count = voidChargeCount > 0 ? voidChargeCount : 1;
+    
+    let currentCoreId = coreIdCounter; // coreIdCounter を取得
+    const coresToDrag = Array(count).fill(null).map(() => ({ id: `core-${currentCoreId++}`, type: 'blue' })); // IDを付与
+    setCoreIdCounter(currentCoreId); // coreIdCounter を更新
+
+    e.dataTransfer.setData("cores", JSON.stringify(coresToDrag));
+    e.dataTransfer.setData("type", "voidCore");
+
+    setDraggedCoreData({
+        cores: coresToDrag,
+        sourceArrayName: 'void'
+    });
+}
+
+export function handleVoidCoreClick(e) {
+    e.stopPropagation();
+    setVoidChargeCount(voidChargeCount + 1);
+    const toastMessage = `${voidChargeCount + 1}個`;
+    showToast('voidToast', toastMessage);
+}
+
+export function handleVoidCoreRightClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (voidChargeCount > 0) {
+        setVoidChargeCount(voidChargeCount - 1);
+        const toastMessage = voidChargeCount > 0 ? `${voidChargeCount}個` : '';
+        showToast('voidToast', toastMessage, voidChargeCount === 0);
+    }
 }

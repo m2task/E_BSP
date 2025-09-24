@@ -6,10 +6,10 @@ export let trash = [];
 export let burst = [];
 export let openArea = [];
 
-export let lifeCores = ["blue", "blue", "blue", "blue", "blue"];
-export let reserveCores = ["blue", "blue", "blue", "soul"];
-export let countCores = [];
-export let trashCores = [];
+export let lifeCores = []; // 初期値を空の配列に変更
+export let reserveCores = []; // 初期値を空の配列に変更
+export let countCores = []; // 初期値を空の配列に変更
+export let trashCores = []; // 初期値を空の配列に変更
 
 export let voidChargeCount = 0;
 export let toastTimeout = null;
@@ -18,6 +18,7 @@ export let handVisible = true;
 export let handPinned = false;
 export let countShowCountAsNumber = true;
 export let cardIdCounter = 0;
+export let coreIdCounter = 0; // coreIdCounter を追加
 
 
 
@@ -60,6 +61,7 @@ export function setHandVisible(visible) { handVisible = visible; }
 export function setHandPinned(pinned) { handPinned = pinned; }
 export function setCountShowCountAsNumber(showAsNumber) { countShowCountAsNumber = showAsNumber; }
 export function setCardIdCounter(counter) { cardIdCounter = counter; }
+export function setCoreIdCounter(counter) { coreIdCounter = counter; } // setCoreIdCounter を追加
 export function setDraggedElement(element) { draggedElement = element; }
 export function setOffsetX(x) { offsetX = x; }
 export function setOffsetY(y) { offsetY = y; }

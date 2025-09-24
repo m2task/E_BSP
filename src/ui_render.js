@@ -1,6 +1,6 @@
 // src/ui_render.js
 import { deck, hand, field, trash, burst, lifeCores, reserveCores, countCores, trashCores, selectedCores, cardPositions, countShowCountAsNumber, openArea, handPinned } from './game_data.js';
-import { handleCoreClick } from './core_logic.js'; // 修正: event_handlers.js から core_logic.js に変更
+import { handleCoreClick, handleCoreDragStart } from './core_logic.js'; // handleCoreDragStart をインポート
 import { updateMagnifierEventListeners } from './magnify_logic.js';
 
 export function createCardElement(cardData) {
@@ -100,11 +100,12 @@ export function renderField() {
         if (cardData.coresOnCard && cardData.coresOnCard.length > 0) {
             const coresContainer = document.createElement('div');
             coresContainer.className = 'cores-on-card'; // 新しいクラスを追加
-            cardData.coresOnCard.forEach((core, index) => {
+            cardData.coresOnCard.forEach((core) => { // index を削除
                 const coreDiv = document.createElement('div');
                 coreDiv.className = `core ${core.type}`;
                 coreDiv.draggable = true;
-                coreDiv.dataset.index = index; // カード上のコアのインデックス
+                coreDiv.dataset.coreId = core.id; // IDを付与
+                // coreDiv.dataset.index = index; // 削除
                 coreDiv.dataset.coreType = core.type;
                 coreDiv.dataset.sourceCardId = cardData.id; // コアの親カードID
                 coreDiv.style.position = 'absolute';
@@ -114,11 +115,11 @@ export function renderField() {
                     e.stopPropagation(); // コアのクリックがカードの回転イベントに伝播しないようにする
                     handleCoreClick(e); // ここでhandleCoreClickを呼び出す
                 });
-                // 選択状態を反映
-                const isSelected = selectedCores.some(c => {
-                    // selectedCores内の要素がsourceCardIdを持つ場合のみ比較
-                    return c.sourceCardId && c.sourceCardId === cardData.id && c.index === index;
+                coreDiv.addEventListener('dragstart', (e) => {
+                    handleCoreDragStart(e, core.id, core.type, null, cardData.id); // IDを渡す
                 });
+                // 選択状態を反映
+                const isSelected = selectedCores.some(c => c.id === core.id); // IDで比較
                 if (isSelected) {
                     coreDiv.classList.add('selected');
                 }
@@ -165,18 +166,19 @@ export function renderCores(containerId, coreArray) {
         return;
     }
     container.innerHTML = "";
-    coreArray.forEach((coreType, index) => {
+    coreArray.forEach((core) => { // coreType, index を core に変更
         const div = document.createElement("div");
-        div.className = `core ${coreType}`;
+        div.className = `core ${core.type}`;
         div.draggable = true;
-        div.dataset.index = index;
-        div.dataset.coreType = coreType;
+        div.dataset.coreId = core.id; // IDを付与
+        // div.dataset.index = index; // 削除
+        div.dataset.coreType = core.type;
         div.addEventListener('click', handleCoreClick); // ここでhandleCoreClickを呼び出す
-        // 選択状態を反映
-        const isSelected = selectedCores.some(c => {
-            // selectedCores内の要素がsourceArrayNameを持つ場合のみ比較
-            return c.sourceArrayName && c.sourceArrayName === containerId && c.index === index;
+        div.addEventListener('dragstart', (e) => {
+            handleCoreDragStart(e, core.id, core.type, containerId, null); // IDを渡す
         });
+        // 選択状態を反映
+        const isSelected = selectedCores.some(c => c.id === core.id); // IDで比較
         if (isSelected) {
             div.classList.add('selected');
         }

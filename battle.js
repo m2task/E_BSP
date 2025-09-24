@@ -1,5 +1,5 @@
 // main.js
-import { deck, hand, field, cardIdCounter, setDeck, setHand, setCardIdCounter, setSelectedCores, setLifeCores, setReserveCores, setCountCores, setTrashCores } from './src/game_data.js';
+import { deck, hand, field, cardIdCounter, coreIdCounter, setDeck, setHand, setCardIdCounter, setCoreIdCounter, setSelectedCores, setLifeCores, setReserveCores, setCountCores, setTrashCores } from './src/game_data.js';
 import { setupEventListeners } from './src/event_handlers.js';
 import { renderAll } from './src/ui_render.js';
 import { shuffle } from './src/utils.js';
@@ -14,8 +14,17 @@ function getURLParams() {
 
 async function initializeGame() {
     setSelectedCores([]);
-    setLifeCores(["blue", "blue", "blue", "blue", "blue"]);
-    setReserveCores(["blue", "blue", "blue", "soul"]);
+    let currentCoreId = coreIdCounter;
+    const initialLifeCores = Array(5).fill(null).map(() => ({ id: `core-${currentCoreId++}`, type: "blue" }));
+    const initialReserveCores = [
+        { id: `core-${currentCoreId++}`, type: "blue" },
+        { id: `core-${currentCoreId++}`, type: "blue" },
+        { id: `core-${currentCoreId++}`, type: "blue" },
+        { id: `core-${currentCoreId++}`, type: "soul" }
+    ];
+    setLifeCores(initialLifeCores);
+    setReserveCores(initialReserveCores);
+    setCoreIdCounter(currentCoreId);
     setCountCores([]);
     setTrashCores([]);
     setHand([]); // Clear hand at the beginning
