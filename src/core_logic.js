@@ -3,6 +3,85 @@ import { lifeCores, reserveCores, countCores, trashCores, field, voidChargeCount
 import { renderAll } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
 
+// =====================================================================
+// ★★★ 重なり解消のためのヘルパー関数群 ★★★
+// =====================================================================
+const CORE_WIDTH = 20;
+const CORE_HEIGHT = 20;
+const PLACEMENT_MARGIN = 2; // コア間の最小マージン
+
+/**
+ * 二つのコアが重なっているか判定する
+ * @param {{x: number, y: number}} core1
+ * @param {{x: number, y: number}} core2
+ * @returns {boolean}
+ */
+function isOverlapping(core1, core2) {
+    return (
+        core1.x < core2.x + CORE_WIDTH + PLACEMENT_MARGIN &&
+        core1.x + CORE_WIDTH + PLACEMENT_MARGIN > core2.x &&
+        core1.y < core2.y + CORE_HEIGHT + PLACEMENT_MARGIN &&
+        core1.y + CORE_HEIGHT + PLACEMENT_MARGIN > core2.y
+    );
+}
+
+/**
+ * 指定されたカード上で、希望の座標に近い空きスロットを探索する
+ * @param {number} preferredX - 希望のX座標
+ * @param {number} preferredY - 希望のY座標
+ * @param {Array<{x: number, y: number}>} existingCores - カード上の既存コアのリスト
+ * @param {number} cardWidth - カードの幅
+ * @param {number} cardHeight - カードの高さ
+ * @returns {{x: number, y: number}} - 配置可能な新しい座標
+ */
+function findEmptySlot(preferredX, preferredY, existingCores, cardWidth, cardHeight) {
+    let newPos = { x: preferredX, y: preferredY };
+
+    // まず希望の座標をカード内にクランプ
+    newPos.x = Math.max(0, Math.min(newPos.x, cardWidth - CORE_WIDTH));
+    newPos.y = Math.max(0, Math.min(newPos.y, cardHeight - CORE_HEIGHT));
+
+    let isOccupied = existingCores.some(core => isOverlapping(newPos, core));
+
+    // もし埋まっていたら、空きスペースを螺旋状に探索
+    if (isOccupied) {
+        let radius = CORE_WIDTH / 2; // 最初の探索半径
+        let angle = 0;
+        let found = false;
+        const maxRadius = Math.max(cardWidth, cardHeight) * 2; // 無限ループ防止
+
+        while (!found && radius < maxRadius) {
+            // 螺旋の座標を計算
+            const testX = preferredX + Math.round(radius * Math.cos(angle));
+            const testY = preferredY + Math.round(radius * Math.sin(angle));
+
+            let candidatePos = { x: testX, y: testY };
+
+            // カード境界内にクランプ
+            candidatePos.x = Math.max(0, Math.min(candidatePos.x, cardWidth - CORE_WIDTH));
+            candidatePos.y = Math.max(0, Math.min(candidatePos.y, cardHeight - CORE_HEIGHT));
+
+            // その場所が空いているかチェック
+            isOccupied = existingCores.some(core => isOverlapping(candidatePos, core));
+
+            if (!isOccupied) {
+                newPos = candidatePos;
+                found = true;
+            }
+
+            // 角度を進める
+            angle += Math.PI / 4; // 角度のステップを大きくする
+            if (angle > Math.PI * 2) { // 1周したら半径を広げる
+                angle = 0;
+                radius += 5; // 半径の増加ステップ
+            }
+        }
+    }
+
+    return newPos;
+}
+
+
 export function handleCoreClick(e) {
     e.stopPropagation(); // イベントの伝播を停止
     const coreElement = e.target.closest('.core');
@@ -57,53 +136,52 @@ export function handleCoreDropOnCard(e, targetCardElement) {
     const targetCard = field.find(card => card.id === targetCardId);
 
     if (!targetCard) return;
-
-    if (e.preventDefault) {
-        e.preventDefault();
-    }
+    e.preventDefault();
 
     const cardRect = targetCardElement.getBoundingClientRect();
-    let dropX = e.clientX - cardRect.left;
-    let dropY = e.clientY - cardRect.top;
+    let initialDropX = e.clientX - cardRect.left;
+    let initialDropY = e.clientY - cardRect.top;
     const type = e.dataTransfer.getData("type");
 
-    // カードが回転している場合、ドロップ座標を変換する
+    // カードの回転に対応
     if (targetCard.isRotated) {
-        const originalWidth = 104; // CSSでの定義値
-        const originalHeight = 156; // CSSでの定義値
-
-        const xFromCenter = dropX - (cardRect.width / 2);
-        const yFromCenter = dropY - (cardRect.height / 2);
-
+        const originalWidth = 104;
+        const originalHeight = 156;
+        const xFromCenter = initialDropX - (cardRect.width / 2);
+        const yFromCenter = initialDropY - (cardRect.height / 2);
         const rotatedXFromCenter = yFromCenter;
         const rotatedYFromCenter = -xFromCenter;
-
-        dropX = rotatedXFromCenter + (originalWidth / 2);
-        dropY = rotatedYFromCenter + (originalHeight / 2);
+        initialDropX = rotatedXFromCenter + (originalWidth / 2);
+        initialDropY = rotatedYFromCenter + (originalHeight / 2);
     }
 
-    const coreWidth = 20;
-    const coreHeight = 20;
     const clampWidth = 104;
     const clampHeight = 156;
 
-    dropX = Math.max(0, Math.min(dropX, clampWidth - coreWidth));
-    dropY = Math.max(0, Math.min(dropY, clampHeight - coreHeight));
+    // --- 重なり解消ロジック ---
+    const addCoresWithOverlapAvoidance = (cores) => {
+        let currentCoresOnCard = [...targetCard.coresOnCard];
+
+        cores.forEach(coreInfo => {
+            const coreType = (typeof coreInfo === 'string') ? coreInfo : coreInfo.type;
+            const { x, y } = findEmptySlot(initialDropX, initialDropY, currentCoresOnCard, clampWidth, clampHeight);
+            const newCore = { type: coreType, x, y };
+            targetCard.coresOnCard.push(newCore);
+            currentCoresOnCard.push(newCore);
+        });
+    };
 
     if (type === 'voidCore') {
         const coresToAddCount = coresToMove.length;
-        for (let i = 0; i < coresToAddCount; i++) {
-            targetCard.coresOnCard.push({ type: "blue", x: dropX, y: dropY });
-        }
+        const newCores = Array(coresToAddCount).fill("blue");
+        addCoresWithOverlapAvoidance(newCores);
         setVoidChargeCount(0);
         showToast('voidToast', '', true);
         const toastMessage = `${coresToAddCount}個増やしました`;
         showToast('voidToast', toastMessage);
     } else {
         removeCoresFromSource(coresToMove);
-        for (const coreInfo of coresToMove) {
-            targetCard.coresOnCard.push({ type: coreInfo.type, x: dropX, y: dropY });
-        }
+        addCoresWithOverlapAvoidance(coresToMove);
     }
 }
 
@@ -126,36 +204,32 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement) {
     const offsetX = parseFloat(e.dataTransfer.getData("offsetX"));
     const offsetY = parseFloat(e.dataTransfer.getData("offsetY"));
 
-    let newX = e.clientX - cardRect.left;
-    let newY = e.clientY - cardRect.top;
+    let preferredX = e.clientX - cardRect.left;
+    let preferredY = e.clientY - cardRect.top;
 
     if (targetCard.isRotated) {
         const originalWidth = 104;
         const originalHeight = 156;
-
-        const xFromCenter = newX - (cardRect.width / 2);
-        const yFromCenter = newY - (cardRect.height / 2);
-
+        const xFromCenter = preferredX - (cardRect.width / 2);
+        const yFromCenter = preferredY - (cardRect.height / 2);
         const rotatedXFromCenter = yFromCenter;
         const rotatedYFromCenter = -xFromCenter;
-
-        newX = rotatedXFromCenter + (originalWidth / 2);
-        newY = rotatedYFromCenter + (originalHeight / 2);
+        preferredX = rotatedXFromCenter + (originalWidth / 2);
+        preferredY = rotatedYFromCenter + (originalHeight / 2);
     }
 
-    newX -= offsetX;
-    newY -= offsetY;
+    preferredX -= offsetX;
+    preferredY -= offsetY;
 
-    const coreWidth = 20;
-    const coreHeight = 20;
     const clampWidth = 104;
     const clampHeight = 156;
 
-    newX = Math.max(0, Math.min(newX, clampWidth - coreWidth));
-    newY = Math.max(0, Math.min(newY, clampHeight - coreHeight));
+    // --- 重なり解消ロジック ---
+    const otherCores = targetCard.coresOnCard.filter((_, index) => index !== coreIndexOnCard);
+    const { x, y } = findEmptySlot(preferredX, preferredY, otherCores, clampWidth, clampHeight);
 
-    targetCard.coresOnCard[coreIndexOnCard].x = newX;
-    targetCard.coresOnCard[coreIndexOnCard].y = newY;
+    targetCard.coresOnCard[coreIndexOnCard].x = x;
+    targetCard.coresOnCard[coreIndexOnCard].y = y;
 
     if (draggedElement) {
         draggedElement.style.display = 'block';
@@ -272,7 +346,7 @@ export function removeCoresFromSource(cores) {
 
             for (const coreInfo of coresToRemoveFromThisSource) {
                 // For cores on cards, we need to match by type and potentially position if multiple of same type
-                // For now, let's assume we remove the first matching type, or if we need exact match, we need unique IDs for cores.
+                // For now, let's assume we remove the first matching type, or if we need unique IDs for cores.
                 // Given the current structure, matching by type and then splicing the first one found is the most direct.
                 const actualIndex = coreInfo.index; // Assuming coreInfo.type is the actual core value
                 if (actualIndex > -1 && actualIndex < sourceCard.coresOnCard.length) {
