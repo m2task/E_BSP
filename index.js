@@ -1,167 +1,276 @@
-let deck = [];
-let uniqueCardNameOrder = []; // ユニークなカード名が追加された順序を保持
-let currentDeck = 'deck1'; // 現在編集中のデッキ
-let toastTimeout;
-
-// --- DOMContentLoaded ---
 document.addEventListener('DOMContentLoaded', () => {
-    const deckSelector = document.getElementById('deckSelector');
-    deckSelector.addEventListener('change', (e) => {
-        currentDeck = e.target.value;
-        loadDeck();
-    });
-    loadDeck(); // 初期ロード
-});
+    const deckList = document.getElementById('deck-list');
+    const selectedDeckCardsContainer = document.getElementById('selected-deck-cards');
 
-// --- デッキ操作 ---
-function loadDeck() {
-    const savedData = localStorage.getItem(currentDeck);
-    if (savedData) {
-        const { deck: savedDeck, includeFirstCard } = JSON.parse(savedData);
-        deck = savedDeck || [];
-        document.getElementById('includeFirstCard').checked = includeFirstCard || false;
-        // uniqueCardNameOrder を再構築
-        uniqueCardNameOrder = [...new Set(deck)];
-    } else {
-        deck = [];
-        document.getElementById('includeFirstCard').checked = false;
-        uniqueCardNameOrder = [];
+    // --- Elements for editing deck ---
+    const totalCardCountSpan = document.getElementById('total-card-count');
+    const deckEditorContainer = document.getElementById('deck-editor-container');
+    const cardNameInput = document.getElementById('cardNameInput');
+    const addCardByNameButton = document.getElementById('addCardByNameButton');
+    const deckNameInput = document.getElementById('deckNameInput');
+    const saveDeckAsButton = document.getElementById('saveDeckAsButton');
+    const overwriteSaveButton = document.getElementById('overwriteSaveButton');
+
+    let deck = []; // The currently edited deck
+    let currentEditingDeckName = null; // Stores the name of the currently loaded/edited deck
+
+    // New: Generates a simple unique ID for cards
+    function generateUniqueId() {
+        return Date.now().toString(36) + Math.random().toString(36).substring(2);
     }
-    updateList();
-}
 
-function saveDeck() {
-    const includeFirstCard = document.getElementById('includeFirstCard').checked;
-    const dataToSave = {
-        deck: deck,
-        includeFirstCard: includeFirstCard
-    };
-    localStorage.setItem(currentDeck, JSON.stringify(dataToSave));
-    showToast(`${currentDeck} を保存しました。`);
-}
+    // New: Creates a card image (data URL) from text
+    function createCardImageFromText(text, width = 80, height = 110) {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
 
-function showToast(message) {
-    const toastElement = document.getElementById("toast");
-    toastElement.textContent = message;
-    toastElement.className = "toast show";
-    clearTimeout(toastTimeout);
-    toastTimeout = setTimeout(() => {
-        toastElement.className = toastElement.className.replace("show", "");
-    }, 3000);
-}
+        // Draw white background
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, width, height);
 
-function addCard(multiplier = 1) {
-    const cardNameInput = document.getElementById("cardName");
-    const input = cardNameInput.value.trim();
-    if (!input) return;
+        // Draw text
+        ctx.fillStyle = 'black';
+        ctx.font = '12px Arial'; // Adjust font size and family as needed
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, width / 2, height / 2); // Center text
 
-    const match = input.match(/^(.+?)(?:[×\*xX](\d+))?$/);
-    if (match) {
-        const name = match[1].trim();
-        const count = parseInt(match[2] || "1", 10) * multiplier;
-        for (let i = 0; i < count; i++) {
-            deck.push(name);
+        return canvas.toDataURL('image/png');
+    }
+
+    // New: Renders the currently edited deck in the deckEditorContainer
+    function renderEditedDeck() {
+        deckEditorContainer.innerHTML = '';
+        if (deck.length === 0) {
+            deckEditorContainer.innerHTML = '<p style="color: #666;">ここに編集中のカードが表示されます。</p>';
+            totalCardCountSpan.textContent = '0';
+            return;
         }
-        if (!uniqueCardNameOrder.includes(name)) {
-            uniqueCardNameOrder.push(name);
+
+        let totalCardCount = 0;
+        deck.forEach(card => {
+            totalCardCount += card.quantity;
+
+            const cardItem = document.createElement('div');
+            cardItem.className = 'deck-card-item';
+            cardItem.dataset.cardId = card.id;
+
+            const img = document.createElement('img');
+            img.src = card.imgDataUrl;
+            img.alt = card.name || `Card ${card.id}`;
+
+            const controls = document.createElement('div');
+            controls.className = 'card-controls';
+
+            const decreaseBtn = document.createElement('button');
+            decreaseBtn.textContent = '-';
+            decreaseBtn.addEventListener('click', () => handleDecreaseQuantity(card.id));
+
+            const quantitySpan = document.createElement('span');
+            quantitySpan.className = 'card-quantity';
+            quantitySpan.textContent = `x${card.quantity}`;
+
+            const increaseBtn = document.createElement('button');
+            increaseBtn.textContent = '+';
+            increaseBtn.addEventListener('click', () => handleIncreaseQuantity(card.id));
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = '削除';
+            deleteBtn.className = 'delete-button';
+            deleteBtn.addEventListener('click', () => handleDeleteCard(card.id));
+
+            controls.appendChild(decreaseBtn);
+            controls.appendChild(quantitySpan);
+            controls.appendChild(increaseBtn);
+            controls.appendChild(deleteBtn);
+
+            cardItem.appendChild(img);
+            cardItem.appendChild(controls);
+            deckEditorContainer.appendChild(cardItem);
+        });
+        totalCardCountSpan.textContent = totalCardCount.toString();
+    }
+
+    // New: Handles decreasing card quantity for edited deck
+    function handleDecreaseQuantity(id) {
+        const cardIndex = deck.findIndex(card => card.id === id);
+        if (cardIndex !== -1) {
+            deck[cardIndex].quantity--;
+            if (deck[cardIndex].quantity <= 0) {
+                deck.splice(cardIndex, 1); // Remove if quantity is 0 or less
+            }
+            renderEditedDeck();
         }
-        updateList();
-        cardNameInput.value = ''; // 入力欄をクリア
-    }
-}
-
-function updateList() {
-    const ul = document.getElementById("deckList");
-    ul.innerHTML = "";
-
-    const cardCounts = {};
-    deck.forEach(card => {
-        cardCounts[card] = (cardCounts[card] || 0) + 1;
-    });
-
-    const uniqueCardsInOrder = uniqueCardNameOrder.filter(name => cardCounts[name] > 0);
-
-    for (const card of uniqueCardsInOrder) {
-        const li = document.createElement("li");
-        li.className = "card-item";
-
-        li.innerHTML = `
-<div style="display: flex; align-items: center;">
-    <button onclick="deleteAllOfCard('${card}')">削除</button>
-    <button onclick="decrementCard('${card}')" style="margin-left: 5px;">-</button>
-    <span style="min-width: 20px; text-align: center;">${cardCounts[card]}</span>
-    <button onclick="incrementCard('${card}')" style="margin-left: 5px; margin-right: 10px;">+</button>
-    <span>${card}</span>
-    <button onclick="moveCardUp('${card}')" style="margin-left: 5px;">↑</button>
-</div>
-`;
-        ul.appendChild(li);
     }
 
-    document.getElementById("cardCount").textContent = `現在のデッキ枚数: ${deck.length}枚`;
-}
-
-function moveCardUp(cardName) {
-    const currentIndex = uniqueCardNameOrder.indexOf(cardName);
-    if (currentIndex > 0) {
-        // uniqueCardNameOrder 内で位置を交換
-        [uniqueCardNameOrder[currentIndex], uniqueCardNameOrder[currentIndex - 1]] = 
-        [uniqueCardNameOrder[currentIndex - 1], uniqueCardNameOrder[currentIndex]];
-        updateList();
+    // New: Handles increasing card quantity for edited deck
+    function handleIncreaseQuantity(id) {
+        const cardIndex = deck.findIndex(card => card.id === id);
+        if (cardIndex !== -1) {
+            deck[cardIndex].quantity++;
+            renderEditedDeck();
+        }
     }
-}
 
-function incrementCard(name) {
-    deck.push(name);
-    updateList();
-}
-
-function decrementCard(name) {
-    const index = deck.indexOf(name);
-    if (index > -1) {
-        deck.splice(index, 1);
-        updateList();
+    // New: Handles deleting a card from edited deck
+    function handleDeleteCard(id) {
+        deck = deck.filter(card => card.id !== id);
+        renderEditedDeck();
     }
-}
 
-function deleteAllOfCard(name) {
-    deck = deck.filter(card => card !== name);
-    // uniqueCardNameOrder からも削除
-    uniqueCardNameOrder = uniqueCardNameOrder.filter(cardName => cardName !== name);
-    updateList();
-}
+    async function renderDeckList() {
+        deckList.innerHTML = ''; // Clear existing list
+        const savedDecks = await window.cardGameDB.getAllDecks();
 
-function exportDeck() {
-    document.getElementById("deckData").value = JSON.stringify(deck, null, 2);
-    showToast("デッキをコピーしておくと、別の端末でも再利用できます！");
-}
+        if (!savedDecks || savedDecks.length === 0) {
+            deckList.innerHTML = '<p>保存されたデッキはありません。</p>';
+            return;
+        }
 
-function importDeck() {
-    try {
-        const input = document.getElementById("deckData").value;
-        const imported = JSON.parse(input);
-        if (Array.isArray(imported)) {
-            deck = imported;
-            // インポート時に uniqueCardNameOrder を再構築
-            uniqueCardNameOrder = [...new Set(deck)];
-            updateList();
+        for (const deckData of savedDecks) {
+            const deckName = deckData.name;
+            const totalCards = deckData.data.reduce((sum, card) => sum + card.quantity, 0);
+
+            const listItem = document.createElement('li');
+            listItem.dataset.deckName = deckName; // Store deck name for selection
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = true; // デフォルトでチェック状態にする
+            checkbox.className = 'deck-checkbox';
+            checkbox.dataset.deckName = deckName;
+            checkbox.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+            listItem.appendChild(checkbox);
+
+            const battleButton = document.createElement('button');
+            battleButton.textContent = 'このデッキで対戦';
+            battleButton.className = 'battle-button'; // Add a class for styling
+            battleButton.dataset.deckName = deckName;
+            battleButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent listItem click event
+                const isChecked = e.target.closest('li').querySelector('.deck-checkbox').checked;
+                // Pass deck name and contract card preference to battle.html
+                window.location.href = `battle.html?deckName=${encodeURIComponent(deckName)}&useContract=${isChecked}`;
+            });
+            listItem.appendChild(battleButton);
+
+            const deckNameSpan = document.createElement('span');
+            deckNameSpan.textContent = `${deckName} (${totalCards}枚)`;
+            listItem.appendChild(deckNameSpan);
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = '削除';
+            deleteButton.dataset.deckName = deckName;
+            deleteButton.addEventListener('click', async (e) => {
+                e.stopPropagation(); // Prevent listItem click event
+                if (confirm(`デッキ「${deckName}」を本当に削除しますか？`)) {
+                    await window.cardGameDB.deleteDeck(deckName);
+                    renderDeckList(); // Re-render the list
+                    // Clear displayed deck if deleted
+                    if (currentEditingDeckName === deckName) {
+                        deck = [];
+                        currentEditingDeckName = null;
+                        renderEditedDeck();
+                    }
+                }
+            });
+
+            listItem.appendChild(deleteButton);
+
+            listItem.addEventListener('click', async () => {
+                if (currentEditingDeckName === deckName) {
+                    // 同じデッキがクリックされた場合は編集モードを解除
+                    deck = []; // デッキをクリア
+                    currentEditingDeckName = null; // 編集中のデッキ名をリセット
+                    renderEditedDeck(); // 編集エリアを更新
+                    return;
+                }
+                const loadedDeck = await window.cardGameDB.loadDeck(deckName);
+                if(loadedDeck) {
+                    deck = [...loadedDeck]; // Copy the array to avoid direct reference issues
+                    renderEditedDeck();
+                    currentEditingDeckName = deckName; // Update current editing deck name
+                } else {
+                    alert('デッキの読み込みに失敗しました。');
+                }
+            });
+            deckList.appendChild(listItem);
+        }
+    }
+
+    // Initial render
+    renderDeckList();
+    renderEditedDeck(); // Initial render of the empty edited deck
+
+    // Event Listener for adding card by name
+    addCardByNameButton.addEventListener('click', () => {
+        const cardName = cardNameInput.value.trim();
+        if (cardName === '') {
+            alert('カード名を入力してください。');
+            return;
+        }
+
+        const imgDataUrl = createCardImageFromText(cardName);
+
+        const existingCardIndex = deck.findIndex(card => card.imgDataUrl === imgDataUrl);
+
+        if (existingCardIndex !== -1) {
+            deck[existingCardIndex].quantity++;
         } else {
-            alert("形式が正しくありません！");
+            deck.push({
+                id: generateUniqueId(),
+                imgDataUrl: imgDataUrl,
+                quantity: 1,
+                name: cardName
+            });
         }
-    } catch (e) {
-        alert("インポートに失敗しました（JSON形式が正しいか確認してください）");
-    }
-}
 
-function copyDeckData() {
-    const deckData = document.getElementById("deckData");
-    deckData.select();
-    document.execCommand("copy");
-    showToast("デッキデータをコピーしました。");
-}
+        renderEditedDeck();
+        cardNameInput.value = '';
+    });
 
-function goToBattle(deckId) {
-    saveDeck(); // 対戦画面へ遷移する前にデッキを自動保存
-    const includeFirstCard = document.getElementById('includeFirstCard').checked;
-    window.open(`battle.html?deck=${deckId}&contract=${includeFirstCard}`, '_blank');
-}
+    // Event Listener for saving deck with a given name
+    saveDeckAsButton.addEventListener('click', async () => {
+        const deckName = deckNameInput.value.trim();
+        if (deckName === '') {
+            alert('デッキ名を入力してください。');
+            return;
+        }
+        if (deck.length === 0) {
+            alert('デッキにカードがありません。');
+            return;
+        }
+
+        try {
+            await window.cardGameDB.saveDeck(deckName, deck);
+            alert(`デッキ「${deckName}」を保存しました。`);
+.value = '';
+            renderDeckList(); // Update the list of saved decks
+            currentEditingDeckName = deckName; // Set current editing deck name after saving
+        } catch (error) {
+            console.error('デッキの保存に失敗しました:', error);
+            alert('デッキの保存に失敗しました。');
+        }
+    });
+
+    // Event Listener for overwrite save
+    overwriteSaveButton.addEventListener('click', async () => {
+        if (currentEditingDeckName === null) {
+            alert('上書き保存するには、まずデッキを読み込むか、名前を付けて保存してください。');
+            return;
+        }
+
+        try {
+            await window.cardGameDB.saveDeck(currentEditingDeckName, deck);
+            alert(`デッキ「${currentEditingDeckName}」を上書き保存しました。`);
+            renderDeckList(); // Update the list of saved decks
+        } catch (error) {
+            console.error('デッキの上書き保存に失敗しました:', error);
+            alert('デッキの上書き保存に失敗しました。');
+        }
+    });
+});

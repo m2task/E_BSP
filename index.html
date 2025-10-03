@@ -1,43 +1,138 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>デッキ作成ツール</title>
-<link rel="stylesheet" href="index.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>保存済みデッキ一覧</title>
+    <link rel="stylesheet" href="card_cropper.css"> <!-- スタイルを共有 -->
+    <link rel="stylesheet" href="navbar.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h1, h2 {
+            color: black;
+        }
+        #deck-list-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        #deck-list ul {
+            list-style: none;
+            padding: 0;
+        }
+        #deck-list li {
+            background-color: #e9e9e9;
+            margin-bottom: 8px;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center; /* Keep items vertically centered */
+            gap: 10px; /* Space between items */
+        }
+        #deck-list li:hover {
+            background-color: #dcdcdc;
+        }
+        #deck-list li button {
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #deck-list li .battle-button { /* Style for the new battle button */
+            background-color: #6c757d; /* A subdued gray/blue color */
+        }
+        #deck-list li .battle-button:hover {
+            background-color: #5a6268; /* Darker shade on hover */
+        }
+        #deck-list li button:last-child { /* This targets the delete button */
+            background-color: #dc3545; /* Red color for delete */
+            margin-left: auto; /* Pushes the delete button to the far right */
+        }
+        #deck-list li button:last-child:hover {
+            background-color: #c82333;
+        }
+        #selected-deck-display {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #selected-deck-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .deck-card-item {
+            border: 1px solid #ddd;
+            padding: 5px;
+            border-radius: 4px;
+            text-align: center;
+            background-color: #f9f9f9;
+        }
+        .deck-card-item img {
+            width: 80px; /* card_cropper.js のデフォルトサイズに合わせる */
+            height: 110px; /* card_cropper.js のデフォルトサイズに合わせる */
+            display: block;
+            margin-bottom: 5px;
+        }
+        .deck-card-item .card-quantity {
+            font-weight: bold;
+            color: black;
+        }
+    </style>
 </head>
 <body>
-<div id="toast" class="toast"></div>
-<h1>デッキ登録画面</h1>
-<p>
-    <label>編集するデッキを選択してください:
-        <select id="deckSelector">
-            <option value="deck1">デッキ1</option>
-            <option value="deck2">デッキ2</option>
-        </select>
-    </label>
-</p>
-<input id="cardName" placeholder="カード名 または カード名×ｎ" onkeydown="if(event.key === 'Enter') addCard();" />
-<button onclick="addCard(3)">追加×3</button>
-<button onclick="exportDeck()">エクスポート</button>
-<button onclick="importDeck()">インポート</button>
-<button onclick="saveDeck()">デッキ保存</button>
+    <nav>
+        <ul>
+            <li><a href="card_cropper.html">切り取り</a></li>
+            <li><a href="index.html">デッキ一覧</a></li>
+            <li><a href="use.html">使い方</a></li>
+        </ul>
+    </nav>
+    <h1>保存済みデッキ一覧</h1>
 
-</p>
-<button onclick="goToBattle('deck1')">デッキ1で対戦画面へ</button>
-<button onclick="goToBattle('deck2')">デッキ2で対戦画面へ</button>
-<button onclick="location.href='deck_viewer.html'">開発中ツールにアクセス</button>
+    <div id="deck-list-container">
+        <h2>チェックボックスに☑をするとデッキの一番左上が契約カードになります。</h2>
+        <ul id="deck-list">
+            <!-- デッキ名がここに表示されます -->
+            <li>デッキ名 (X枚) <button data-deck-name="デッキ名">削除</button></li>
+        </ul>
+    </div>
 
-<label><input type="checkbox" id="includeFirstCard"> 契約カードを使用する</label>
+    <!-- デッキ編集エリア -->
+    <div class="deck-editing-area">
+        <div class="save-load-deck-controls">
+            <h3>デッキの保存・読み込み</h3>
+            <input type="text" id="deckNameInput" placeholder="デッキ名を入力">
+            <button id="saveDeckAsButton">名前を付けて保存</button>
+            <button id="overwriteSaveButton">上書き保存</button>
+        </div>
 
-<p id="cardCount">現在のデッキ枚数: 0枚</p>
-<ul id="deckList"></ul>
+        <div class="deck-header-controls">
+            <h2>現在の編集デッキ (<span id="total-card-count">0</span>枚)</h2>
+            <div class="add-card-by-name-controls">
+                <h3>名前でカードを追加</h3>
+                <input type="text" id="cardNameInput" placeholder="カード名を入力">
+                <button id="addCardByNameButton">カード追加</button>
+            </div>
+        </div>
 
-<h3>デッキデータ（コピー・貼り付け用）</h3>
-<div style="display: flex; align-items: center;">
-    <textarea id="deckData" rows="4" placeholder="ここにデッキデータを貼り付けてインポートできます" style="flex-grow: 1; margin-right: 5px;"></textarea>
-    <button onclick="copyDeckData()">コピー</button>
-</div>
+        <div id="deck-editor-container"></div>
+    </div>
 
-<script src="index.js"></script>
+    <script src="src/indexedDB.js"></script>
+    <script src="index.js"></script>
 </body>
 </html>
