@@ -107,25 +107,28 @@ h1, h2, h3 {
 
 .handle {
     position: absolute;
-    background-color: transparent; /* 背景を透明に */
-    border: none; /* 枠線をなくす */
-    cursor: grab;
+    background-color: rgba(255, 0, 0, 0.4); /* 赤枠を視覚的に表示 */
+    border: 1px solid rgba(255, 255, 255, 0.8); /* 枠線を白くして見やすくする */
     pointer-events: all;
     z-index: 10;
+    box-sizing: border-box;
 }
 
 .move-handle {
     cursor: grab;
+    background-color: rgba(0, 123, 255, 0.2); /* 移動可能エリアを薄い青で示す */
 }
 
 .resize-handle-v {
     cursor: ew-resize; /* 左右リサイズカーソル */
-    width: 10px;
 }
 
 .resize-handle-h {
     cursor: ns-resize; /* 上下リサイズカーソル */
-    height: 10px;
+}
+
+.resize-handle-se {
+    cursor: se-resize; /* 右下リサイズカーソル */
 }
 
 #overlay-mask {
@@ -271,5 +274,46 @@ h1, h2, h3 {
 .deck-header-controls .add-card-by-name-controls h3 {
     margin: 0;
     font-size: 1em;
+}
+
+/* --- Responsive Styles for Mobile --- */
+@media (max-width: 768px) {
+    body {
+        margin: 10px;
+    }
+
+    .controls, .actions {
+        flex-direction: column;
+        align-items: stretch; /* Stretch items to fill width */
+    }
+
+    .controls label, .add-card-by-name-controls label, .save-load-deck-controls label {
+        margin-bottom: 5px; /* Add space below labels */
+    }
+
+    .controls input[type="number"], .controls input[type="file"],
+    .add-card-by-name-controls input[type="text"], .save-load-deck-controls input[type="text"] {
+        max-width: none; /* Allow inputs to fill the container */
+        width: 100%;
+    }
+
+    #cropper-container {
+        height: 300px; /* Reduce height on smaller screens */
+    }
+
+    .deck-header-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #deck-list li {
+        flex-direction: column;
+        align-items: stretch; /* Stretch items to fill width */
+        gap: 8px;
+    }
+
+    #deck-list li button:last-child {
+        margin-left: 0; /* Remove the auto margin */
+    }
 }
 

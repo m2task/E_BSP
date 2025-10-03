@@ -1,16 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
-
-    // Section containers
     const cropperSection = document.getElementById('cropper-section');
     const deckListSection = document.getElementById('deck-list-section');
     const deckEditingArea = document.querySelector('.deck-editing-area');
-
-    // Navbar buttons
     const showCropperBtn = document.getElementById('show-cropper-btn');
     const showDeckListBtn = document.getElementById('show-deck-list-btn');
-
-    // Cropper elements
     const rowsInput = document.getElementById('rows');
     const colsInput = document.getElementById('cols');
     const imageLoader = document.getElementById('imageLoader');
@@ -28,11 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sourceImage = document.getElementById('sourceImage');
     const handlesContainer = document.getElementById('grid-handles-container');
     const overlayMask = document.getElementById('overlay-mask');
-
-    // Deck List elements
     const deckList = document.getElementById('deck-list');
-
-    // Deck Editor elements
     const totalCardCountSpan = document.getElementById('total-card-count');
     const deckEditorContainer = document.getElementById('deck-editor-container');
     const cardNameInput = document.getElementById('cardNameInput');
@@ -42,15 +32,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const overwriteSaveButton = document.getElementById('overwriteSaveButton');
 
     // --- State ---
-
-    // Cropper state
     const gridState = { x: 50, y: 50, cellWidth: 80, cellHeight: 110 };
     const gapState = { horizontal: 10, vertical: 20 };
-    const imageState = { x: 0, y: 0, scale: 1.0, isLoaded: false, isPanning: false, panStartX: 0, panStartY: 0 };
-    const dragState = { isDragging: false, target: null, startX: 0, startY: 0, initialState: {} };
+    const imageState = { x: 0, y: 0, scale: 1.0, isLoaded: false };
+    const interactionState = {
+        isDragging: false,
+        isPanning: false,
+        isPinching: false,
+        target: null,
+        startX: 0, startY: 0,
+        panStartX: 0, panStartY: 0,
+        initialState: {},
+        initialPinchDistance: 0,
+    };
 
-    // Deck editor state
-    let deck = []; // The currently edited deck
+    let deck = [];
     let currentEditingDeckName = null;
 
     // --- Utility Functions ---
@@ -81,44 +77,34 @@ document.addEventListener('DOMContentLoaded', () => {
             totalCardCountSpan.textContent = '0';
             return;
         }
-
         let totalCardCount = 0;
         deck.forEach(card => {
             totalCardCount += card.quantity;
-
             const cardItem = document.createElement('div');
             cardItem.className = 'deck-card-item';
             cardItem.dataset.cardId = card.id;
-
             const img = document.createElement('img');
             img.src = card.imgDataUrl;
             img.alt = card.name || `Card ${card.id}`;
-
             const controls = document.createElement('div');
             controls.className = 'card-controls';
-
             const decreaseBtn = document.createElement('button');
             decreaseBtn.textContent = '-';
             decreaseBtn.addEventListener('click', () => handleDecreaseQuantity(card.id));
-
             const quantitySpan = document.createElement('span');
             quantitySpan.className = 'card-quantity';
             quantitySpan.textContent = `x${card.quantity}`;
-
             const increaseBtn = document.createElement('button');
             increaseBtn.textContent = '+';
             increaseBtn.addEventListener('click', () => handleIncreaseQuantity(card.id));
-
             const deleteBtn = document.createElement('button');
             deleteBtn.textContent = '削除';
             deleteBtn.className = 'delete-button';
             deleteBtn.addEventListener('click', () => handleDeleteCard(card.id));
-
             controls.appendChild(decreaseBtn);
             controls.appendChild(quantitySpan);
             controls.appendChild(increaseBtn);
             controls.appendChild(deleteBtn);
-
             cardItem.appendChild(img);
             cardItem.appendChild(controls);
             deckEditorContainer.appendChild(cardItem);
@@ -130,9 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const cardIndex = deck.findIndex(card => card.id === id);
         if (cardIndex !== -1) {
             deck[cardIndex].quantity--;
-            if (deck[cardIndex].quantity <= 0) {
-                deck.splice(cardIndex, 1);
-            }
+            if (deck[cardIndex].quantity <= 0) deck.splice(cardIndex, 1);
             renderEditedDeck();
         }
     }
@@ -154,19 +138,15 @@ document.addEventListener('DOMContentLoaded', () => {
     async function renderDeckList() {
         deckList.innerHTML = '';
         const savedDecks = await window.cardGameDB.getAllDecks();
-
         if (!savedDecks || savedDecks.length === 0) {
             deckList.innerHTML = '<p>保存されたデッキはありません。</p>';
             return;
         }
-
         for (const deckData of savedDecks) {
             const deckName = deckData.name;
             const totalCards = deckData.data.reduce((sum, card) => sum + card.quantity, 0);
-
             const listItem = document.createElement('li');
             listItem.dataset.deckName = deckName;
-
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.checked = true;
@@ -174,7 +154,6 @@ document.addEventListener('DOMContentLoaded', () => {
             checkbox.dataset.deckName = deckName;
             checkbox.addEventListener('click', (e) => e.stopPropagation());
             listItem.appendChild(checkbox);
-
             const battleButton = document.createElement('button');
             battleButton.textContent = 'このデッキで対戦';
             battleButton.className = 'battle-button';
@@ -185,11 +164,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.href = `battle.html?deckName=${encodeURIComponent(deckName)}&useContract=${isChecked}`;
             });
             listItem.appendChild(battleButton);
-
             const deckNameSpan = document.createElement('span');
             deckNameSpan.textContent = `${deckName} (${totalCards}枚)`;
             listItem.appendChild(deckNameSpan);
-
             const deleteButton = document.createElement('button');
             deleteButton.textContent = '削除';
             deleteButton.dataset.deckName = deckName;
@@ -206,7 +183,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             listItem.appendChild(deleteButton);
-
             listItem.addEventListener('click', async () => {
                 if (currentEditingDeckName === deckName) {
                     deck = [];
@@ -233,7 +209,6 @@ document.addEventListener('DOMContentLoaded', () => {
         handlesContainer.innerHTML = '';
         overlayMask.innerHTML = '';
         if (!imageState.isLoaded) return;
-
         const rows = parseInt(rowsInput.value, 10);
         const cols = parseInt(colsInput.value, 10);
         const gapH = gapState.horizontal;
@@ -242,7 +217,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalCellHeight = gridState.cellHeight + gapV;
         const totalGridDisplayWidth = (gridState.cellWidth * cols) + (gapH * (cols - 1));
         const totalGridDisplayHeight = (gridState.cellHeight * rows) + (gapV * (rows - 1));
-
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
                 const cell = document.createElement('div');
@@ -252,7 +226,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 cell.style.width = `${gridState.cellWidth}px`;
                 cell.style.height = `${gridState.cellHeight}px`;
                 handlesContainer.appendChild(cell);
-
                 if (c < cols - 1) {
                     const hGap = document.createElement('div');
                     hGap.className = 'gap-visual';
@@ -282,7 +255,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
-
         const moveHandle = document.createElement('div');
         moveHandle.className = 'handle move-handle';
         moveHandle.dataset.target = 'move';
@@ -291,13 +263,12 @@ document.addEventListener('DOMContentLoaded', () => {
         moveHandle.style.width = `${gridState.cellWidth}px`;
         moveHandle.style.height = `${gridState.cellHeight}px`;
         handlesContainer.appendChild(moveHandle);
-
         const resizeVHandle = document.createElement('div');
         resizeVHandle.className = 'handle resize-handle-v';
         resizeVHandle.dataset.target = 'resize-v';
-        resizeVHandle.style.left = `${gridState.x + gridState.cellWidth}px`;
+        resizeVHandle.style.left = `${gridState.x + gridState.cellWidth - 12}px`;
         resizeVHandle.style.top = `${gridState.y}px`;
-        resizeVHandle.style.width = `10px`;
+        resizeVHandle.style.width = `24px`;
         resizeVHandle.style.height = `${gridState.cellHeight}px`;
         handlesContainer.appendChild(resizeVHandle);
 
@@ -305,29 +276,34 @@ document.addEventListener('DOMContentLoaded', () => {
         resizeHHandle.className = 'handle resize-handle-h';
         resizeHHandle.dataset.target = 'resize-h';
         resizeHHandle.style.left = `${gridState.x}px`;
-        resizeHHandle.style.top = `${gridState.y + gridState.cellHeight}px`;
+        resizeHHandle.style.top = `${gridState.y + gridState.cellHeight - 12}px`;
         resizeHHandle.style.width = `${gridState.cellWidth}px`;
-        resizeHHandle.style.height = `10px`;
+        resizeHHandle.style.height = `24px`;
         handlesContainer.appendChild(resizeHHandle);
 
+        const resizeSEHandle = document.createElement('div');
+        resizeSEHandle.className = 'handle resize-handle-se';
+        resizeSEHandle.dataset.target = 'resize-se';
+        resizeSEHandle.style.left = `${gridState.x + gridState.cellWidth - 12}px`;
+        resizeSEHandle.style.top = `${gridState.y + gridState.cellHeight - 12}px`;
+        resizeSEHandle.style.width = '24px';
+        resizeSEHandle.style.height = '24px';
+        handlesContainer.appendChild(resizeSEHandle);
         const maskTop = document.createElement('div');
         maskTop.className = 'mask-pane';
         maskTop.style.height = `${gridState.y}px`;
         overlayMask.appendChild(maskTop);
-
         const maskBottom = document.createElement('div');
         maskBottom.className = 'mask-pane';
         maskBottom.style.top = `${gridState.y + totalGridDisplayHeight}px`;
         maskBottom.style.height = `${cropperContainer.clientHeight - (gridState.y + totalGridDisplayHeight)}px`;
         overlayMask.appendChild(maskBottom);
-
         const maskLeft = document.createElement('div');
         maskLeft.className = 'mask-pane';
         maskLeft.style.top = `${gridState.y}px`;
         maskLeft.style.width = `${gridState.x}px`;
         maskLeft.style.height = `${totalGridDisplayHeight}px`;
         overlayMask.appendChild(maskLeft);
-
         const maskRight = document.createElement('div');
         maskRight.className = 'mask-pane';
         maskRight.style.top = `${gridState.y}px`;
@@ -341,77 +317,125 @@ document.addEventListener('DOMContentLoaded', () => {
         sourceImage.style.transform = `translate(${imageState.x}px, ${imageState.y}px) scale(${imageState.scale})`;
     }
 
-    // --- Event Listeners ---
+    // --- Event Listeners (Unified for Mouse and Touch) ---
+
+    function getPointer(e) {
+        return e.touches ? e.touches[0] : e;
+    }
+
+    function onDragStart(e) {
+        if (e.target.classList.contains('handle')) {
+            e.preventDefault();
+            const pointer = getPointer(e);
+            interactionState.isDragging = true;
+            interactionState.target = e.target.dataset.target;
+            interactionState.startX = pointer.clientX;
+            interactionState.startY = pointer.clientY;
+            interactionState.initialState = { ...gridState };
+        }
+    }
+
+    function onPanStart(e) {
+        e.preventDefault();
+        const pointer = getPointer(e);
+        interactionState.isPanning = true;
+        interactionState.panStartX = pointer.clientX - imageState.x;
+        interactionState.panStartY = pointer.clientY - imageState.y;
+        imageContainer.classList.add('grabbing');
+    }
+
+    function onPinchStart(e) {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            interactionState.isPinching = true;
+            interactionState.initialPinchDistance = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+        }
+    }
+
+    function onInteractionMove(e) {
+        if (interactionState.isDragging) {
+            e.preventDefault();
+            const pointer = getPointer(e);
+            const dx = pointer.clientX - interactionState.startX;
+            const dy = pointer.clientY - interactionState.startY;
+            if (interactionState.target === 'move') {
+                gridState.x = interactionState.initialState.x + dx;
+                gridState.y = interactionState.initialState.y + dy;
+            } else if (interactionState.target === 'resize-v') {
+                gridState.cellWidth = Math.max(10, interactionState.initialState.cellWidth + dx);
+            } else if (interactionState.target === 'resize-h') {
+                gridState.cellHeight = Math.max(10, interactionState.initialState.cellHeight + dy);
+            } else if (interactionState.target === 'resize-se') {
+                gridState.cellWidth = Math.max(10, interactionState.initialState.cellWidth + dx);
+                gridState.cellHeight = Math.max(10, interactionState.initialState.cellHeight + dy);
+            }
+            drawGridAndHandles();
+        } else if (interactionState.isPanning) {
+            e.preventDefault();
+            const pointer = getPointer(e);
+            imageState.x = pointer.clientX - interactionState.panStartX;
+            imageState.y = pointer.clientY - interactionState.panStartY;
+            applyImageTransform();
+        } else if (interactionState.isPinching && e.touches.length === 2) {
+            e.preventDefault();
+            const currentPinchDistance = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            const scaleFactor = currentPinchDistance / interactionState.initialPinchDistance;
+            imageState.scale = Math.max(0.1, imageState.scale * scaleFactor);
+            applyImageTransform();
+            interactionState.initialPinchDistance = currentPinchDistance; // Update for continuous zoom
+        }
+    }
+
+    function onInteractionEnd(e) {
+        interactionState.isDragging = false;
+        interactionState.isPanning = false;
+        interactionState.isPinching = false;
+        imageContainer.classList.remove('grabbing');
+    }
 
     // Section visibility
     showCropperBtn.addEventListener('click', (e) => {
         e.preventDefault();
         cropperSection.style.display = 'block';
         deckListSection.style.display = 'none';
-        deckEditingArea.style.display = 'block'; // Keep editor visible
+        deckEditingArea.style.display = 'block';
     });
-
     showDeckListBtn.addEventListener('click', (e) => {
         e.preventDefault();
         cropperSection.style.display = 'none';
         deckListSection.style.display = 'block';
-        deckEditingArea.style.display = 'block'; // Keep editor visible
+        deckEditingArea.style.display = 'block';
     });
 
-    // Cropper listeners
-    handlesContainer.addEventListener('mousedown', (e) => {
-        if (!e.target.classList.contains('handle')) return;
-        e.preventDefault();
-        dragState.isDragging = true;
-        dragState.target = e.target.dataset.target;
-        dragState.startX = e.clientX;
-        dragState.startY = e.clientY;
-        dragState.initialState = { ...gridState };
-    });
+    // Cropper interaction listeners
+    handlesContainer.addEventListener('mousedown', onDragStart);
+    handlesContainer.addEventListener('touchstart', onDragStart, { passive: false });
 
-    window.addEventListener('mousemove', (e) => {
-        if (dragState.isDragging) {
-            e.preventDefault();
-            const dx = e.clientX - dragState.startX;
-            const dy = e.clientY - dragState.startY;
-            if (dragState.target === 'move') {
-                gridState.x = dragState.initialState.x + dx;
-                gridState.y = dragState.initialState.y + dy;
-            } else if (dragState.target === 'resize-v') {
-                gridState.cellWidth = Math.max(10, dragState.initialState.cellWidth + dx);
-            } else if (dragState.target === 'resize-h') {
-                gridState.cellHeight = Math.max(10, dragState.initialState.cellHeight + dy);
-            }
-            drawGridAndHandles();
-        }
-        if (imageState.isPanning) {
-            imageState.x = e.clientX - imageState.panStartX;
-            imageState.y = e.clientY - imageState.panStartY;
-            applyImageTransform();
-        }
-    });
+    imageContainer.addEventListener('mousedown', onPanStart);
+    imageContainer.addEventListener('touchstart', onPanStart, { passive: false });
 
-    window.addEventListener('mouseup', () => {
-        dragState.isDragging = false;
-        imageState.isPanning = false;
-        imageContainer.classList.remove('grabbing');
-    });
+    cropperContainer.addEventListener('touchstart', onPinchStart, { passive: false });
 
-    imageContainer.addEventListener('mousedown', (e) => {
-        imageState.isPanning = true;
-        imageState.panStartX = e.clientX - imageState.x;
-        imageState.panStartY = e.clientY - imageState.y;
-        imageContainer.classList.add('grabbing');
-    });
+    window.addEventListener('mousemove', onInteractionMove);
+    window.addEventListener('touchmove', onInteractionMove, { passive: false });
 
+    window.addEventListener('mouseup', onInteractionEnd);
+    window.addEventListener('touchend', onInteractionEnd);
+
+    // Zoom buttons and wheel
     const handleZoom = (direction) => {
         if (!imageState.isLoaded) return;
-        const scaleAmount = 0.02;
-        imageState.scale += (direction === 'in' ? scaleAmount : -scaleAmount);
+        const scaleAmount = direction === 'in' ? 1.1 : 1 / 1.1;
+        imageState.scale *= scaleAmount;
         imageState.scale = Math.max(0.1, imageState.scale);
         applyImageTransform();
     };
-
     zoomInButton.addEventListener('click', () => handleZoom('in'));
     zoomOutButton.addEventListener('click', () => handleZoom('out'));
     cropperContainer.addEventListener('wheel', (e) => {
@@ -419,9 +443,9 @@ document.addEventListener('DOMContentLoaded', () => {
         handleZoom(e.deltaY < 0 ? 'in' : 'out');
     });
 
+    // Other controls
     rowsInput.addEventListener('change', drawGridAndHandles);
     colsInput.addEventListener('change', drawGridAndHandles);
-
     const updateGapDisplayAndDraw = () => {
         gapHValueSpan.textContent = gapState.horizontal;
         gapVValueSpan.textContent = gapState.vertical;
@@ -439,13 +463,10 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.onload = (event) => {
                 sourceImage.src = event.target.result;
                 sourceImage.onload = () => {
-                    // Reset image state for the new image
                     imageState.x = 0;
                     imageState.y = 0;
                     imageState.scale = 1.0;
                     imageState.isLoaded = true;
-
-                    // Apply the initial transform and draw the grid
                     applyImageTransform();
                     drawGridAndHandles();
                 };
@@ -468,23 +489,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const cropperRect = cropperContainer.getBoundingClientRect();
         const imageRect = sourceImage.getBoundingClientRect();
         const ratio = sourceImage.naturalWidth / imageRect.width;
-
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
                 const sx = (cropperRect.left + gridState.x + c * totalCellWidth - imageRect.left) * ratio;
                 const sy = (cropperRect.top + gridState.y + r * totalCellHeight - imageRect.top) * ratio;
                 const sWidth = gridState.cellWidth * ratio;
                 const sHeight = gridState.cellHeight * ratio;
-
                 if (sWidth <= 0 || sHeight <= 0) continue;
-
                 const canvas = document.createElement('canvas');
                 canvas.width = sWidth;
                 canvas.height = sHeight;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(sourceImage, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
                 const imgDataUrl = canvas.toDataURL('image/jpeg', 0.9);
-
                 const existingCardIndex = deck.findIndex(card => card.imgDataUrl === imgDataUrl);
                 if (existingCardIndex !== -1) {
                     deck[existingCardIndex].quantity++;
@@ -493,7 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
-        renderEditedDeck(); // Use the unified render function
+        renderEditedDeck();
         alert(`${rows * cols}枚のカードをデッキに追加しました。`);
         deckEditingArea.scrollIntoView({ behavior: 'smooth' });
     });
@@ -555,10 +572,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initial Setup ---
     function initialize() {
-        cropperSection.style.display = 'none'; // Hide cropper by default
-        deckListSection.style.display = 'block'; // Show deck list by default
+        cropperSection.style.display = 'none';
+        deckListSection.style.display = 'block';
         deckEditingArea.style.display = 'block';
-
         updateGapDisplayAndDraw();
         drawGridAndHandles();
         renderDeckList();
