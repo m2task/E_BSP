@@ -266,29 +266,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const resizeVHandle = document.createElement('div');
         resizeVHandle.className = 'handle resize-handle-v';
         resizeVHandle.dataset.target = 'resize-v';
-        resizeVHandle.style.left = `${gridState.x + gridState.cellWidth - 12}px`;
+        resizeVHandle.style.left = `${gridState.x + gridState.cellWidth}px`;
         resizeVHandle.style.top = `${gridState.y}px`;
-        resizeVHandle.style.width = `24px`;
+        resizeVHandle.style.width = `10px`;
         resizeVHandle.style.height = `${gridState.cellHeight}px`;
         handlesContainer.appendChild(resizeVHandle);
-
         const resizeHHandle = document.createElement('div');
         resizeHHandle.className = 'handle resize-handle-h';
         resizeHHandle.dataset.target = 'resize-h';
         resizeHHandle.style.left = `${gridState.x}px`;
-        resizeHHandle.style.top = `${gridState.y + gridState.cellHeight - 12}px`;
+        resizeHHandle.style.top = `${gridState.y + gridState.cellHeight}px`;
         resizeHHandle.style.width = `${gridState.cellWidth}px`;
-        resizeHHandle.style.height = `24px`;
+        resizeHHandle.style.height = `10px`;
         handlesContainer.appendChild(resizeHHandle);
-
-        const resizeSEHandle = document.createElement('div');
-        resizeSEHandle.className = 'handle resize-handle-se';
-        resizeSEHandle.dataset.target = 'resize-se';
-        resizeSEHandle.style.left = `${gridState.x + gridState.cellWidth - 12}px`;
-        resizeSEHandle.style.top = `${gridState.y + gridState.cellHeight - 12}px`;
-        resizeSEHandle.style.width = '24px';
-        resizeSEHandle.style.height = '24px';
-        handlesContainer.appendChild(resizeSEHandle);
         const maskTop = document.createElement('div');
         maskTop.className = 'mask-pane';
         maskTop.style.height = `${gridState.y}px`;
@@ -367,9 +357,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (interactionState.target === 'resize-v') {
                 gridState.cellWidth = Math.max(10, interactionState.initialState.cellWidth + dx);
             } else if (interactionState.target === 'resize-h') {
-                gridState.cellHeight = Math.max(10, interactionState.initialState.cellHeight + dy);
-            } else if (interactionState.target === 'resize-se') {
-                gridState.cellWidth = Math.max(10, interactionState.initialState.cellWidth + dx);
                 gridState.cellHeight = Math.max(10, interactionState.initialState.cellHeight + dy);
             }
             drawGridAndHandles();

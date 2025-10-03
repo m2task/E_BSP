@@ -107,28 +107,25 @@ h1, h2, h3 {
 
 .handle {
     position: absolute;
-    background-color: rgba(255, 0, 0, 0.4); /* 赤枠を視覚的に表示 */
-    border: 1px solid rgba(255, 255, 255, 0.8); /* 枠線を白くして見やすくする */
+    background-color: transparent; /* 背景を透明に */
+    border: none; /* 枠線をなくす */
+    cursor: grab;
     pointer-events: all;
     z-index: 10;
-    box-sizing: border-box;
 }
 
 .move-handle {
     cursor: grab;
-    background-color: rgba(0, 123, 255, 0.2); /* 移動可能エリアを薄い青で示す */
 }
 
 .resize-handle-v {
     cursor: ew-resize; /* 左右リサイズカーソル */
+    width: 10px;
 }
 
 .resize-handle-h {
     cursor: ns-resize; /* 上下リサイズカーソル */
-}
-
-.resize-handle-se {
-    cursor: se-resize; /* 右下リサイズカーソル */
+    height: 10px;
 }
 
 #overlay-mask {
