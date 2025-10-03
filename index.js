@@ -439,7 +439,14 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.onload = (event) => {
                 sourceImage.src = event.target.result;
                 sourceImage.onload = () => {
+                    // Reset image state for the new image
+                    imageState.x = 0;
+                    imageState.y = 0;
+                    imageState.scale = 1.0;
                     imageState.isLoaded = true;
+
+                    // Apply the initial transform and draw the grid
+                    applyImageTransform();
                     drawGridAndHandles();
                 };
             };
