@@ -70,6 +70,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Deck Editor Functions ---
+    function updateCardQuantity(id, amount) {
+        const cardIndex = deck.findIndex(card => card.id === id);
+        if (cardIndex !== -1) {
+            deck[cardIndex].quantity += amount;
+            if (deck[cardIndex].quantity <= 0) {
+                deck.splice(cardIndex, 1);
+            }
+            renderEditedDeck();
+        }
+    }
+
     function renderEditedDeck() {
         deckEditorContainer.innerHTML = '';
         if (deck.length === 0) {
@@ -90,13 +101,13 @@ document.addEventListener('DOMContentLoaded', () => {
             controls.className = 'card-controls';
             const decreaseBtn = document.createElement('button');
             decreaseBtn.textContent = '-';
-            decreaseBtn.addEventListener('click', () => handleDecreaseQuantity(card.id));
+            decreaseBtn.addEventListener('click', () => updateCardQuantity(card.id, -1));
             const quantitySpan = document.createElement('span');
             quantitySpan.className = 'card-quantity';
             quantitySpan.textContent = `x${card.quantity}`;
             const increaseBtn = document.createElement('button');
             increaseBtn.textContent = '+';
-            increaseBtn.addEventListener('click', () => handleIncreaseQuantity(card.id));
+            increaseBtn.addEventListener('click', () => updateCardQuantity(card.id, 1));
             const deleteBtn = document.createElement('button');
             deleteBtn.textContent = '削除';
             deleteBtn.className = 'delete-button';
@@ -110,23 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
             deckEditorContainer.appendChild(cardItem);
         });
         totalCardCountSpan.textContent = totalCardCount.toString();
-    }
-
-    function handleDecreaseQuantity(id) {
-        const cardIndex = deck.findIndex(card => card.id === id);
-        if (cardIndex !== -1) {
-            deck[cardIndex].quantity--;
-            if (deck[cardIndex].quantity <= 0) deck.splice(cardIndex, 1);
-            renderEditedDeck();
-        }
-    }
-
-    function handleIncreaseQuantity(id) {
-        const cardIndex = deck.findIndex(card => card.id === id);
-        if (cardIndex !== -1) {
-            deck[cardIndex].quantity++;
-            renderEditedDeck();
-        }
     }
 
     function handleDeleteCard(id) {
@@ -147,6 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const totalCards = deckData.data.reduce((sum, card) => sum + card.quantity, 0);
             const listItem = document.createElement('li');
             listItem.dataset.deckName = deckName;
+
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.checked = true;
@@ -154,19 +149,23 @@ document.addEventListener('DOMContentLoaded', () => {
             checkbox.dataset.deckName = deckName;
             checkbox.addEventListener('click', (e) => e.stopPropagation());
             listItem.appendChild(checkbox);
+
             const battleButton = document.createElement('button');
             battleButton.textContent = 'このデッキで対戦';
             battleButton.className = 'battle-button';
             battleButton.dataset.deckName = deckName;
             battleButton.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const isChecked = e.target.closest('li').querySelector('.deck-checkbox').checked;
+                // DOM検索をなくし、直接checkbox変数を参照する
+                const isChecked = checkbox.checked;
                 window.location.href = `battle.html?deckName=${encodeURIComponent(deckName)}&useContract=${isChecked}`;
             });
             listItem.appendChild(battleButton);
+
             const deckNameSpan = document.createElement('span');
             deckNameSpan.textContent = `${deckName} (${totalCards}枚)`;
             listItem.appendChild(deckNameSpan);
+
             const deleteButton = document.createElement('button');
             deleteButton.textContent = '削除';
             deleteButton.dataset.deckName = deckName;
@@ -174,27 +173,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.stopPropagation();
                 if (confirm(`デッキ「${deckName}」を本当に削除しますか？`)) {
                     await window.cardGameDB.deleteDeck(deckName);
-                    renderDeckList();
+                    renderDeckList(); // リストを再描画
+                    // 削除したデッキが編集中だった場合、編集エリアをリセット
                     if (currentEditingDeckName === deckName) {
                         deck = [];
                         currentEditingDeckName = null;
+                        deckNameInput.value = ''; // デッキ名入力欄もクリア
                         renderEditedDeck();
                     }
                 }
             });
             listItem.appendChild(deleteButton);
+
             listItem.addEventListener('click', async () => {
+                // 同じデッキが選択された場合は、編集をキャンセル（トグル動作）
                 if (currentEditingDeckName === deckName) {
                     deck = [];
                     currentEditingDeckName = null;
+                    deckNameInput.value = '';
                     renderEditedDeck();
                     return;
                 }
+
                 const loadedDeck = await window.cardGameDB.loadDeck(deckName);
                 if (loadedDeck) {
                     deck = [...loadedDeck];
-                    renderEditedDeck();
                     currentEditingDeckName = deckName;
+                    deckNameInput.value = deckName; // 読み込んだデッキ名を入力欄に表示
+                    renderEditedDeck();
                     deckEditingArea.scrollIntoView({ behavior: 'smooth' });
                 } else {
                     alert('デッキの読み込みに失敗しました。');
@@ -476,19 +482,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const cropperRect = cropperContainer.getBoundingClientRect();
         const imageRect = sourceImage.getBoundingClientRect();
         const ratio = sourceImage.naturalWidth / imageRect.width;
+
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
                 const sx = (cropperRect.left + gridState.x + c * totalCellWidth - imageRect.left) * ratio;
                 const sy = (cropperRect.top + gridState.y + r * totalCellHeight - imageRect.top) * ratio;
                 const sWidth = gridState.cellWidth * ratio;
                 const sHeight = gridState.cellHeight * ratio;
+
                 if (sWidth <= 0 || sHeight <= 0) continue;
+
                 const canvas = document.createElement('canvas');
                 canvas.width = sWidth;
                 canvas.height = sHeight;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(sourceImage, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
-                const imgDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+                const imgDataUrl = canvas.toDataURL('image/png'); // JPEGからPNGに変更
+
                 const existingCardIndex = deck.findIndex(card => card.imgDataUrl === imgDataUrl);
                 if (existingCardIndex !== -1) {
                     deck[existingCardIndex].quantity++;
