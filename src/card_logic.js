@@ -1,43 +1,10 @@
-'''// src/card_logic.js
+// src/card_logic.js
 import { deck, hand, field, trash, burst, reserveCores, discardState, openArea, cardIdCounter, setCardIdCounter, setDeck, setHand, setField, setTrash, setBurst, setReserveCores, setDiscardCounter, setDiscardedCardNames, setDiscardToastTimer, setOpenArea, cardPositions } from './game_data.js';
-import { renderAll, showCostModal, renderOpenArea, createCardElement, renderDeck, renderHand, renderField, renderTrash, renderBurst, renderCores } from './ui_render.js';
+import { renderAll, showCostModal, renderOpenArea } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
 import { payCostFromReserve } from './core_logic.js';
 import { openModal } from './event_handlers.js';
 import { hideMagnifier } from './magnify_logic.js';
-
-// Helper function for partial rendering
-function renderZones(zoneNames) {
-    const zones = new Set(zoneNames);
-    zones.forEach(zoneName => {
-        switch (zoneName) {
-            case 'hand':
-            case 'handZone':
-                renderHand();
-                break;
-            case 'field':
-            case 'fieldCards':
-            case 'fieldZone':
-                renderField();
-                break;
-            case 'trash':
-            case 'trashZoneFrame':
-                renderTrash();
-                break;
-            case 'burst':
-            case 'burstZone':
-                renderBurst();
-                break;
-            case 'deck':
-                renderDeck();
-                break;
-            case 'reserve':
-            case 'reserveCores':
-                renderCores('reserveCores', reserveCores);
-                break;
-        }
-    });
-}
 
 export function drawCard(fromBottom = false) {
     if (deck.length > 0) {
@@ -51,19 +18,12 @@ export function drawCard(fromBottom = false) {
             cardToDraw = deck.shift(); // デッキの上からドロー
         }
         hand.push(cardToDraw);
-
-        // DOM更新
-        const handZone = document.getElementById('handZone');
-        const cardElement = createCardElement(cardToDraw);
-        handZone.appendChild(cardElement);
-        document.getElementById("handCount").textContent = hand.length;
-        renderDeck(); // デッキ枚数表示を更新
-
         // ドローしたら手札を開く
         const handZoneContainer = document.getElementById('handZoneContainer');
         const openHandButton = document.getElementById('openHandButton');
         handZoneContainer.classList.remove('collapsed');
         openHandButton.classList.add('hidden');
+        renderAll();
     } else {
         alert("デッキが空です");
     }
@@ -85,7 +45,7 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
             cardData.coresOnCard = [];
         }
         delete cardPositions[cardId];
-        renderZones([sourceZoneId, 'reserve']);
+        renderAll();
         return; // Stop further execution
     }
 
@@ -94,6 +54,7 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
         const sourceArray = getArrayByZoneName(sourceZoneId);
         const cardIndex = sourceArray.findIndex(c => c.id === cardId);
         if (cardIndex === -1) return;
+        const cardData = sourceArray[cardIndex];
 
         showCostModal(cardData,
             (cost) => { // Success callback (cost paid)
@@ -107,7 +68,7 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
                 } else {
                     // Not enough cores, do nothing, card stays in source
                 }
-                renderZones([sourceZoneId, 'field']);
+                renderAll();
             },
             () => { // Cancel callback (no cost paid)
                 const currentSourceArray = getArrayByZoneName(sourceZoneId);
@@ -116,7 +77,7 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
 
                 const [movedCard] = currentSourceArray.splice(currentCardIndex, 1);
                 field.push(movedCard);
-                renderZones([sourceZoneId, 'field']);
+                renderAll();
             }
         );
     } else {
@@ -171,14 +132,13 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
         if (shouldTransferCoresToReserve) {
             reserveCores.push(...cardData.coresOnCard.map(core => core.type));
             cardData.coresOnCard = [];
-            renderCores('reserveCores', reserveCores);
         }
 
         if (sourceZoneId === 'openArea' && openArea.length === 0) {
             document.getElementById('openAreaModal').style.display = 'none';
         }
 
-        renderZones([sourceZoneId, targetZoneName]);
+        renderAll();
     }
 }
 
@@ -193,8 +153,7 @@ export function openDeck() {
 
     openModal('openAreaModal', 'openArea', renderOpenArea);
 
-    renderDeck();
-    renderOpenArea();
+    renderAll();
 }
 
 export function discardDeck() {
@@ -208,8 +167,7 @@ export function discardDeck() {
 
     setDiscardCounter(discardState.counter + 1);
 
-    renderDeck();
-    renderTrash();
+    renderAll();
 
     // 既存のタイマーがあればクリア
     if (discardState.timer) {
@@ -244,12 +202,5 @@ export function createSpecialCardOnField(cardType, position) {
     field.push(newCard);
     cardPositions[newCard.id] = position;
 
-    // DOM更新
-    const fieldZone = document.getElementById('fieldCards');
-    const cardElement = createCardElement(newCard);
-    cardElement.style.position = 'absolute';
-    cardElement.style.left = position.left + 'px';
-    cardElement.style.top = position.top + 'px';
-    fieldZone.appendChild(cardElement);
+    renderAll();
 }
-'''

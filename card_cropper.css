@@ -168,8 +168,8 @@ h1, h2, h3 {
 }
 
 .deck-card-item img {
-    width: 80px;
-    height: 110px;
+    width: 80px; /* card_cropper.js のデフォルトサイズに合わせる */
+    height: 110px; /* card_cropper.js のデフォルトサイズに合わせる */
     display: block;
     margin-bottom: 5px;
 }
@@ -182,8 +182,8 @@ h1, h2, h3 {
 }
 
 .card-controls button {
-    background-color: #e0e0e0;
-    color: black;
+    background-color: #e0e0e0; /* 灰色 */
+    color: black; /* 黒文字 */
     border: none;
     padding: 5px 8px;
     border-radius: 3px;
@@ -192,7 +192,7 @@ h1, h2, h3 {
 }
 
 .card-controls button:hover {
-    background-color: #c0c0c0;
+    background-color: #c0c0c0; /* ホバー時の少し濃い灰色 */
 }
 
 .card-quantity {
@@ -203,8 +203,8 @@ h1, h2, h3 {
 }
 
 .delete-button {
-    background-color: #dc3545 !important;
-    color: white !important;
+    background-color: #dc3545 !important; /* 赤 */
+    color: white !important; /* 白文字 */
 }
 
 .delete-button:hover {
@@ -215,15 +215,47 @@ h1, h2, h3 {
     display: none !important;
 }
 
+/* ナビゲーションバーのスタイル (ユーザーの要望により残す) */
+.main-nav {
+    background-color: #333; /* 背景色 */
+    padding: 10px 0; /* 上下のパディング */
+    margin-bottom: 20px; /* 下のマージン */
+}
+
+.main-nav ul {
+    list-style: none; /* リストのマーカーを削除 */
+    padding: 0;
+    margin: 0;
+    display: flex; /* Flexboxを使って横並びにする */
+    justify-content: center; /* 中央揃え */
+}
+
+.main-nav li {
+    margin: 0 15px; /* リンク間のスペース */
+}
+
+.main-nav a {
+    color: white; /* 文字色 */
+    text-decoration: none; /* 下線を削除 */
+    font-weight: bold; /* 太字 */
+    padding: 5px 10px; /* リンクのパディング */
+    border-radius: 5px; /* 角を丸くする */
+    transition: background-color 0.3s ease; /* ホバー時のアニメーション */
+}
+
+.main-nav a:hover {
+    background-color: #555; /* ホバー時の背景色 */
+}
+
 .deck-header-controls {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 20px; /* Adjust as needed */
     margin-bottom: 20px;
 }
 
 .deck-header-controls h2 {
-    margin: 0;
+    margin: 0; /* Remove default margin from h2 */
 }
 
 .deck-header-controls .add-card-by-name-controls {
@@ -249,21 +281,21 @@ h1, h2, h3 {
 
     .controls, .actions {
         flex-direction: column;
-        align-items: stretch;
+        align-items: stretch; /* Stretch items to fill width */
     }
 
     .controls label, .add-card-by-name-controls label, .save-load-deck-controls label {
-        margin-bottom: 5px;
+        margin-bottom: 5px; /* Add space below labels */
     }
 
     .controls input[type="number"], .controls input[type="file"],
     .add-card-by-name-controls input[type="text"], .save-load-deck-controls input[type="text"] {
-        max-width: none;
+        max-width: none; /* Allow inputs to fill the container */
         width: 100%;
     }
 
     #cropper-container {
-        height: 300px;
+        height: 300px; /* Reduce height on smaller screens */
     }
 
     .deck-header-controls {
@@ -273,12 +305,12 @@ h1, h2, h3 {
 
     #deck-list li {
         flex-direction: column;
-        align-items: stretch;
+        align-items: stretch; /* Stretch items to fill width */
         gap: 8px;
     }
 
     #deck-list li button:last-child {
-        margin-left: 0;
+        margin-left: 0; /* Remove the auto margin */
     }
 }
 

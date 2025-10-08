@@ -3,20 +3,6 @@ import { deck, hand, field, trash, burst, lifeCores, reserveCores, countCores, t
 import { handleCoreClick } from './core_logic.js'; // 修正: event_handlers.js から core_logic.js に変更
 import { updateMagnifierEventListeners } from './magnify_logic.js';
 
-export function updateCardState(cardElement, cardData) {
-    if (cardData.isRotated) {
-        cardElement.classList.add('rotated');
-    } else {
-        cardElement.classList.remove('rotated');
-    }
-
-    if (cardData.isExhausted) {
-        cardElement.classList.add('exhausted');
-    } else {
-        cardElement.classList.remove('exhausted');
-    }
-}
-
 export function createCardElement(cardData) {
     const div = document.createElement('div');
     div.className = 'card';
@@ -36,9 +22,7 @@ export function createCardElement(cardData) {
 
     if (cardData.imgDataUrl) {
         const img = document.createElement('img');
-        img.dataset.src = cardData.imgDataUrl; // srcをdata-srcに変更
-        img.src = ''; // srcを空に設定
-        img.classList.add('lazy-load'); // lazy-loadクラスを追加
+        img.src = cardData.imgDataUrl;
         img.alt = cardData.name || 'Card Image';
         img.draggable = false; // 画像自体のドラッグを禁止する
         div.appendChild(img);
@@ -66,7 +50,7 @@ export function createCardElement(cardData) {
             card.isExhausted = true;
             card.isRotated = false; // 重疲労させたら疲労は解除
         }
-        updateCardState(cardElement, card); // renderAll() の代わりに個別の状態更新関数を呼ぶ
+        renderAll(); // 状態変更を反映するために再描画
     });
     div.appendChild(exhaustBtn);
     return div;
@@ -109,7 +93,8 @@ export function renderField() {
             cardElement.style.top = pos.top + 'px';
         }
         // 回転状態を反映
-        updateCardState(cardElement, cardData);
+        if (cardData.isRotated) cardElement.classList.add('rotated');
+        if (cardData.isExhausted) cardElement.classList.add('exhausted');
 
         // カード上のコアを描画
         if (cardData.coresOnCard && cardData.coresOnCard.length > 0) {
@@ -144,47 +129,6 @@ export function renderField() {
 
         fieldZone.appendChild(cardElement);
     });
-}
-
-export function renderCardCores(cardId) {
-    const cardData = field.find(c => c.id === cardId);
-    if (!cardData) return;
-
-    const cardElement = document.querySelector(`.card[data-id="${cardId}"]`);
-    if (!cardElement) return;
-
-    // Remove existing cores container
-    const existingCoresContainer = cardElement.querySelector('.cores-on-card');
-    if (existingCoresContainer) {
-        existingCoresContainer.remove();
-    }
-
-    // Re-render cores if any
-    if (cardData.coresOnCard && cardData.coresOnCard.length > 0) {
-        const coresContainer = document.createElement('div');
-        coresContainer.className = 'cores-on-card';
-        cardData.coresOnCard.forEach((core, index) => {
-            const coreDiv = document.createElement('div');
-            coreDiv.className = `core ${core.type}`;
-            coreDiv.draggable = true;
-            coreDiv.dataset.index = index;
-            coreDiv.dataset.coreType = core.type;
-            coreDiv.dataset.sourceCardId = cardData.id;
-            coreDiv.style.position = 'absolute';
-            coreDiv.style.left = core.x + 'px';
-            coreDiv.style.top = core.y + 'px';
-            coreDiv.addEventListener('click', (e) => {
-                e.stopPropagation();
-                handleCoreClick(e);
-            });
-            const isSelected = selectedCores.some(c => c.sourceCardId === cardData.id && c.index === index);
-            if (isSelected) {
-                coreDiv.classList.add('selected');
-            }
-            coresContainer.appendChild(coreDiv);
-        });
-        cardElement.appendChild(coresContainer);
-    }
 }
 
 export function renderTrash() {

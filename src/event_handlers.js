@@ -1,6 +1,6 @@
 // src/event_handlers.js
 import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging } from './game_data.js';
-import { renderAll, renderTrashModalContent, updateCardState, renderDeckCore, renderField, renderCores, renderTrashCores } from './ui_render.js';
+import { renderAll, renderTrashModalContent } from './ui_render.js';
 import { showToast, getZoneName, isMobileDevice } from './utils.js'; // isMobileDevice をインポート
 import { hideMagnifier } from './magnify_logic.js';
 import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField } from './card_logic.js';
@@ -28,7 +28,7 @@ export function setupEventListeners() {
                 cardData.isRotated = true;
                 cardData.isExhausted = false; // 疲労させたら重疲労は解除
             }
-            updateCardState(cardElement, cardData); // 状態変更を反映するために個別に再描画
+            renderAll(); // 状態変更を反映するために再描画
         }
     });
 
@@ -643,12 +643,12 @@ export function openModal(modalId, contentId, renderContent) {
 
 export function addDeckCore() {
     countCores.push("blue");
-    renderDeckCore();
+    renderAll();
 }
 
 export function toggleDeckCoreCount() {
     setCountShowCountAsNumber(!countShowCountAsNumber);
-    renderDeckCore();
+    renderAll();
 }
 
 export function refreshAll() {
@@ -665,7 +665,5 @@ export function refreshAll() {
     while (trashCores.length > 0) {
         reserveCores.push(trashCores.shift());
     }
-    renderField();
-    renderCores('reserveCores', reserveCores);
-    renderTrashCores();
+    renderAll();
 }
