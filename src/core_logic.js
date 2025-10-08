@@ -1,7 +1,58 @@
-// src/core_logic.js
+'''// src/core_logic.js
 import { lifeCores, reserveCores, countCores, trashCores, field, voidChargeCount, selectedCores, draggedCoreData, setVoidChargeCount, setSelectedCores, setDraggedCoreData, draggedElement } from './game_data.js';
-import { renderAll } from './ui_render.js';
+import { renderAll, renderCores, renderCardCores, renderTrashCores } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
+
+// =====================================================================
+// ★★★ 影響範囲を限定して再描画するヘルパー関数 ★★★
+// =====================================================================
+function renderAffectedZones(targetZoneName, movedCores, targetCardId) {
+    const sourceZoneNames = new Set();
+    const affectedCardIds = new Set();
+
+    if (targetCardId) {
+        affectedCardIds.add(targetCardId);
+    }
+
+    movedCores.forEach(core => {
+        if (core.sourceArrayName) {
+            sourceZoneNames.add(core.sourceArrayName);
+        }
+        if (core.sourceCardId) {
+            affectedCardIds.add(core.sourceCardId);
+        }
+    });
+
+    // Render destination zone
+    if (targetZoneName) {
+        const targetArray = getArrayByZoneName(targetZoneName);
+        if (targetArray) {
+            if (targetZoneName === 'trashZoneFrame') { // 'trash' is the name used in getArrayByZoneName
+                renderTrashCores();
+            } else {
+                renderCores(targetZoneName, targetArray);
+            }
+        }
+    }
+
+    // Render source zones
+    sourceZoneNames.forEach(zoneName => {
+        const sourceArray = getArrayByZoneName(zoneName);
+        if (sourceArray) {
+            if (zoneName === 'trashZoneFrame') {
+                renderTrashCores();
+            } else {
+                renderCores(zoneName, sourceArray);
+            }
+        }
+    });
+
+    // Render affected cards
+    affectedCardIds.forEach(cardId => {
+        renderCardCores(cardId);
+    });
+}
+
 
 // =====================================================================
 // ★★★ 重なり解消のためのヘルパー関数群 ★★★
@@ -119,15 +170,17 @@ export function handleCoreClick(e) {
     // Ctrl/Metaキーの有無に関わらず、選択をトグル
     if (existingIndex > -1) {
         selectedCores.splice(existingIndex, 1);
+        coreElement.classList.remove('selected');
     } else {
         selectedCores.push(coreIdentifier);
+        coreElement.classList.add('selected');
     }
-    renderAll();
 }
 
 export function clearSelectedCores() {
     setSelectedCores([]);
-    renderAll(); // 選択状態をクリアしたら再描画してDOMを更新
+    const selectedCoreElements = document.querySelectorAll('.core.selected');
+    selectedCoreElements.forEach(el => el.classList.remove('selected'));
 }
 
 export function handleCoreDropOnCard(e, targetCardElement) {
@@ -179,9 +232,11 @@ export function handleCoreDropOnCard(e, targetCardElement) {
         showToast('voidToast', '', true);
         const toastMessage = `${coresToAddCount}個増やしました`;
         showToast('voidToast', toastMessage);
+        renderCardCores(targetCardId);
     } else {
         removeCoresFromSource(coresToMove);
         addCoresWithOverlapAvoidance(coresToMove);
+        renderAffectedZones(null, coresToMove, targetCardId);
     }
 }
 
@@ -234,6 +289,7 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement) {
     if (draggedElement) {
         draggedElement.style.display = 'block';
     }
+    renderCardCores(targetCardId);
 }
 
 export function handleCoreDropOnZone(e, targetElement) {
@@ -246,15 +302,17 @@ export function handleCoreDropOnZone(e, targetElement) {
         showToast('voidToast', '', true);
 
         const movedCount = coresToMove.length;
+        const targetArray = getArrayByZoneName(targetZoneName);
         for (let i = 0; i < movedCount; i++) {
-            if (targetZoneName === 'trash') trashCores.push("blue");
-            else if (targetZoneName === 'reserve') reserveCores.push("blue");
-            else if (targetZoneName === 'life') lifeCores.push("blue");
-            else if (targetZoneName === 'count') countCores.push("blue");
+            targetArray.push("blue");
         }
         const toastMessage = `${movedCount}個増やしました`;
         showToast('voidToast', toastMessage);
-        renderAll();
+        if (targetZoneName === 'trashZoneFrame') {
+            renderTrashCores();
+        } else {
+            renderCores(targetZoneName, targetArray);
+        }
         return;
     }
 
@@ -292,7 +350,7 @@ export function handleCoreDropOnZone(e, targetElement) {
         }
     }
 
-    renderAll();
+    renderAffectedZones(targetZoneName, coresToActuallyMove, null);
 }
 
 export function removeCoresFromSource(cores) {
@@ -392,6 +450,8 @@ export function payCostFromReserve(cost) {
     // 残ったコアでリザーブを再構築
     reserveCores.splice(0, reserveCores.length, ...normalCores, ...soulCores);
 
-    renderAll();
+    renderCores('reserveCores', reserveCores);
+    renderTrashCores();
     return true; // 支払い成功
 }
+''
