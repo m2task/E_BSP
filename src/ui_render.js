@@ -22,7 +22,9 @@ export function createCardElement(cardData) {
 
     if (cardData.imgDataUrl) {
         const img = document.createElement('img');
-        img.src = cardData.imgDataUrl;
+        img.dataset.src = cardData.imgDataUrl; // srcをdata-srcに変更
+        img.src = ''; // srcを空に設定
+        img.classList.add('lazy-load'); // lazy-loadクラスを追加
         img.alt = cardData.name || 'Card Image';
         img.draggable = false; // 画像自体のドラッグを禁止する
         div.appendChild(img);
@@ -241,6 +243,26 @@ export function renderAll() {
 
     // Update magnifier listeners on all cards after every render
     updateMagnifierEventListeners();
+    setupLazyLoading(); // Lazy loadingのセットアップ
+}
+
+function setupLazyLoading() {
+    const lazyImages = document.querySelectorAll('.lazy-load');
+
+    const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src;
+                img.classList.remove('lazy-load');
+                observer.unobserve(img);
+            }
+        });
+    });
+
+    lazyImages.forEach(img => {
+        observer.observe(img);
+    });
 }
 
 export function renderOpenArea() {
