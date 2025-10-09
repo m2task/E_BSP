@@ -612,6 +612,11 @@ function handleTouchEnd(e) {
         }
     }
 
+    // ドラッグ終了後の後処理
+    if (touchedElement) {
+        touchedElement.style.opacity = '1'; // 元の要素の透明度を戻す
+    }
+
     setIsDragging(false);
     touchedElement = null;
     setDraggedCoreData(null); // ドラッグ終了時にデータをリセット
