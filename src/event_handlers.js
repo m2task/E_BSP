@@ -45,6 +45,7 @@ export function setupEventListeners() {
     });
 
     document.querySelector('.deck-button').addEventListener('click', (e) => {
+        e.stopPropagation(); // イベントの伝播を停止
         const deckButton = e.currentTarget;
         const rect = deckButton.getBoundingClientRect();
         const clickY = e.clientY - rect.top; // ボタン内でのクリックY座標
