@@ -607,6 +607,7 @@ function handleTouchEnd(e) {
                     }
                 };
                 handleCoreDrop(mockEvent);
+                hideMagnifier();
             }
         }
     }
