@@ -105,9 +105,8 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
             },
             // 3. Cancel Callback
             () => {
-                // モーダルを閉じた場合は召喚をキャンセルする
-                cancelPayment(); // paymentStateをリセット
-                renderAll();
+                // モーダル外クリック時はコスト0で召喚（以前の挙動に戻す）
+                onPaymentSuccess();
             }
         );
     } else {
