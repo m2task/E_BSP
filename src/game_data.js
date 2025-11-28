@@ -51,6 +51,7 @@ export let paymentState = {
     cardToPlay: null, // プレイしようとしているカードのデータ
     source: 'reserve', // 'reserve' or 'field'
     callback: null, // 支払い完了後のコールバック
+    paymentLog: [], // 支払いの操作ログ { fromCardId: string, paidCores: object[] }
 };
 
 

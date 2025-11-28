@@ -700,3 +700,27 @@ body {
     border-color: #1e7e34;
 }
 
+#cancelPaymentButton {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    background-color: #dc3545; /* 赤色 */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 1100; /* 他のUIより手前に表示 */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+#cancelPaymentButton:hover {
+    background-color: #c82333;
+}
+
+#cancelPaymentButton.hidden {
+    display: none;
+}
+

@@ -244,6 +244,14 @@ export function renderAll() {
         renderTrashModalContent();
     }
 
+    // 支払いキャンセルボタンの表示制御
+    const cancelButton = document.getElementById('cancelPaymentButton');
+    if (paymentState.isPaying && paymentState.source === 'field') {
+        cancelButton.classList.remove('hidden');
+    } else {
+        cancelButton.classList.add('hidden');
+    }
+
     // Update magnifier listeners on all cards after every render
     updateMagnifierEventListeners();
 }

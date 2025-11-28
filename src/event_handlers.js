@@ -4,7 +4,7 @@ import { renderAll, renderTrashModalContent } from './ui_render.js';
 import { showToast, getZoneName, isMobileDevice } from './utils.js'; // isMobileDevice をインポート
 import { hideMagnifier } from './magnify_logic.js';
 import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField } from './card_logic.js';
-import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, payCostFromField } from './core_logic.js';
+import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, payCostFromField, cancelPayment } from './core_logic.js';
 
 export function setupEventListeners() {
     // デッキボタンのドラッグイベントリスナーを追加
@@ -32,12 +32,24 @@ export function setupEventListeners() {
                 return;
             }
 
-            const amountToPay = prompt(`このカードから支払うコアの数を入力してください (最大: ${cardData.coresOnCard.length})`, "1");
-            const amount = parseInt(amountToPay, 10);
+            const amountToPayStr = prompt(`このカードから支払うコアの数を入力してください (最大: ${cardData.coresOnCard.length})`, "1");
 
-            if (!isNaN(amount) && amount > 0 && amount <= cardData.coresOnCard.length) {
+            if (amountToPayStr === null) { // ユーザーがプロンプトのキャンセルボタンを押した場合
+                cancelPayment();
+                return;
+            }
+
+            const amount = parseInt(amountToPayStr, 10);
+
+            if (isNaN(amount) || amount <= 0) { // 無効な数値や0以下の値が入力された場合
+                cancelPayment();
+                showToast('errorToast', '無効な値です。支払いをキャンセルしました。');
+                return;
+            }
+
+            if (amount <= cardData.coresOnCard.length) {
                 payCostFromField(cardId, amount);
-            } else if (amount > cardData.coresOnCard.length) {
+            } else {
                 showToast('errorToast', '指定された数のコアはありません。');
             }
             return; // 支払い処理の後は回転処理を行わない
