@@ -576,3 +576,5 @@ export function cancelPayment(updateUI = true) {
         renderAll();
     }
 }
+
+window.cancelPayment = cancelPayment;
