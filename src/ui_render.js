@@ -3,7 +3,6 @@ import { deck, hand, field, trash, burst, lifeCores, reserveCores, countCores, t
 import { handleCoreClick } from './core_logic.js';
 import { updateMagnifierEventListeners } from './magnify_logic.js';
 import { showToast } from './utils.js';
-import { showToast } from './utils.js';
 
 export function createCardElement(cardData) {
     const div = document.createElement('div');
