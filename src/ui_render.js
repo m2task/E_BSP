@@ -1,7 +1,8 @@
 // src/ui_render.js
 import { deck, hand, field, trash, burst, lifeCores, reserveCores, countCores, trashCores, selectedCores, cardPositions, countShowCountAsNumber, openArea, handPinned, paymentState } from './game_data.js';
-import { handleCoreClick } from './core_logic.js'; // 修正: event_handlers.js から core_logic.js に変更
+import { handleCoreClick } from './core_logic.js';
 import { updateMagnifierEventListeners } from './magnify_logic.js';
+import { showToast } from './utils.js';
 
 export function createCardElement(cardData) {
     const div = document.createElement('div');
@@ -328,6 +329,7 @@ export function showCostModal(cardData, reservePaymentCallback, fieldPaymentCall
 
 
     costModal.style.display = 'flex';
+    showToast('infoToast', '外側クリックでコストを支払わずに召喚');
 
     const closeModalOnClickOutside = (e) => {
         // モーダルコンテンツ自体がクリックされた場合は閉じない

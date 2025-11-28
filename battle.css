@@ -690,6 +690,7 @@ body {
 /* コストモーダルの「フィールドから支払う」ボタン */
 .cost-grid .field-payment-button {
     grid-column: span 3; /* ボタンをグリッドの全幅に広げる */
+    width: auto; /* button の width: 50px を上書き */
     background-color: #28a745; /* 緑色 */
     color: white;
     border-color: #218838;
