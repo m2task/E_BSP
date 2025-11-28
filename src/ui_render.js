@@ -1,5 +1,5 @@
 // src/ui_render.js
-import { deck, hand, field, trash, burst, lifeCores, reserveCores, countCores, trashCores, selectedCores, cardPositions, countShowCountAsNumber, openArea, handPinned } from './game_data.js';
+import { deck, hand, field, trash, burst, lifeCores, reserveCores, countCores, trashCores, selectedCores, cardPositions, countShowCountAsNumber, openArea, handPinned, paymentState } from './game_data.js';
 import { handleCoreClick } from './core_logic.js'; // 修正: event_handlers.js から core_logic.js に変更
 import { updateMagnifierEventListeners } from './magnify_logic.js';
 
@@ -95,6 +95,11 @@ export function renderField() {
         // 回転状態を反映
         if (cardData.isRotated) cardElement.classList.add('rotated');
         if (cardData.isExhausted) cardElement.classList.add('exhausted');
+
+        // コスト支払い中のスタイルを適用
+        if (paymentState.isPaying && paymentState.source === 'field' && cardData.coresOnCard.length > 0) {
+            cardElement.classList.add('payable');
+        }
 
         // カード上のコアを描画
         if (cardData.coresOnCard && cardData.coresOnCard.length > 0) {
@@ -274,21 +279,23 @@ export function renderTrashModalContent() {
     });
 }
 
-export function showCostModal(cardData, callback, cancelCallback) {
+export function showCostModal(cardData, reservePaymentCallback, fieldPaymentCallback, cancelCallback) {
     const costModal = document.getElementById('costModal');
     const costGrid = document.getElementById('costGrid');
     costGrid.innerHTML = '';
 
+    // 1-8 のコストボタン (リザーブからの支払い)
     for (let i = 1; i <= 8; i++) {
         const button = document.createElement('button');
         button.textContent = i;
         button.addEventListener('click', () => {
             costModal.style.display = 'none';
-            callback(i);
+            reservePaymentCallback(i);
         });
         costGrid.appendChild(button);
     }
 
+    // n のコストボタン (リザーブからの支払い)
     const nButton = document.createElement('button');
     nButton.textContent = 'n';
     nButton.addEventListener('click', () => {
@@ -296,10 +303,21 @@ export function showCostModal(cardData, callback, cancelCallback) {
         const cost = parseInt(customCost, 10);
         if (!isNaN(cost) && cost >= 0) {
             costModal.style.display = 'none';
-            callback(cost);
+            reservePaymentCallback(cost);
         }
     });
     costGrid.appendChild(nButton);
+
+    // フィールドから支払うボタン
+    const fieldPaymentButton = document.createElement('button');
+    fieldPaymentButton.textContent = 'フィールドから';
+    fieldPaymentButton.classList.add('field-payment-button'); // スタイリング用クラス
+    fieldPaymentButton.addEventListener('click', () => {
+        costModal.style.display = 'none';
+        fieldPaymentCallback();
+    });
+    costGrid.appendChild(fieldPaymentButton);
+
 
     costModal.style.display = 'flex';
 

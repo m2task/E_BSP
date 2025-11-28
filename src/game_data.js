@@ -43,6 +43,17 @@ export let isDragging = false; // ドラッグ中かどうかを示すフラグ
 
 export const discardState = { counter: 0, names: [], timer: null };
 
+// --- コスト支払い状態 ---
+export let paymentState = {
+    isPaying: false,
+    totalCost: 0,
+    paidAmount: 0,
+    cardToPlay: null, // プレイしようとしているカードのデータ
+    source: 'reserve', // 'reserve' or 'field'
+    callback: null, // 支払い完了後のコールバック
+};
+
+
 // Setters for game data
 export function setDeck(newDeck) { deck = newDeck; }
 export function setField(newField) { field = newField; }
@@ -69,6 +80,10 @@ export function setDraggedCoreData(data) { draggedCoreData = data; }
 export function setDiscardCounter(count) { discardState.counter = count; }
 export function setDiscardedCardNames(names) { discardState.names = names; }
 export function setDiscardToastTimer(timer) { discardState.timer = timer; }
+export function setPaymentState(newState) {
+    paymentState = { ...paymentState, ...newState };
+}
+
 
 // Setters for touch drag data
 export function setTouchDraggedElement(element) { touchDraggedElement = element; }

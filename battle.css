@@ -676,3 +676,27 @@ body {
   height: 100%;
 }
 
+/* コスト支払い可能なカードのハイライト */
+.card.payable {
+    cursor: pointer;
+    box-shadow: 0 0 15px 5px rgba(255, 215, 0, 0.9); /* ゴールドの強い輝き */
+    border: 2px solid #ffd700;
+}
+
+.card.payable:hover {
+    box-shadow: 0 0 20px 8px rgba(255, 225, 50, 1); /* ホバー時さらに強く */
+}
+
+/* コストモーダルの「フィールドから支払う」ボタン */
+.cost-grid .field-payment-button {
+    grid-column: span 3; /* ボタンをグリッドの全幅に広げる */
+    background-color: #28a745; /* 緑色 */
+    color: white;
+    border-color: #218838;
+}
+
+.cost-grid .field-payment-button:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+

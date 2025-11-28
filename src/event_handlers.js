@@ -1,10 +1,10 @@
 // src/event_handlers.js
-import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging } from './game_data.js';
+import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging, paymentState } from './game_data.js';
 import { renderAll, renderTrashModalContent } from './ui_render.js';
 import { showToast, getZoneName, isMobileDevice } from './utils.js'; // isMobileDevice をインポート
 import { hideMagnifier } from './magnify_logic.js';
 import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField } from './card_logic.js';
-import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone } from './core_logic.js';
+import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, payCostFromField } from './core_logic.js';
 
 export function setupEventListeners() {
     // デッキボタンのドラッグイベントリスナーを追加
@@ -14,22 +14,43 @@ export function setupEventListeners() {
     deckButton.addEventListener('dragover', handleDeckDragOver);
     deckButton.addEventListener('drop', handleDeckDrop);
 
-    // フィールドのカードクリックイベント（回転用）
+    // フィールドのカードクリックイベント（回転またはコスト支払い）
     document.getElementById('fieldCards').addEventListener('click', (e) => {
         const cardElement = e.target.closest('.card');
-        if (cardElement && !e.target.classList.contains('exhaust-button')) {
-            const cardId = cardElement.dataset.id;
-            const cardData = field.find(card => card.id === cardId);
-            if (!cardData) return; // データが見つからない場合は何もしない
-
-            if (cardData.isRotated) {
-                cardData.isRotated = false;
-            } else {
-                cardData.isRotated = true;
-                cardData.isExhausted = false; // 疲労させたら重疲労は解除
-            }
-            renderAll(); // 状態変更を反映するために再描画
+        if (!cardElement || e.target.classList.contains('exhaust-button')) {
+            return;
         }
+
+        const cardId = cardElement.dataset.id;
+        const cardData = field.find(card => card.id === cardId);
+        if (!cardData) return;
+
+        // コスト支払い中の処理
+        if (paymentState.isPaying && paymentState.source === 'field') {
+            if (cardData.coresOnCard.length === 0) {
+                showToast('errorToast', 'このカードには支払えるコアがありません。');
+                return;
+            }
+
+            const amountToPay = prompt(`このカードから支払うコアの数を入力してください (最大: ${cardData.coresOnCard.length})`, "1");
+            const amount = parseInt(amountToPay, 10);
+
+            if (!isNaN(amount) && amount > 0 && amount <= cardData.coresOnCard.length) {
+                payCostFromField(cardId, amount);
+            } else if (amount > cardData.coresOnCard.length) {
+                showToast('errorToast', '指定された数のコアはありません。');
+            }
+            return; // 支払い処理の後は回転処理を行わない
+        }
+
+        // 通常の回転処理
+        if (cardData.isRotated) {
+            cardData.isRotated = false;
+        } else {
+            cardData.isRotated = true;
+            cardData.isExhausted = false; // 疲労させたら重疲労は解除
+        }
+        renderAll(); // 状態変更を反映するために再描画
     });
 
     // 画面のどこかをクリックしたらコアの選択を解除

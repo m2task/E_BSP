@@ -2,7 +2,7 @@
 import { deck, hand, field, trash, burst, reserveCores, discardState, openArea, cardIdCounter, setCardIdCounter, setDeck, setHand, setField, setTrash, setBurst, setReserveCores, setDiscardCounter, setDiscardedCardNames, setDiscardToastTimer, setOpenArea, cardPositions } from './game_data.js';
 import { renderAll, showCostModal, renderOpenArea } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
-import { payCostFromReserve } from './core_logic.js';
+import { payCostFromReserve, startFieldPayment, cancelPayment } from './core_logic.js';
 import { openModal } from './event_handlers.js';
 import { hideMagnifier } from './magnify_logic.js';
 
@@ -56,27 +56,41 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
         if (cardIndex === -1) return;
         const cardData = sourceArray[cardIndex];
 
-        showCostModal(cardData,
-            (cost) => { // Success callback (cost paid)
-                const currentSourceArray = getArrayByZoneName(sourceZoneId);
-                const currentCardIndex = currentSourceArray.findIndex(c => c.id === cardId);
-                if (currentCardIndex === -1) return; // Card is no longer in the source zone
+        // 支払い完了後の共通処理
+        const onPaymentSuccess = () => {
+            const currentSourceArray = getArrayByZoneName(sourceZoneId);
+            const currentCardIndex = currentSourceArray.findIndex(c => c.id === cardId);
+            if (currentCardIndex === -1) return; // Card is no longer in the source zone
 
+            const [movedCard] = currentSourceArray.splice(currentCardIndex, 1);
+            field.push(movedCard);
+            renderAll();
+        };
+
+        showCostModal(
+            cardData,
+            // 1. Reserve Payment Callback
+            (cost) => {
                 if (payCostFromReserve(cost)) {
-                    const [movedCard] = currentSourceArray.splice(currentCardIndex, 1);
-                    field.push(movedCard);
+                    onPaymentSuccess();
                 } else {
                     // Not enough cores, do nothing, card stays in source
+                    renderAll();
                 }
-                renderAll();
             },
-            () => { // Cancel callback (no cost paid)
-                const currentSourceArray = getArrayByZoneName(sourceZoneId);
-                const currentCardIndex = currentSourceArray.findIndex(c => c.id === cardId);
-                if (currentCardIndex === -1) return; // Card is no longer in the source zone
-
-                const [movedCard] = currentSourceArray.splice(currentCardIndex, 1);
-                field.push(movedCard);
+            // 2. Field Payment Callback
+            () => {
+                const totalCost = cardData.cost !== undefined ? cardData.cost : parseInt(prompt("支払う合計コストを入力してください:", "0"), 10);
+                if (!isNaN(totalCost) && totalCost > 0) {
+                    startFieldPayment(totalCost, cardData, onPaymentSuccess);
+                } else {
+                    onPaymentSuccess();
+                }
+            },
+            // 3. Cancel Callback
+            () => {
+                // モーダルを閉じた場合は召喚をキャンセルする
+                cancelPayment(); // paymentStateをリセット
                 renderAll();
             }
         );
