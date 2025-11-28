@@ -358,79 +358,82 @@ export function removeCoresFromSource(cores) {
     }
 }
 
-export function payCostFromReserve(cost) {
-    if (cost <= 0) return true; // コストが0以下の場合は支払い不要
-
-    const normalCores = reserveCores.filter(core => core === "blue");
-    const soulCores = reserveCores.filter(core => core === "soul");
-
-    if (normalCores.length + soulCores.length < cost) {
-        alert(`リザーブのコアが足りません。必要なコア: ${cost}個、現在のリザーブ: ${reserveCores.length}個`);
-        return false; // 支払い失敗
-    }
-
-    let paidCount = 0;
-    const coresToPay = [];
-
-    // 優先的にノーマルコアを支払う
-    while (paidCount < cost && normalCores.length > 0) {
-        coresToPay.push(normalCores.shift());
-        paidCount++;
-    }
-
-    // 足りない分をソウルコアで支払う
-    while (paidCount < cost && soulCores.length > 0) {
-        coresToPay.push(soulCores.shift());
-        paidCount++;
-    }
-
-    // 支払ったコアをトラッシュに移動
-    for (const core of coresToPay) {
-        trashCores.push(core);
-    }
-
-    // 残ったコアでリザーブを再構築
-    reserveCores.splice(0, reserveCores.length, ...normalCores, ...soulCores);
-
-    renderAll();
-    return true; // 支払い成功
+export function getTotalCoresOnReserve() {
+    return reserveCores.length;
 }
 
-/**
- * フィールド上のすべてのコアの合計数を取得する
- * @returns {number}
- */
 export function getTotalCoresOnField() {
     return field.reduce((sum, card) => sum + (card.coresOnCard ? card.coresOnCard.length : 0), 0);
 }
 
-/**
- * フィールド全体で指定されたコストを支払えるかチェックする
- * @param {number} totalCost - チェックするコスト
- * @returns {boolean} - 支払い可能かどうか
- */
-export function canPayFromField(totalCost) {
-    return getTotalCoresOnField() >= totalCost;
+export function canPayTotal(cost) {
+    const totalCores = getTotalCoresOnReserve() + getTotalCoresOnField();
+    return totalCores >= cost;
 }
+
+// 新しい支払いフローのメイン関数
+export function payCost(totalCost, cardToPlay, onPaymentSuccess) {
+    // 1. リザーブから支払える分を計算
+    const tempReserve = [...reserveCores];
+    const coresFromReserve = [];
+    // ソウルコアを後回しにする
+    const normalCores = tempReserve.filter(c => c !== 'soul');
+    const soulCores = tempReserve.filter(c => c === 'soul');
+
+    while (coresFromReserve.length < totalCost && normalCores.length > 0) {
+        coresFromReserve.push(normalCores.shift());
+    }
+    while (coresFromReserve.length < totalCost && soulCores.length > 0) {
+        coresFromReserve.push(soulCores.shift());
+    }
+
+    const paidFromReserve = coresFromReserve.length;
+    const remainingCost = totalCost - paidFromReserve;
+
+    // 2. 不足コストがない場合 (リザーブだけで足りる)
+    if (remainingCost <= 0) {
+        reserveCores.splice(0, paidFromReserve);
+        trashCores.push(...coresFromReserve);
+        showToast('successToast', `${paidFromReserve}コスト支払いました。`);
+        onPaymentSuccess();
+        renderAll();
+        return;
+    }
+
+    // 3. 不足コストがある場合 -> フィールド支払いへ
+    showToast('infoToast', `リザーブから${paidFromReserve}コスト支払いました。残り${remainingCost}コストをフィールドから支払ってください。`);
+
+    const onFieldPaymentSuccess = () => {
+        // このコールバックは completePayment から呼ばれる
+        // フィールド支払い分は completePayment 内でトラッシュに送られる
+        // ここでリザーブからの支払い分をコミットする
+        reserveCores.splice(0, paidFromReserve);
+        trashCores.push(...coresFromReserve);
+        onPaymentSuccess(); // 最終的な成功コールバック
+    };
+
+    // フィールド支払い開始
+    startFieldPayment(remainingCost, cardToPlay, onFieldPaymentSuccess);
+}
+
 
 /**
  * フィールドからのコスト支払いプロセスを開始する
  * @param {number} totalCost - 支払うべき総コスト
  * @param {object} cardToPlay - プレイしようとしているカードのデータ
- * @param {function} callback - 支払い完了後のコールバック
+ * @param {function} successCallback - 支払い完了後のコールバック
  */
-export function startFieldPayment(totalCost, cardToPlay, callback) {
+export function startFieldPayment(totalCost, cardToPlay, successCallback) {
     setPaymentState({
         isPaying: true,
         totalCost: totalCost,
         paidAmount: 0,
         cardToPlay: cardToPlay,
         source: 'field',
-        callback: callback,
+        callback: successCallback, // 成功時のコールバックを保存
         paymentLog: [], // 支払いログを初期化
     });
-    showToast('infoToast', `コストを ${totalCost} 支払ってください。フィールドのカードからコアを選択してください。`);
-    renderAll(); // フィールドのカードに支払い中を示すUIを適用するため
+    renderAll();
 }
 
 /**
@@ -450,7 +453,6 @@ export function payCostFromField(cardId, amount) {
     const remainingCost = paymentState.totalCost - paymentState.paidAmount;
     const paymentAmount = Math.min(amount, remainingCost);
 
-    // 支払うコアを特定（ソウルコアは最後に）
     const coresToPay = [];
     const tempCoresOnCard = [...card.coresOnCard];
     const normalCoresOnCard = tempCoresOnCard.filter(c => c.type !== 'soul');
@@ -469,7 +471,6 @@ export function payCostFromField(cardId, amount) {
         return;
     }
 
-    // カード上のコアから支払った分を削除
     coresToPay.forEach(coreToRemove => {
         const index = card.coresOnCard.findIndex(c => c === coreToRemove);
         if (index !== -1) {
@@ -477,21 +478,16 @@ export function payCostFromField(cardId, amount) {
         }
     });
 
-    // ★★★ 変更点: トラッシュにはまだ送らない ★★★
-
-    // 支払いログを記録
     const logEntry = { fromCardId: cardId, paidCores: coresToPay };
     paymentState.paymentLog.push(logEntry);
 
-    // 支払い状況を更新
     setPaymentState({
         paidAmount: paymentState.paidAmount + paymentAmount,
         paymentLog: paymentState.paymentLog,
     });
 
-    showToast('infoToast', `${paymentAmount} コスト支払いました。(残り: ${paymentState.totalCost - paymentState.paidAmount})`);
+    showToast('infoToast', `${paymentAmount}コスト支払いました。(残り: ${paymentState.totalCost - paymentState.paidAmount})`);
 
-    // 支払いが完了したかチェック
     if (paymentState.paidAmount >= paymentState.totalCost) {
         completePayment();
     }
@@ -505,10 +501,9 @@ export function payCostFromField(cardId, amount) {
 export function completePayment() {
     if (!paymentState.isPaying) return;
 
-    showToast('successToast', 'コストの支払いが完了しました。');
     const { callback, paymentLog } = paymentState;
 
-    // ★★★ 変更点: ログに基づいて、支払われたコアをトラッシュに移動 ★★★
+    // フィールドからの支払い分をトラッシュに移動
     if (paymentLog.length > 0) {
         paymentLog.forEach(log => {
             log.paidCores.forEach(core => {
@@ -517,7 +512,7 @@ export function completePayment() {
         });
     }
 
-    // 支払い状態をリセット（ログはクリア）
+    // 支払い状態をリセット
     setPaymentState({
         isPaying: false,
         totalCost: 0,
@@ -528,12 +523,12 @@ export function completePayment() {
         paymentLog: [],
     });
 
-    // コールバックを実行
+    // 成功コールバック（リザーブ分のコミットと最終的な成功処理）を実行
     if (callback) {
         callback();
+    } else {
+        renderAll();
     }
-    // renderAllはcallback内で呼ばれることを期待するが、念のためここでも呼ぶ
-    renderAll();
 }
 
 /**
@@ -541,13 +536,11 @@ export function completePayment() {
  * @param {boolean} [updateUI=true] - UIを更新するかどうか
  */
 export function cancelPayment(updateUI = true) {
-    // ★★★ 変更点: 支払いログに基づいてコアを元の場所に戻す ★★★
+    // フィールドからの支払いログに基づいてコアを元の場所に戻す
     if (paymentState.paymentLog.length > 0) {
         paymentState.paymentLog.forEach(log => {
             const card = field.find(c => c.id === log.fromCardId);
             if (card) {
-                // paidCores には {type, x, y} のオブジェクトが入っている
-                // これをそのままカードに戻す
                 card.coresOnCard.push(...log.paidCores);
             }
         });
@@ -569,5 +562,3 @@ export function cancelPayment(updateUI = true) {
         renderAll();
     }
 }
-
-

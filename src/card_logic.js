@@ -2,7 +2,7 @@
 import { deck, hand, field, trash, burst, reserveCores, discardState, openArea, cardIdCounter, setCardIdCounter, setDeck, setHand, setField, setTrash, setBurst, setReserveCores, setDiscardCounter, setDiscardedCardNames, setDiscardToastTimer, setOpenArea, cardPositions } from './game_data.js';
 import { renderAll, showCostModal, renderOpenArea } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
-import { payCostFromReserve, startFieldPayment, cancelPayment, canPayFromField, getTotalCoresOnField } from './core_logic.js';
+import { payCost, canPayTotal, cancelPayment } from './core_logic.js';
 import { openModal } from './event_handlers.js';
 import { hideMagnifier } from './magnify_logic.js';
 
@@ -69,44 +69,16 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
 
         showCostModal(
             cardData,
-            // 1. Reserve Payment Callback
             (cost) => {
-                if (payCostFromReserve(cost)) {
-                    onPaymentSuccess();
+                if (canPayTotal(cost)) {
+                    payCost(cost, cardData, onPaymentSuccess);
                 } else {
-                    // Not enough cores, do nothing, card stays in source
+                    showToast('errorToast', 'リザーブとフィールドのコアを合わせてもコストが支払えません。');
                     renderAll();
                 }
             },
-            // 2. Field Payment Callback
             () => {
-                const defaultCost = cardData.cost !== undefined ? cardData.cost : 0;
-                const costToPay = prompt("支払う合計コストを入力してください:", defaultCost);
-                const cost = parseInt(costToPay, 10);
-
-                if (isNaN(cost) || cost < 0) {
-                    renderAll(); // 無効な入力やキャンセル
-                    return;
-                }
-
-                if (cost === 0) {
-                    onPaymentSuccess(); // コスト0
-                    return;
-                }
-
-                // 支払い能力チェック
-                if (canPayFromField(cost)) {
-                    startFieldPayment(cost, cardData, onPaymentSuccess);
-                } else {
-                    const totalCores = getTotalCoresOnField();
-                    showToast('errorToast', `フィールドのコアが足りません。必要: ${cost}, 現在: ${totalCores}`);
-                    renderAll();
-                }
-            },
-            // 3. Cancel Callback
-            () => {
-                // モーダル外クリック時はコスト0で召喚（以前の挙動に戻す）
-                onPaymentSuccess();
+                onPaymentSuccess(); // コスト0で召喚
             }
         );
     } else {

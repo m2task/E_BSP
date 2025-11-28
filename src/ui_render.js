@@ -288,53 +288,36 @@ export function renderTrashModalContent() {
     });
 }
 
-export function showCostModal(cardData, reservePaymentCallback, fieldPaymentCallback, cancelCallback) {
+export function showCostModal(cardData, callback, cancelCallback) {
     const costModal = document.getElementById('costModal');
     const costGrid = document.getElementById('costGrid');
     costGrid.innerHTML = '';
 
-    const hideInfoToast = () => showToast('infoToast', '', true);
-
-    // 1-8 のコストボタン (リザーブからの支払い)
+    // 1-8 のコストボタン
     for (let i = 1; i <= 8; i++) {
         const button = document.createElement('button');
         button.textContent = i;
         button.addEventListener('click', () => {
-            hideInfoToast();
             costModal.style.display = 'none';
-            reservePaymentCallback(i);
+            callback(i);
         });
         costGrid.appendChild(button);
     }
 
-    // n のコストボタン (リザーブからの支払い)
+    // n のコストボタン
     const nButton = document.createElement('button');
     nButton.textContent = 'n';
     nButton.addEventListener('click', () => {
-        hideInfoToast();
         const customCost = prompt('支払うコストの数を入力してください。', '0');
         const cost = parseInt(customCost, 10);
         if (!isNaN(cost) && cost >= 0) {
             costModal.style.display = 'none';
-            reservePaymentCallback(cost);
+            callback(cost);
         }
     });
     costGrid.appendChild(nButton);
 
-    // フィールドから支払うボタン
-    const fieldPaymentButton = document.createElement('button');
-    fieldPaymentButton.textContent = 'フィールドから';
-    fieldPaymentButton.classList.add('field-payment-button'); // スタイリング用クラス
-    fieldPaymentButton.addEventListener('click', () => {
-        hideInfoToast();
-        costModal.style.display = 'none';
-        fieldPaymentCallback();
-    });
-    costGrid.appendChild(fieldPaymentButton);
-
-
     costModal.style.display = 'flex';
-    showToast('infoToast', '外側クリックでコストを支払わずに召喚');
 
     const closeModalOnClickOutside = (e) => {
         // モーダルコンテンツ自体がクリックされた場合は閉じない
@@ -343,7 +326,6 @@ export function showCostModal(cardData, reservePaymentCallback, fieldPaymentCall
         }
         // モーダルの背景がクリックされた場合のみ閉じる
         if (e.target === costModal) {
-            hideInfoToast();
             costModal.style.display = 'none';
             if (cancelCallback) cancelCallback();
             costModal.removeEventListener('click', closeModalOnClickOutside);
