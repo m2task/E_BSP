@@ -1,7 +1,11 @@
 // src/core_logic.js
 import { lifeCores, reserveCores, countCores, trashCores, field, voidChargeCount, selectedCores, draggedCoreData, paymentState, setPaymentState, setVoidChargeCount, setSelectedCores, setDraggedCoreData, draggedElement } from './game_data.js';
-import { renderAll } from './ui_render.js';
+import { renderAll, showCostModal } from './ui_render.js'; // showCostModal をインポート
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
+
+let costModalOutsideClickListener = null; // イベントリスナーを保持する変数
+const hideInfoToast = () => showToast('infoToast', '', { hide: true }); // ヘルパー関数
+
 
 // =====================================================================
 // ★★★ 重なり解消のためのヘルパー関数群 ★★★
@@ -400,6 +404,27 @@ export function payCost(totalCost, cardToPlay, onPaymentSuccess) {
     }
 
     // 3. 不足コストがある場合 -> フィールド支払いへ
+    // モーダル表示とイベントリスナー設定
+    const costModal = document.getElementById('costModal');
+    costModal.style.display = 'flex';
+    showToast('infoToast', 'モーダル外クリックでコストを支払わない', { duration: 700 });
+
+    // モーダル外クリックで支払いをキャンセルするリスナー
+    const handleOutsideClick = (e) => {
+        // モーダルコンテンツ自体がクリックされた場合は閉じない
+        if (e.target.closest('.modal-content')) {
+            return;
+        }
+        // モーダルの背景がクリックされた場合のみ閉じる
+        if (e.target === costModal) {
+            hideInfoToast();
+            cancelPayment(true); // UI更新を伴うキャンセル
+            // イベントリスナーは cancelPayment 内で解除される
+        }
+    };
+    costModal.addEventListener('click', handleOutsideClick);
+    costModalOutsideClickListener = handleOutsideClick; // リスナーをグローバル変数に保存
+
     showToast('infoToast', `リザーブから${paidFromReserve}コスト支払います。残り${remainingCost}コストをフィールドから支払ってください。`, { duration: 1000 });
 
     const onFieldPaymentSuccess = () => {
@@ -519,6 +544,17 @@ export function completePayment() {
         paymentLog: [],
     });
 
+    // モーダルを非表示にし、イベントリスナーを解除
+    const costModal = document.getElementById('costModal');
+    if (costModal) {
+        costModal.style.display = 'none';
+        if (costModalOutsideClickListener) {
+            costModal.removeEventListener('click', costModalOutsideClickListener);
+            costModalOutsideClickListener = null;
+        }
+    }
+    hideInfoToast(); // トーストも非表示にする
+
     // 成功コールバック（リザーブ分のコミットと最終的な成功処理）を実行
     if (callback) {
         callback();
@@ -551,6 +587,17 @@ export function cancelPayment(updateUI = true) {
         callback: null,
         paymentLog: [], // ログをクリア
     });
+
+    // モーダルを非表示にし、イベントリスナーを解除
+    const costModal = document.getElementById('costModal');
+    if (costModal) {
+        costModal.style.display = 'none';
+        if (costModalOutsideClickListener) {
+            costModal.removeEventListener('click', costModalOutsideClickListener);
+            costModalOutsideClickListener = null;
+        }
+    }
+    hideInfoToast(); // トーストも非表示にする
 
     if (updateUI) {
         showToast('infoToast', 'コスト支払いがキャンセルされました', { duration: 1000 });
