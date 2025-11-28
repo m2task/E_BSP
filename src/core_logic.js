@@ -452,7 +452,7 @@ export function payCostFromField(cardId, amount) {
 
     // 支払うコアを特定（ソウルコアは最後に）
     const coresToPay = [];
-    const tempCoresOnCard = [...card.coresOnCard]; // 元の配列を破壊しないようにコピー
+    const tempCoresOnCard = [...card.coresOnCard];
     const normalCoresOnCard = tempCoresOnCard.filter(c => c.type !== 'soul');
     const soulCoresOnCard = tempCoresOnCard.filter(c => c.type === 'soul');
 
@@ -477,8 +477,7 @@ export function payCostFromField(cardId, amount) {
         }
     });
 
-    // 支払ったコアをトラッシュに移動
-    coresToPay.forEach(core => trashCores.push(core.type));
+    // ★★★ 変更点: トラッシュにはまだ送らない ★★★
 
     // 支払いログを記録
     const logEntry = { fromCardId: cardId, paidCores: coresToPay };
@@ -507,7 +506,16 @@ export function completePayment() {
     if (!paymentState.isPaying) return;
 
     showToast('successToast', 'コストの支払いが完了しました。');
-    const { callback } = paymentState;
+    const { callback, paymentLog } = paymentState;
+
+    // ★★★ 変更点: ログに基づいて、支払われたコアをトラッシュに移動 ★★★
+    if (paymentLog.length > 0) {
+        paymentLog.forEach(log => {
+            log.paidCores.forEach(core => {
+                trashCores.push(core.type);
+            });
+        });
+    }
 
     // 支払い状態をリセット（ログはクリア）
     setPaymentState({
@@ -524,6 +532,7 @@ export function completePayment() {
     if (callback) {
         callback();
     }
+    // renderAllはcallback内で呼ばれることを期待するが、念のためここでも呼ぶ
     renderAll();
 }
 
@@ -532,18 +541,14 @@ export function completePayment() {
  * @param {boolean} [updateUI=true] - UIを更新するかどうか
  */
 export function cancelPayment(updateUI = true) {
-    // 支払いログに基づいてコアを元の場所に戻す
+    // ★★★ 変更点: 支払いログに基づいてコアを元の場所に戻す ★★★
     if (paymentState.paymentLog.length > 0) {
         paymentState.paymentLog.forEach(log => {
             const card = field.find(c => c.id === log.fromCardId);
             if (card) {
-                log.paidCores.forEach(paidCore => {
-                    const coreIndexInTrash = trashCores.lastIndexOf(paidCore.type);
-                    if (coreIndexInTrash !== -1) {
-                        trashCores.splice(coreIndexInTrash, 1);
-                        card.coresOnCard.push(paidCore);
-                    }
-                });
+                // paidCores には {type, x, y} のオブジェクトが入っている
+                // これをそのままカードに戻す
+                card.coresOnCard.push(...log.paidCores);
             }
         });
     }
