@@ -523,7 +523,7 @@ body {
     text-align: center;
     white-space: nowrap;
     z-index: 100; /* 最前面に表示 */
-    pointer-events: none; /* クリックを透過 */
+    pointer-events: auto; /* 表示されているときだけクリック可能にする */
     transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
 }
 
