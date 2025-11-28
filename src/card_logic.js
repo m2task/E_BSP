@@ -76,6 +76,9 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
                     // コアが足りない場合は何もしない
                     renderAll();
                 }
+            },
+            () => {
+                onPaymentSuccess(); // コスト0で召喚
             }
         );
     } else {
