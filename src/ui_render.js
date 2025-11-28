@@ -322,7 +322,7 @@ export function showCostModal(cardData, callback, cancelCallback) {
     costGrid.appendChild(nButton);
 
     costModal.style.display = 'flex';
-    showToast('infoToast', 'モーダル外クリックでコストを支払わない', { duration: 700 }); // ★追加
+    showToast('infoToast', 'モーダル外をクリックでコストを支払わない', { duration: 1500 }); // ★追加
 
     const closeModalOnClickOutside = (e) => {
         // モーダルコンテンツ自体がクリックされた場合は閉じない
