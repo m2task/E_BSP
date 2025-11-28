@@ -73,7 +73,8 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
                 if (canPayTotal(cost)) {
                     payCost(cost, cardData, onPaymentSuccess);
                 } else {
-                    showToast('errorToast', 'リザーブとフィールドのコアを合わせてもコストが支払えません。', { duration: 3000 });
+                    // コアが足りない場合は何もしない
+                    renderAll();
                 }
             },
             () => {

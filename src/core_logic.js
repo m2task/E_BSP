@@ -440,7 +440,6 @@ export function payCostFromField(cardId, amount) {
 
     const card = field.find(c => c.id === cardId);
     if (!card || card.coresOnCard.length < amount) {
-        showToast('errorToast', '支払うためのコアが足りません。', { duration: 1000 });
         return;
     }
 
@@ -555,7 +554,7 @@ export function cancelPayment(updateUI = true) {
     });
 
     if (updateUI) {
-        showToast('infoToast', 'コスト支払がキャンセルされました', { duration: 700 });
+        showToast('infoToast', 'コスト支払いがキャンセルされました');
         renderAll();
     }
 }
