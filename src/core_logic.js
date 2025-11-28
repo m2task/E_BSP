@@ -541,6 +541,13 @@ export function completePayment() {
  * @param {boolean} [updateUI=true] - UIを更新するかどうか
  */
 export function cancelPayment(updateUI = true) {
+    // ★★★ デバッグ用アラート ★★★
+    alert('キャンセルボタンが押されました。\n支払いログの数: ' + paymentState.paymentLog.length);
+    if (paymentState.paymentLog.length > 0) {
+        alert('ログの内容:\n' + JSON.stringify(paymentState.paymentLog, null, 2));
+    }
+    // ★★★ ここまで ★★★
+
     // ★★★ 変更点: 支払いログに基づいてコアを元の場所に戻す ★★★
     if (paymentState.paymentLog.length > 0) {
         paymentState.paymentLog.forEach(log => {
