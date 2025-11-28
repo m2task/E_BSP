@@ -1,5 +1,5 @@
 // src/utils.js
-import { toastTimeout, setToastTimeout } from './game_data.js';
+// import { toastTimeout, setToastTimeout } from './game_data.js';
 import { hand, field, trash, burst, lifeCores, reserveCores, countCores, trashCores, openArea } from './game_data.js';
 
 export function shuffle(array) {
@@ -49,7 +49,7 @@ export function getArrayByZoneName(zoneName) {
     }
 }
 
-const toastHandlers = {};
+const toastHandlers = {}; // クリックハンドラとタイマーを管理するためのオブジェクト
 
 export function showToast(toastId, message, options = {}) {
     const { hide = false, duration = null } = options;
@@ -60,17 +60,19 @@ export function showToast(toastId, message, options = {}) {
         return;
     }
 
-    // 既存のタイマーとリスナーをクリア
-    clearTimeout(toastTimeout);
-    if (toastHandlers[toastId]) {
-        toastElement.removeEventListener('click', toastHandlers[toastId]);
+    // 既存のタイマーとリスナーをクリア (toastId ごとに管理)
+    if (toastHandlers[toastId] && toastHandlers[toastId].timer) {
+        clearTimeout(toastHandlers[toastId].timer);
+    }
+    if (toastHandlers[toastId] && toastHandlers[toastId].clickListener) {
+        toastElement.removeEventListener('click', toastHandlers[toastId].clickListener);
     }
 
     const hideToast = () => {
         toastElement.classList.remove('show');
         toastElement.textContent = '';
         toastElement.removeEventListener('click', hideToast);
-        delete toastHandlers[toastId];
+        delete toastHandlers[toastId]; // 完全に削除
     };
 
     if (hide || message === '') {
@@ -79,12 +81,15 @@ export function showToast(toastId, message, options = {}) {
         toastElement.textContent = message;
         toastElement.classList.add('show');
 
-        // 新しいハンドラを設定
-        toastHandlers[toastId] = hideToast;
-        toastElement.addEventListener('click', hideToast);
+        // 新しいハンドラとタイマーを設定
+        toastHandlers[toastId] = {
+            clickListener: hideToast,
+            timer: null // タイマーは後で設定
+        };
+        toastElement.addEventListener('click', toastHandlers[toastId].clickListener);
 
         if (duration !== null && isFinite(duration)) {
-            setToastTimeout(setTimeout(hideToast, duration));
+            toastHandlers[toastId].timer = setTimeout(hideToast, duration);
         }
     }
 }

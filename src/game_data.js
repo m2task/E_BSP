@@ -12,7 +12,7 @@ export let countCores = [];
 export let trashCores = [];
 
 export let voidChargeCount = 0;
-export let toastTimeout = null;
+
 
 export let handVisible = true;
 export let handPinned = false;
@@ -67,7 +67,7 @@ export function setReserveCores(newRCC) { reserveCores = newRCC; }
 export function setCountCores(newDCC) { countCores = newDCC; }
 export function setTrashCores(newTCC) { trashCores = newTCC; }
 export function setVoidChargeCount(count) { voidChargeCount = count; }
-export function setToastTimeout(timeout) { toastTimeout = timeout; }
+
 export function setHandVisible(visible) { handVisible = visible; }
 export function setHandPinned(pinned) { handPinned = pinned; }
 export function setCountShowCountAsNumber(showAsNumber) { countShowCountAsNumber = showAsNumber; }
