@@ -176,9 +176,9 @@ export function handleCoreDropOnCard(e, targetCardElement) {
         const newCores = Array(coresToAddCount).fill("blue");
         addCoresWithOverlapAvoidance(newCores);
         setVoidChargeCount(0);
-        showToast('voidToast', '', true);
+        showToast('voidToast', '', { hide: true });
         const toastMessage = `${coresToAddCount}個増やしました`;
-        showToast('voidToast', toastMessage);
+        showToast('voidToast', toastMessage, { duration: 1000 });
     } else {
         removeCoresFromSource(coresToMove);
         addCoresWithOverlapAvoidance(coresToMove);
@@ -243,7 +243,7 @@ export function handleCoreDropOnZone(e, targetElement) {
     if (type === 'voidCore') {
         const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
         setVoidChargeCount(0);
-        showToast('voidToast', '', true);
+        showToast('voidToast', '', { hide: true });
 
         const movedCount = coresToMove.length;
         for (let i = 0; i < movedCount; i++) {
@@ -253,7 +253,7 @@ export function handleCoreDropOnZone(e, targetElement) {
             else if (targetZoneName === 'count') countCores.push("blue");
         }
         const toastMessage = `${movedCount}個増やしました`;
-        showToast('voidToast', toastMessage);
+        showToast('voidToast', toastMessage, { duration: 1000 });
         renderAll();
         return;
     }
@@ -271,7 +271,7 @@ export function handleCoreDropOnZone(e, targetElement) {
                 if (confirm("ソウルドライブしますか？")) {
                     coresToActuallyMove.push(coreInfo); // OKなら移動リストに追加
                 }
-                // キャンセルの場合は何もしない（＝元の位置に残る）
+                // キャンセルの場合は何もしない（＝元のの位置に残る）
             } else {
                 coresToActuallyMove.push(coreInfo); // ソウルコア以外は無条件で移動
             }
@@ -287,7 +287,7 @@ export function handleCoreDropOnZone(e, targetElement) {
     // 移動先へコアを追加
     const targetArray = (targetZoneName === 'trash') ? trashCores : getArrayByZoneName(targetZoneName);
     if (targetArray) {
-        for (const coreInfo of coresToActuallyMove) {
+        for (const coreInfo of coresToMove) {
             targetArray.push(coreInfo.type);
         }
     }
@@ -394,14 +394,13 @@ export function payCost(totalCost, cardToPlay, onPaymentSuccess) {
     if (remainingCost <= 0) {
         reserveCores.splice(0, paidFromReserve);
         trashCores.push(...coresFromReserve);
-        showToast('successToast', `${paidFromReserve}コスト支払いました。`);
         onPaymentSuccess();
         renderAll();
         return;
     }
 
     // 3. 不足コストがある場合 -> フィールド支払いへ
-    showToast('infoToast', `リザーブから${paidFromReserve}コスト支払いました。残り${remainingCost}コストをフィールドから支払ってください。`);
+    showToast('infoToast', `リザーブから${paidFromReserve}コスト支払います。残り${remainingCost}コストをフィールドから支払ってください。`, { duration: null });
 
     const onFieldPaymentSuccess = () => {
         // このコールバックは completePayment から呼ばれる
@@ -419,9 +418,6 @@ export function payCost(totalCost, cardToPlay, onPaymentSuccess) {
 
 /**
  * フィールドからのコスト支払いプロセスを開始する
- * @param {number} totalCost - 支払うべき総コスト
- * @param {object} cardToPlay - プレイしようとしているカードのデータ
- * @param {function} successCallback - 支払い完了後のコールバック
  */
 export function startFieldPayment(totalCost, cardToPlay, successCallback) {
     setPaymentState({
@@ -430,23 +426,21 @@ export function startFieldPayment(totalCost, cardToPlay, successCallback) {
         paidAmount: 0,
         cardToPlay: cardToPlay,
         source: 'field',
-        callback: successCallback, // 成功時のコールバックを保存
-        paymentLog: [], // 支払いログを初期化
+        callback: successCallback,
+        paymentLog: [],
     });
     renderAll();
 }
 
 /**
  * フィールドのカードからコストを支払う
- * @param {string} cardId - コアを支払うカードのID
- * @param {number} amount - 支払うコアの数
  */
 export function payCostFromField(cardId, amount) {
     if (!paymentState.isPaying || paymentState.source !== 'field') return;
 
     const card = field.find(c => c.id === cardId);
     if (!card || card.coresOnCard.length < amount) {
-        showToast('errorToast', '支払うためのコアが足りません。');
+        showToast('errorToast', '支払うためのコアが足りません。', { duration: 1000 });
         return;
     }
 
@@ -467,7 +461,7 @@ export function payCostFromField(cardId, amount) {
     }
 
     if (coresToPay.length < paymentAmount) {
-        showToast('errorToast', '支払いに失敗しました。');
+        showToast('errorToast', '支払いに失敗しました。', { duration: 1000 });
         return;
     }
 
@@ -481,14 +475,18 @@ export function payCostFromField(cardId, amount) {
     const logEntry = { fromCardId: cardId, paidCores: coresToPay };
     paymentState.paymentLog.push(logEntry);
 
+    const newPaidAmount = paymentState.paidAmount + paymentAmount;
     setPaymentState({
-        paidAmount: paymentState.paidAmount + paymentAmount,
+        paidAmount: newPaidAmount,
         paymentLog: paymentState.paymentLog,
     });
 
-    showToast('infoToast', `${paymentAmount}コスト支払いました。(残り: ${paymentState.totalCost - paymentState.paidAmount})`);
+    const remainingAfterThis = paymentState.totalCost - newPaidAmount;
+    if (remainingAfterThis > 0) {
+        showToast('infoToast', `あと${remainingAfterThis}コスト支払ってください。`, { duration: null });
+    }
 
-    if (paymentState.paidAmount >= paymentState.totalCost) {
+    if (newPaidAmount >= paymentState.totalCost) {
         completePayment();
     }
 
@@ -496,7 +494,7 @@ export function payCostFromField(cardId, amount) {
 }
 
 /**
- * コスト支払いプロセスを完了する
+ * コスト支払いプロセスを完了する (フィールド支払い完了時)
  */
 export function completePayment() {
     if (!paymentState.isPaying) return;
@@ -532,8 +530,7 @@ export function completePayment() {
 }
 
 /**
- * コスト支払いプロセスをキャンセルする
- * @param {boolean} [updateUI=true] - UIを更新するかどうか
+ * コスト支払いプロセスをキャンセルする (フィールド支払いキャンセル時)
  */
 export function cancelPayment(updateUI = true) {
     // フィールドからの支払いログに基づいてコアを元の場所に戻す
@@ -558,7 +555,7 @@ export function cancelPayment(updateUI = true) {
     });
 
     if (updateUI) {
-        showToast('infoToast', '支払いをキャンセルしました。');
+        showToast('infoToast', 'コスト支払がキャンセルされました', { duration: 700 });
         renderAll();
     }
 }

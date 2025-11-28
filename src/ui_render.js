@@ -293,7 +293,7 @@ export function showCostModal(cardData, callback, cancelCallback) {
     const costGrid = document.getElementById('costGrid');
     costGrid.innerHTML = '';
 
-    const hideInfoToast = () => showToast('infoToast', '', true);
+    const hideInfoToast = () => showToast('infoToast', '', { hide: true });
 
     // 1-8 のコストボタン
     for (let i = 1; i <= 8; i++) {
@@ -322,7 +322,7 @@ export function showCostModal(cardData, callback, cancelCallback) {
     costGrid.appendChild(nButton);
 
     costModal.style.display = 'flex';
-    showToast('infoToast', 'モーダル外クリックでコストを支払わない');
+    showToast('infoToast', 'モーダル外クリックでコストを支払わない', { duration: null });
 
     const closeModalOnClickOutside = (e) => {
         // モーダルコンテンツ自体がクリックされた場合は閉じない

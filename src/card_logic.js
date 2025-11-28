@@ -2,7 +2,7 @@
 import { deck, hand, field, trash, burst, reserveCores, discardState, openArea, cardIdCounter, setCardIdCounter, setDeck, setHand, setField, setTrash, setBurst, setReserveCores, setDiscardCounter, setDiscardedCardNames, setDiscardToastTimer, setOpenArea, cardPositions } from './game_data.js';
 import { renderAll, showCostModal, renderOpenArea } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
-import { payCost, canPayTotal, cancelPayment } from './core_logic.js';
+import { payCost, canPayTotal } from './core_logic.js';
 import { openModal } from './event_handlers.js';
 import { hideMagnifier } from './magnify_logic.js';
 
@@ -73,8 +73,7 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
                 if (canPayTotal(cost)) {
                     payCost(cost, cardData, onPaymentSuccess);
                 } else {
-                    showToast('errorToast', 'リザーブとフィールドのコアを合わせてもコストが支払えません。');
-                    renderAll();
+                    showToast('errorToast', 'リザーブとフィールドのコアを合わせてもコストが支払えません。', { duration: 3000 });
                 }
             },
             () => {
@@ -108,10 +107,10 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
             }
             if (putOnBottom) {
                 deck.push(cardData);
-                showToast('cardMoveToast', `${cardData.name}をデッキの下に戻しました`);
+                showToast('cardMoveToast', `${cardData.name}をデッキの下に戻しました`, { duration: 1000 });
             } else {
                 deck.unshift(cardData);
-                showToast('cardMoveToast', `${cardData.name}をデッキの上に戻しました`);
+                showToast('cardMoveToast', `${cardData.name}をデッキの上に戻しました`, { duration: 1000 });
             }
         } else if (targetZoneName === 'void') {
             if (!confirm(`${cardData.name}をゲームから除外していいですか？`)) {
@@ -178,7 +177,7 @@ export function discardDeck() {
     // 新しいタイマーを設定
     setDiscardToastTimer(setTimeout(() => {
         const message = `${discardState.counter}枚破棄しました。`;
-        showToast('cardMoveToast', message);
+        showToast('cardMoveToast', message, { duration: 1000 });
         
         // カウンターとリストをリセット
         setDiscardCounter(0);

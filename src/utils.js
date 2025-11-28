@@ -49,7 +49,9 @@ export function getArrayByZoneName(zoneName) {
     }
 }
 
-export function showToast(toastId, message, hide = false) {
+export function showToast(toastId, message, options = {}) {
+    const { hide = false, duration = null } = options; // デフォルトのdurationをnullに
+
     const toastElement = document.getElementById(toastId);
     if (!toastElement) {
         console.error(`Toast element with ID '${toastId}' not found.`);
@@ -64,10 +66,14 @@ export function showToast(toastId, message, hide = false) {
     } else {
         toastElement.textContent = message;
         toastElement.classList.add('show');
-        setToastTimeout(setTimeout(() => {
-            toastElement.classList.remove('show');
-            toastElement.textContent = '';
-        }, 700)); // 0.7秒後に非表示
+
+        // duration が有限の数値の場合のみタイマーをセット
+        if (duration !== null && isFinite(duration)) {
+            setToastTimeout(setTimeout(() => {
+                toastElement.classList.remove('show');
+                toastElement.textContent = '';
+            }, duration));
+        }
     }
 }
 

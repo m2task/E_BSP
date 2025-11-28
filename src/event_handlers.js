@@ -1,7 +1,7 @@
 // src/event_handlers.js
 import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging, paymentState } from './game_data.js';
 import { renderAll, renderTrashModalContent } from './ui_render.js';
-import { showToast, getZoneName, isMobileDevice } from './utils.js'; // isMobileDevice をインポート
+import { showToast, getZoneName, isMobileDevice } from './utils.js';
 import { hideMagnifier } from './magnify_logic.js';
 import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField } from './card_logic.js';
 import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, payCostFromField, cancelPayment } from './core_logic.js';
@@ -20,6 +20,8 @@ export function setupEventListeners() {
         if (!cardElement || e.target.classList.contains('exhaust-button')) {
             return;
         }
+        
+        showToast('infoToast', '', { hide: true });
 
         const cardId = cardElement.dataset.id;
         const cardData = field.find(card => card.id === cardId);
@@ -28,29 +30,28 @@ export function setupEventListeners() {
         // コスト支払い中の処理
         if (paymentState.isPaying && paymentState.source === 'field') {
             if (cardData.coresOnCard.length === 0) {
-                showToast('errorToast', 'このカードには支払えるコアがありません。');
+                showToast('errorToast', 'このカードには支払えるコアがありません。', { duration: 1000 });
                 return;
             }
 
             const amountToPayStr = prompt(`このカードから支払うコアの数を入力してください (最大: ${cardData.coresOnCard.length})`, "1");
 
-            if (amountToPayStr === null) { // ユーザーがプロンプトのキャンセルボタンを押した場合
-                cancelPayment();
+            if (amountToPayStr === null) {
+                // プロンプトのキャンセルは何もしない（ユーザーが別のカードを選び直せるように）
                 return;
             }
 
             const amount = parseInt(amountToPayStr, 10);
 
-            if (isNaN(amount) || amount <= 0) { // 無効な数値や0以下の値が入力された場合
-                cancelPayment();
-                showToast('errorToast', '無効な値です。支払いをキャンセルしました。');
+            if (isNaN(amount) || amount <= 0) {
+                showToast('errorToast', '無効な値です。', { duration: 1000 });
                 return;
             }
 
             if (amount <= cardData.coresOnCard.length) {
                 payCostFromField(cardId, amount);
             } else {
-                showToast('errorToast', '指定された数のコアはありません。');
+                showToast('errorToast', '指定された数のコアはありません。', { duration: 1000 });
             }
             return; // 支払い処理の後は回転処理を行わない
         }
@@ -67,13 +68,13 @@ export function setupEventListeners() {
 
     // 画面のどこかをクリックしたらコアの選択を解除
     document.addEventListener('click', (e) => {
-        if (!e.target.classList.contains('core')) {
+        if (!e.target.closest('.core')) {
             clearSelectedCores();
         }
         // ボイドアイコン以外の場所をクリックしたらチャージ数をリセット
         if (e.target.id !== 'voidCore') {
             setVoidChargeCount(0);
-            showToast('voidToast', '', true); // トーストを非表示にする
+            showToast('voidToast', '', { hide: true }); // トーストを非表示にする
         }
     });
 
@@ -192,7 +193,7 @@ export function setupEventListeners() {
     document.getElementById('voidCore').addEventListener('click', (e) => {
         e.stopPropagation(); // ドキュメント全体のクリックイベントが発火しないようにする
         setVoidChargeCount(voidChargeCount + 1);
-        showToast('voidToast', ` ${voidChargeCount}個増やせます`);
+        showToast('voidToast', ` ${voidChargeCount}個増やせます`, { duration: 1000 });
     });
 
     // 「デッキ登録画面へ」ボタンのクリックイベント
@@ -702,7 +703,8 @@ export function refreshAll() {
         if (card.isExhausted) {
             card.isExhausted = false;
             card.isRotated = true;
-        } else {
+        }
+ else {
             card.isRotated = false;
             card.isExhausted = false;
         }
