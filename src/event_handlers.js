@@ -205,6 +205,11 @@ export function setupEventListeners() {
     document.getElementById('deckDiscardBtn').addEventListener('click', discardDeck);
     document.getElementById('deckOpenBtn').addEventListener('click', openDeck);
     document.getElementById('deckGaiButton').addEventListener('click', openDeckGaiModal);
+
+    // 支払いキャンセルボタンのイベントリスナー
+    document.getElementById('cancelPaymentButton').addEventListener('click', () => {
+        cancelPayment();
+    });
 }
 
 // --- 共通コア情報取得関数 ---
