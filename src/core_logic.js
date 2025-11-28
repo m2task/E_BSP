@@ -401,7 +401,7 @@ export function payCost(totalCost, cardToPlay, onPaymentSuccess) {
     }
 
     // 3. 不足コストがある場合 -> フィールド支払いへ
-    showToast('infoToast', `リザーブから${paidFromReserve}コスト支払います。残り${remainingCost}コストをフィールドから支払ってください。`, { duration: 1500 });
+    showToast('infoToast', `リザーブから${paidFromReserve}コスト支払います。残り${remainingCost}コストをフィールドのカードをクリックして支払ってください。`, { duration: 2000 });
 
     const onFieldPaymentSuccess = () => {
         // このコールバックは completePayment から呼ばれる
