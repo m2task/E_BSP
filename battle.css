@@ -725,3 +725,11 @@ body {
     display: none;
 }
 
+#infoToast {
+    /* 他のトーストより手前に、モーダル(z-index: 200)より更に手前に表示 */
+    z-index: 210;
+    /* 表示位置を画面中央より少し上に調整 */
+    bottom: auto;
+    top: 35%;
+}
+
