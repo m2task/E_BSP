@@ -400,7 +400,7 @@ export function payCost(totalCost, cardToPlay, onPaymentSuccess) {
     }
 
     // 3. 不足コストがある場合 -> フィールド支払いへ
-    showToast('infoToast', `リザーブから${paidFromReserve}コスト支払います。残り${remainingCost}コストをフィールドから支払ってください。`, { duration: null });
+    showToast('infoToast', `リザーブから${paidFromReserve}コスト支払います。残り${remainingCost}コストをフィールドから支払ってください。`, { duration: 1000 });
 
     const onFieldPaymentSuccess = () => {
         // このコールバックは completePayment から呼ばれる
@@ -460,7 +460,6 @@ export function payCostFromField(cardId, amount) {
     }
 
     if (coresToPay.length < paymentAmount) {
-        showToast('errorToast', '支払いに失敗しました。', { duration: 1000 });
         return;
     }
 
@@ -482,7 +481,7 @@ export function payCostFromField(cardId, amount) {
 
     const remainingAfterThis = paymentState.totalCost - newPaidAmount;
     if (remainingAfterThis > 0) {
-        showToast('infoToast', `あと${remainingAfterThis}コスト支払ってください。`, { duration: null });
+        showToast('infoToast', `あと${remainingAfterThis}コスト支払ってください。`, { duration: 1000 });
     }
 
     if (newPaidAmount >= paymentState.totalCost) {
@@ -554,7 +553,7 @@ export function cancelPayment(updateUI = true) {
     });
 
     if (updateUI) {
-        showToast('infoToast', 'コスト支払いがキャンセルされました');
+        showToast('infoToast', 'コスト支払いがキャンセルされました', { duration: 1000 });
         renderAll();
     }
 }

@@ -49,8 +49,10 @@ export function getArrayByZoneName(zoneName) {
     }
 }
 
+const toastHandlers = {};
+
 export function showToast(toastId, message, options = {}) {
-    const { hide = false, duration = null } = options; // デフォルトのdurationをnullに
+    const { hide = false, duration = null } = options;
 
     const toastElement = document.getElementById(toastId);
     if (!toastElement) {
@@ -58,21 +60,31 @@ export function showToast(toastId, message, options = {}) {
         return;
     }
 
-    clearTimeout(toastTimeout); // 既存のタイマーをクリア
+    // 既存のタイマーとリスナーをクリア
+    clearTimeout(toastTimeout);
+    if (toastHandlers[toastId]) {
+        toastElement.removeEventListener('click', toastHandlers[toastId]);
+    }
 
-    if (hide || message === '') {
+    const hideToast = () => {
         toastElement.classList.remove('show');
         toastElement.textContent = '';
+        toastElement.removeEventListener('click', hideToast);
+        delete toastHandlers[toastId];
+    };
+
+    if (hide || message === '') {
+        hideToast();
     } else {
         toastElement.textContent = message;
         toastElement.classList.add('show');
 
-        // duration が有限の数値の場合のみタイマーをセット
+        // 新しいハンドラを設定
+        toastHandlers[toastId] = hideToast;
+        toastElement.addEventListener('click', hideToast);
+
         if (duration !== null && isFinite(duration)) {
-            setToastTimeout(setTimeout(() => {
-                toastElement.classList.remove('show');
-                toastElement.textContent = '';
-            }, duration));
+            setToastTimeout(setTimeout(hideToast, duration));
         }
     }
 }
