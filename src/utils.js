@@ -67,7 +67,7 @@ export function showToast(toastId, message, hide = false) {
         setToastTimeout(setTimeout(() => {
             toastElement.classList.remove('show');
             toastElement.textContent = '';
-        }, 1000)); // 1秒後に非表示
+        }, 700)); // 0.7秒後に非表示
     }
 }
 

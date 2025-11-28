@@ -293,11 +293,14 @@ export function showCostModal(cardData, callback, cancelCallback) {
     const costGrid = document.getElementById('costGrid');
     costGrid.innerHTML = '';
 
+    const hideInfoToast = () => showToast('infoToast', '', true);
+
     // 1-8 のコストボタン
     for (let i = 1; i <= 8; i++) {
         const button = document.createElement('button');
         button.textContent = i;
         button.addEventListener('click', () => {
+            hideInfoToast();
             costModal.style.display = 'none';
             callback(i);
         });
@@ -308,6 +311,7 @@ export function showCostModal(cardData, callback, cancelCallback) {
     const nButton = document.createElement('button');
     nButton.textContent = 'n';
     nButton.addEventListener('click', () => {
+        hideInfoToast();
         const customCost = prompt('支払うコストの数を入力してください。', '0');
         const cost = parseInt(customCost, 10);
         if (!isNaN(cost) && cost >= 0) {
@@ -318,6 +322,7 @@ export function showCostModal(cardData, callback, cancelCallback) {
     costGrid.appendChild(nButton);
 
     costModal.style.display = 'flex';
+    showToast('infoToast', 'モーダル外クリックでコストを支払わない');
 
     const closeModalOnClickOutside = (e) => {
         // モーダルコンテンツ自体がクリックされた場合は閉じない
@@ -326,6 +331,7 @@ export function showCostModal(cardData, callback, cancelCallback) {
         }
         // モーダルの背景がクリックされた場合のみ閉じる
         if (e.target === costModal) {
+            hideInfoToast();
             costModal.style.display = 'none';
             if (cancelCallback) cancelCallback();
             costModal.removeEventListener('click', closeModalOnClickOutside);
