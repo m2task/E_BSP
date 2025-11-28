@@ -293,11 +293,14 @@ export function showCostModal(cardData, reservePaymentCallback, fieldPaymentCall
     const costGrid = document.getElementById('costGrid');
     costGrid.innerHTML = '';
 
+    const hideInfoToast = () => showToast('infoToast', '', true);
+
     // 1-8 のコストボタン (リザーブからの支払い)
     for (let i = 1; i <= 8; i++) {
         const button = document.createElement('button');
         button.textContent = i;
         button.addEventListener('click', () => {
+            hideInfoToast();
             costModal.style.display = 'none';
             reservePaymentCallback(i);
         });
@@ -308,6 +311,7 @@ export function showCostModal(cardData, reservePaymentCallback, fieldPaymentCall
     const nButton = document.createElement('button');
     nButton.textContent = 'n';
     nButton.addEventListener('click', () => {
+        hideInfoToast();
         const customCost = prompt('支払うコストの数を入力してください。', '0');
         const cost = parseInt(customCost, 10);
         if (!isNaN(cost) && cost >= 0) {
@@ -322,6 +326,7 @@ export function showCostModal(cardData, reservePaymentCallback, fieldPaymentCall
     fieldPaymentButton.textContent = 'フィールドから';
     fieldPaymentButton.classList.add('field-payment-button'); // スタイリング用クラス
     fieldPaymentButton.addEventListener('click', () => {
+        hideInfoToast();
         costModal.style.display = 'none';
         fieldPaymentCallback();
     });
@@ -338,6 +343,7 @@ export function showCostModal(cardData, reservePaymentCallback, fieldPaymentCall
         }
         // モーダルの背景がクリックされた場合のみ閉じる
         if (e.target === costModal) {
+            hideInfoToast();
             costModal.style.display = 'none';
             if (cancelCallback) cancelCallback();
             costModal.removeEventListener('click', closeModalOnClickOutside);
