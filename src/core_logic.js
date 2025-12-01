@@ -247,11 +247,15 @@ export function handleCoreDropOnZone(e, targetElement) {
         showToast('voidToast', '', { hide: true });
 
         const movedCount = coresToMove.length;
-        for (let i = 0; i < movedCount; i++) {
-            if (targetZoneName === 'trash') trashCores.push("blue");
-            else if (targetZoneName === 'reserve') reserveCores.push("blue");
-            else if (targetZoneName === 'life') lifeCores.push("blue");
-            else if (targetZoneName === 'count') countCores.push("blue");
+        for (const coreInfo of coresToMove) { // ループを変更
+            // voidCoreであっても、ドラッグされたコアのタイプを尊重する
+            // ただし、voidCore本来のドラッグ元にはtypeがないので、'blue'をデフォルトにする
+            const droppedCoreType = coreInfo.type && coreInfo.type !== 'void' ? coreInfo.type : 'blue';
+
+            if (targetZoneName === 'trash') trashCores.push(droppedCoreType);
+            else if (targetZoneName === 'reserve') reserveCores.push(droppedCoreType);
+            else if (targetZoneName === 'life') lifeCores.push(droppedCoreType);
+            else if (targetZoneName === 'count') countCores.push(droppedCoreType);
         }
         const toastMessage = `${movedCount}個増やしました`;
         showToast('voidToast', toastMessage, { duration: 1000 });
@@ -393,7 +397,13 @@ export function payCost(totalCost, cardToPlay, onPaymentSuccess) {
 
     // 2. 不足コストがない場合 (リザーブだけで足りる)
     if (remainingCost <= 0) {
-        reserveCores.splice(0, paidFromReserve);
+        // 支払ったコアをリザーブから削除する
+        coresFromReserve.forEach(coreType => {
+            const index = reserveCores.findIndex(c => c === coreType);
+            if (index !== -1) {
+                reserveCores.splice(index, 1);
+            }
+        });
         trashCores.push(...coresFromReserve);
         onPaymentSuccess();
         renderAll();
@@ -407,7 +417,13 @@ export function payCost(totalCost, cardToPlay, onPaymentSuccess) {
         // このコールバックは completePayment から呼ばれる
         // フィールド支払い分は completePayment 内でトラッシュに送られる
         // ここでリザーブからの支払い分をコミットする
-        reserveCores.splice(0, paidFromReserve);
+        // 支払ったコアをリザーブから削除する
+        coresFromReserve.forEach(coreType => {
+            const index = reserveCores.findIndex(c => c === coreType);
+            if (index !== -1) {
+                reserveCores.splice(index, 1);
+            }
+        });
         trashCores.push(...coresFromReserve);
         onPaymentSuccess(); // 最終的な成功コールバック
     };
