@@ -71,7 +71,7 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
             if (!movedCard.isSpecial) {
                 setTimeout(() => { // 描画が完了してからモーダルを表示
                     showConfirmationModal(
-                        `${movedCard.name}にコアを乗せますか？`,
+                        `維持コアを乗せますか？`,
                         () => { // "はい" の処理
                             placeCoreOnSummonedCard(movedCard);
                         },
