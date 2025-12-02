@@ -1,10 +1,10 @@
 // src/event_handlers.js
-import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging, paymentState } from './game_data.js';
+import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging, paymentState, moveState } from './game_data.js';
 import { renderAll, renderTrashModalContent } from './ui_render.js';
 import { showToast, getZoneName, isMobileDevice } from './utils.js';
 import { hideMagnifier } from './magnify_logic.js';
 import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField } from './card_logic.js';
-import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, payCostFromField, cancelPayment } from './core_logic.js';
+import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, payCostFromField, cancelPayment, moveCoreFromField, cancelCoreMove } from './core_logic.js';
 
 export function setupEventListeners() {
     // デッキボタンのドラッグイベントリスナーを追加
@@ -26,6 +26,28 @@ export function setupEventListeners() {
         const cardId = cardElement.dataset.id;
         const cardData = field.find(card => card.id === cardId);
         if (!cardData) return;
+
+        // 維持コアシステムのコア移動中の処理
+        if (moveState.isMoving) {
+            const sourceCard = cardData;
+            const targetCard = moveState.targetCard;
+
+            // 移動先と同じカードをクリックしたらキャンセル
+            if (sourceCard.id === targetCard.id) {
+                cancelCoreMove();
+                return;
+            }
+
+            // コアがないカードをクリックしたらエラー
+            if (sourceCard.coresOnCard.length === 0) {
+                showToast('errorToast', 'このカードには移動できるコアがありません。', { duration: 1000 });
+                return;
+            }
+
+            // コアを移動
+            moveCoreFromField(sourceCard, targetCard, 'soul');
+            return; // 移動処理の後は回転処理を行わない
+        }
 
         // コスト支払い中の処理
         if (paymentState.isPaying && paymentState.source === 'field') {

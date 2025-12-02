@@ -1,5 +1,5 @@
 // src/core_logic.js
-import { lifeCores, reserveCores, countCores, trashCores, field, voidChargeCount, selectedCores, draggedCoreData, paymentState, setPaymentState, setVoidChargeCount, setSelectedCores, setDraggedCoreData, draggedElement } from './game_data.js';
+import { lifeCores, reserveCores, countCores, trashCores, field, voidChargeCount, selectedCores, draggedCoreData, paymentState, setPaymentState, setVoidChargeCount, setSelectedCores, setDraggedCoreData, draggedElement, setMoveState, moveState } from './game_data.js';
 import { renderAll } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
 
@@ -587,27 +587,89 @@ export function placeCoreOnSummonedCard(summonedCard) {
     const potentialSourceCards = field.filter(card => card.id !== summonedCard.id && card.coresOnCard.length > 0);
 
     if (potentialSourceCards.length > 0) {
-      // 簡易的な選択UI (prompt)
-      const cardNames = potentialSourceCards.map((card, index) => `${index + 1}: ${card.name} (${card.coresOnCard.length}個)`).join('\n');
-      const choiceStr = prompt(`リザーブにコアがありません。\nフィールドの他のカードからコアを1個移動します。\n移動元のカードを番号で選択してください:\n\n${cardNames}`);
-
-      if (choiceStr) {
-        const choiceIndex = parseInt(choiceStr, 10) - 1;
-        if (!isNaN(choiceIndex) && choiceIndex >= 0 && choiceIndex < potentialSourceCards.length) {
-          const sourceCard = potentialSourceCards[choiceIndex];
-          const core = sourceCard.coresOnCard.pop();
-          summonedCard.coresOnCard.push(core);
-          showToast('infoToast', `${sourceCard.name}から${summonedCard.name}にコアを1個移動しました。`, { duration: 1500 });
-          renderAll();
-        } else {
-          showToast('errorToast', '無効な選択です。', { duration: 1000 });
-        }
-      }
-      // キャンセルされた場合は何もしない
+      // フィールドからのコア移動を開始
+      startCoreMoveFromField(summonedCard);
     } else {
       // 3. 移動できるコアがどこにもない
       showToast('infoToast', 'リザーブにもフィールドにも移動できるコアがありません。', { duration: 2000 });
-      // 何もしない
     }
   }
+}
+
+/**
+ * フィールドからのコア移動プロセスを開始する
+ */
+export function startCoreMoveFromField(targetCard) {
+    setMoveState({
+        isMoving: true,
+        targetCard: targetCard,
+        callback: () => {
+            // 移動成功時のコールバック（もしあれば）
+            showToast('infoToast', `${targetCard.name}にコアを移動しました。`, { duration: 1500 });
+        },
+    });
+    showToast('infoToast', `移動元のカードをクリックしてください。`, { duration: 2000 });
+    renderAll(); // フィールドのカードをハイライトするために再描画
+}
+
+/**
+ * フィールドのカードから別のカードへコアを1つ移動する
+ * @param {object} sourceCard - 移動元のカード
+ * @param {object} targetCard - 移動先のカード
+ * @param {string} priority - 'soul' または 'normal'。どちらのコアを優先的に移動するか。
+ */
+export function moveCoreFromField(sourceCard, targetCard, priority = 'normal') {
+    if (!sourceCard || !targetCard || sourceCard.coresOnCard.length === 0) {
+        cancelCoreMove();
+        return;
+    }
+
+    let coreToMove;
+    if (priority === 'soul') {
+        // ソウルコアを優先的に移動
+        const soulCoreIndex = sourceCard.coresOnCard.findIndex(c => c.type === 'soul');
+        if (soulCoreIndex !== -1) {
+            coreToMove = sourceCard.coresOnCard.splice(soulCoreIndex, 1)[0];
+        } else {
+            // ソウルコアがなければ最初のコアを移動
+            coreToMove = sourceCard.coresOnCard.shift();
+        }
+    } else {
+        // 通常コアを優先的に移動（ソウルコアを残す）
+        const normalCoreIndex = sourceCard.coresOnCard.findIndex(c => c.type !== 'soul');
+        if (normalCoreIndex !== -1) {
+            coreToMove = sourceCard.coresOnCard.splice(normalCoreIndex, 1)[0];
+        } else {
+            // 通常コアがなければ最後のコア（ソウルコアのはず）を移動
+            coreToMove = sourceCard.coresOnCard.pop();
+        }
+    }
+
+    targetCard.coresOnCard.push(coreToMove);
+
+    // 移動モードを終了
+    const { callback } = moveState;
+    setMoveState({
+        isMoving: false,
+        targetCard: null,
+        callback: null,
+    });
+
+    if (callback) {
+        callback();
+    }
+    renderAll();
+}
+
+/**
+ * コア移動プロセスをキャンセルする
+ */
+export function cancelCoreMove() {
+    setMoveState({
+        isMoving: false,
+        targetCard: null,
+        callback: null,
+    });
+    showToast('infoToast', 'コアの移動をキャンセルしました。', { duration: 1500 });
+    renderAll();
 }

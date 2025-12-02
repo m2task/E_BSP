@@ -54,6 +54,13 @@ export let paymentState = {
     paymentLog: [], // 支払いの操作ログ { fromCardId: string, paidCores: object[] }
 };
 
+// --- コア移動状態 ---
+export let moveState = {
+    isMoving: false,
+    targetCard: null, // 移動先のカード
+    callback: null, // 移動完了後のコールバック
+};
+
 
 // Setters for game data
 export function setDeck(newDeck) { deck = newDeck; }
@@ -83,6 +90,10 @@ export function setDiscardedCardNames(names) { discardState.names = names; }
 export function setDiscardToastTimer(timer) { discardState.timer = timer; }
 export function setPaymentState(newState) {
     paymentState = { ...paymentState, ...newState };
+}
+
+export function setMoveState(newState) {
+    moveState = { ...moveState, ...newState };
 }
 
 

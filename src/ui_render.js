@@ -1,5 +1,5 @@
 // src/ui_render.js
-import { deck, hand, field, trash, burst, lifeCores, reserveCores, countCores, trashCores, selectedCores, cardPositions, countShowCountAsNumber, openArea, handPinned, paymentState } from './game_data.js';
+import { deck, hand, field, trash, burst, lifeCores, reserveCores, countCores, trashCores, selectedCores, cardPositions, countShowCountAsNumber, openArea, handPinned, paymentState, moveState } from './game_data.js';
 import { handleCoreClick } from './core_logic.js';
 import { updateMagnifierEventListeners } from './magnify_logic.js';
 import { showToast } from './utils.js';
@@ -100,6 +100,11 @@ export function renderField() {
         // コスト支払い中のスタイルを適用
         if (paymentState.isPaying && paymentState.source === 'field' && cardData.coresOnCard.length > 0) {
             cardElement.classList.add('payable');
+        }
+
+        // 維持コアシステムの移動元選択中のスタイルを適用
+        if (moveState.isMoving && cardData.coresOnCard.length > 0 && (!moveState.targetCard || moveState.targetCard.id !== cardData.id)) {
+            cardElement.classList.add('payable'); // 同じハイライトスタイルを流用
         }
 
         // カード上のコアを描画
