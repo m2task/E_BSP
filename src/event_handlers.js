@@ -45,7 +45,7 @@ export function setupEventListeners() {
             }
 
             // コアを移動
-            moveCoreFromField(sourceCard, targetCard, 'soul');
+            moveCoreFromField(sourceCard, targetCard);
             return; // 移動処理の後は回転処理を行わない
         }
 
