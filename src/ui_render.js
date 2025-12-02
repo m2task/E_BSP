@@ -4,6 +4,9 @@ import { handleCoreClick } from './core_logic.js';
 import { updateMagnifierEventListeners } from './magnify_logic.js';
 import { showToast } from './utils.js';
 
+let maintainCoreTimer = null;
+let maintainCoreButtonHandler = null; // イベントハンドラを保持する変数
+
 export function createCardElement(cardData) {
     const div = document.createElement('div');
     div.className = 'card';
@@ -398,4 +401,50 @@ export function showConfirmationModal(message, onConfirm, onCancel) {
 
   // --- モーダルの表示 ---
   modal.style.display = 'flex';
+}
+
+export function showMaintainCoreButton(onYes, onNo) {
+    const container = document.getElementById('maintainCoreContainer');
+    const button = document.getElementById('maintainCoreButton');
+
+    // 既存のタイマーやリスナーがあればクリア
+    cancelMaintainCore();
+
+    container.style.display = 'block';
+
+    // イベントハンドラを定義
+    maintainCoreButtonHandler = () => {
+        clearTimeout(maintainCoreTimer);
+        container.style.display = 'none';
+        if (onYes) onYes();
+        button.removeEventListener('click', maintainCoreButtonHandler);
+        maintainCoreTimer = null;
+        maintainCoreButtonHandler = null;
+    };
+
+    button.addEventListener('click', maintainCoreButtonHandler);
+
+    maintainCoreTimer = setTimeout(() => {
+        container.style.display = 'none';
+        if (onNo) onNo();
+        button.removeEventListener('click', maintainCoreButtonHandler);
+        maintainCoreTimer = null;
+        maintainCoreButtonHandler = null;
+    }, 3000);
+}
+
+export function cancelMaintainCore() {
+    if (maintainCoreTimer) {
+        clearTimeout(maintainCoreTimer);
+        maintainCoreTimer = null;
+    }
+    const container = document.getElementById('maintainCoreContainer');
+    if (container) {
+        container.style.display = 'none';
+    }
+    const button = document.getElementById('maintainCoreButton');
+    if (button && maintainCoreButtonHandler) {
+        button.removeEventListener('click', maintainCoreButtonHandler);
+        maintainCoreButtonHandler = null;
+    }
 }

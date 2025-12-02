@@ -1,6 +1,6 @@
 // src/card_logic.js
 import { deck, hand, field, trash, burst, reserveCores, discardState, openArea, cardIdCounter, setCardIdCounter, setDeck, setHand, setField, setTrash, setBurst, setReserveCores, setDiscardCounter, setDiscardedCardNames, setDiscardToastTimer, setOpenArea, cardPositions } from './game_data.js';
-import { renderAll, showCostModal, renderOpenArea, showConfirmationModal } from './ui_render.js';
+import { renderAll, showCostModal, showMaintainCoreButton, cancelMaintainCore } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
 import { payCost, canPayTotal, placeCoreOnSummonedCard } from './core_logic.js';
 import { openModal } from './event_handlers.js';
@@ -58,6 +58,9 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
 
         // 支払い完了後の共通処理
         const onPaymentSuccess = () => {
+            // もし前の維持コア確認が進行中ならキャンセルする
+            cancelMaintainCore();
+
             const currentSourceArray = getArrayByZoneName(sourceZoneId);
             const currentCardIndex = currentSourceArray.findIndex(c => c.id === cardId);
             if (currentCardIndex === -1) return; // Card is no longer in the source zone
@@ -66,22 +69,17 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
             field.push(movedCard);
             renderAll();
 
-            // ★★★ ここからが追加部分 ★★★
             // 特殊カード（トークンなど）でない場合のみ確認
             if (!movedCard.isSpecial) {
-                setTimeout(() => { // 描画が完了してからモーダルを表示
-                    showConfirmationModal(
-                        `維持コアを乗せますか？`,
-                        () => { // "はい" の処理
-                            placeCoreOnSummonedCard(movedCard);
-                        },
-                        () => { // "いいえ" の処理
-                            // 何もしない
-                        }
-                    );
-                }, 100);
+                showMaintainCoreButton(
+                    () => { // "はい" の処理
+                        placeCoreOnSummonedCard(movedCard);
+                    },
+                    () => { // "いいえ" の処理
+                        // 何もしない
+                    }
+                );
             }
-            // ★★★ ここまでが追加部分 ★★★
         };
 
         showCostModal(
