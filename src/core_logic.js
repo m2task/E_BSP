@@ -594,7 +594,7 @@ export function placeCoreOnSummonedCard(summonedCard) {
     const preferredY = cardHeight / 2 - 10; // 中央少し上
     const { x, y } = findEmptySlot(preferredX, preferredY, summonedCard.coresOnCard, cardWidth, cardHeight);
     summonedCard.coresOnCard.push({ type: coreToMove, sourceArrayName: 'reserveCores', x, y });
-    showToast('infoToast', `${summonedCard.name}にリザーブからコアを1個置きました。`, { duration: 1500 });
+    showToast('infoToast', `リザーブからコアを置きました。`, { duration: 1500 });
     renderAll();
   } else {
     // 2. リザーブにコアがない場合、フィールドの他のカードから移動
@@ -619,7 +619,7 @@ export function startCoreMoveFromField(targetCard) {
         targetCard: targetCard,
         callback: () => {
             // 移動成功時のコールバック（もしあれば）
-            showToast('infoToast', `${targetCard.name}にコアを移動しました。`, { duration: 1500 });
+            showToast('infoToast', `フィールドからコアを移動しました。`, { duration: 1500 });
         },
     });
     showToast('infoToast', `移動元のカードをクリックしてください。`, { duration: 2000 });
