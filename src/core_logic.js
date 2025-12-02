@@ -574,3 +574,40 @@ export function cancelPayment(updateUI = true) {
         renderAll();
     }
 }
+
+export function placeCoreOnSummonedCard(summonedCard) {
+  if (reserveCores.length > 0) {
+    // 1. リザーブからコアを乗せる
+    const core = reserveCores.shift();
+    summonedCard.coresOnCard.push({ type: core, sourceArrayName: 'reserveCores' });
+    showToast('infoToast', `${summonedCard.name}にリザーブからコアを1個置きました。`, { duration: 1500 });
+    renderAll();
+  } else {
+    // 2. リザーブにコアがない場合、フィールドの他のカードから移動
+    const potentialSourceCards = field.filter(card => card.id !== summonedCard.id && card.coresOnCard.length > 0);
+
+    if (potentialSourceCards.length > 0) {
+      // 簡易的な選択UI (prompt)
+      const cardNames = potentialSourceCards.map((card, index) => `${index + 1}: ${card.name} (${card.coresOnCard.length}個)`).join('\n');
+      const choiceStr = prompt(`リザーブにコアがありません。\nフィールドの他のカードからコアを1個移動します。\n移動元のカードを番号で選択してください:\n\n${cardNames}`);
+
+      if (choiceStr) {
+        const choiceIndex = parseInt(choiceStr, 10) - 1;
+        if (!isNaN(choiceIndex) && choiceIndex >= 0 && choiceIndex < potentialSourceCards.length) {
+          const sourceCard = potentialSourceCards[choiceIndex];
+          const core = sourceCard.coresOnCard.pop();
+          summonedCard.coresOnCard.push(core);
+          showToast('infoToast', `${sourceCard.name}から${summonedCard.name}にコアを1個移動しました。`, { duration: 1500 });
+          renderAll();
+        } else {
+          showToast('errorToast', '無効な選択です。', { duration: 1000 });
+        }
+      }
+      // キャンセルされた場合は何もしない
+    } else {
+      // 3. 移動できるコアがどこにもない
+      showToast('infoToast', 'リザーブにもフィールドにも移動できるコアがありません。', { duration: 2000 });
+      // 何もしない
+    }
+  }
+}

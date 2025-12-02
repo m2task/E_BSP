@@ -733,3 +733,15 @@ body {
     top: 25%;
 }
 
+.modal-button {
+  padding: 10px 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: #f0f0f0;
+}
+
+.modal-button:hover {
+  background-color: #e0e0e0;
+}
+

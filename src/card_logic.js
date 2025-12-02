@@ -1,8 +1,8 @@
 // src/card_logic.js
 import { deck, hand, field, trash, burst, reserveCores, discardState, openArea, cardIdCounter, setCardIdCounter, setDeck, setHand, setField, setTrash, setBurst, setReserveCores, setDiscardCounter, setDiscardedCardNames, setDiscardToastTimer, setOpenArea, cardPositions } from './game_data.js';
-import { renderAll, showCostModal, renderOpenArea } from './ui_render.js';
+import { renderAll, showCostModal, renderOpenArea, showConfirmationModal } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
-import { payCost, canPayTotal } from './core_logic.js';
+import { payCost, canPayTotal, placeCoreOnSummonedCard } from './core_logic.js';
 import { openModal } from './event_handlers.js';
 import { hideMagnifier } from './magnify_logic.js';
 
@@ -65,6 +65,23 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
             const [movedCard] = currentSourceArray.splice(currentCardIndex, 1);
             field.push(movedCard);
             renderAll();
+
+            // ★★★ ここからが追加部分 ★★★
+            // 特殊カード（トークンなど）でない場合のみ確認
+            if (!movedCard.isSpecial) {
+                setTimeout(() => { // 描画が完了してからモーダルを表示
+                    showConfirmationModal(
+                        `${movedCard.name}にコアを乗せますか？`,
+                        () => { // "はい" の処理
+                            placeCoreOnSummonedCard(movedCard);
+                        },
+                        () => { // "いいえ" の処理
+                            // 何もしない
+                        }
+                    );
+                }, 100);
+            }
+            // ★★★ ここまでが追加部分 ★★★
         };
 
         showCostModal(

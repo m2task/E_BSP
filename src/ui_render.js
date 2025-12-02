@@ -345,3 +345,35 @@ export function showCostModal(cardData, callback, cancelCallback) {
 document.addEventListener('DOMContentLoaded', () => {
     renderAll();
 });
+
+export function showConfirmationModal(message, onConfirm, onCancel) {
+  const modal = document.getElementById('confirmationModal');
+  const messageElement = document.getElementById('confirmationMessage');
+  const confirmButton = document.getElementById('confirmButton');
+  const cancelButton = document.getElementById('cancelButton');
+
+  messageElement.textContent = message;
+
+  // 古いイベントリスナーを削除して多重登録を防ぐ
+  const newConfirmButton = confirmButton.cloneNode(true);
+  confirmButton.parentNode.replaceChild(newConfirmButton, confirmButton);
+
+  const newCancelButton = cancelButton.cloneNode(true);
+  cancelButton.parentNode.replaceChild(newCancelButton, cancelButton);
+
+  const closeModal = () => {
+    modal.style.display = 'none';
+  };
+
+  newConfirmButton.onclick = () => {
+    closeModal();
+    if (onConfirm) onConfirm();
+  };
+
+  newCancelButton.onclick = () => {
+    closeModal();
+    if (onCancel) onCancel();
+  };
+
+  modal.style.display = 'flex';
+}
