@@ -588,7 +588,12 @@ export function placeCoreOnSummonedCard(summonedCard) {
         // なければ最初のコアを移動
         coreToMove = reserveCores.shift();
     }
-    summonedCard.coresOnCard.push({ type: coreToMove, sourceArrayName: 'reserveCores' });
+    const cardWidth = 104;
+    const cardHeight = 156;
+    const preferredX = cardWidth / 2 - 10; // 中央少し左
+    const preferredY = cardHeight / 2 - 10; // 中央少し上
+    const { x, y } = findEmptySlot(preferredX, preferredY, summonedCard.coresOnCard, cardWidth, cardHeight);
+    summonedCard.coresOnCard.push({ type: coreToMove, sourceArrayName: 'reserveCores', x, y });
     showToast('infoToast', `${summonedCard.name}にリザーブからコアを1個置きました。`, { duration: 1500 });
     renderAll();
   } else {
@@ -654,6 +659,13 @@ export function moveCoreFromField(sourceCard, targetCard, priority = 'normal') {
         }
     }
 
+    const cardWidth = 104;
+    const cardHeight = 156;
+    const preferredX = cardWidth / 2 - 10;
+    const preferredY = cardHeight / 2 - 10;
+    const { x, y } = findEmptySlot(preferredX, preferredY, targetCard.coresOnCard, cardWidth, cardHeight);
+    coreToMove.x = x;
+    coreToMove.y = y;
     targetCard.coresOnCard.push(coreToMove);
 
     // 移動モードを終了
