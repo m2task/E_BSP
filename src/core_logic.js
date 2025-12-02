@@ -577,9 +577,18 @@ export function cancelPayment(updateUI = true) {
 
 export function placeCoreOnSummonedCard(summonedCard) {
   if (reserveCores.length > 0) {
-    // 1. リザーブからコアを乗せる
-    const core = reserveCores.shift();
-    summonedCard.coresOnCard.push({ type: core, sourceArrayName: 'reserveCores' });
+    // 1. リザーブからコアを乗せる (ソウルコア優先)
+    let coreToMove;
+    const soulCoreIndex = reserveCores.findIndex(c => c === 'soul');
+
+    if (soulCoreIndex !== -1) {
+        // ソウルコアがあれば優先的に移動
+        coreToMove = reserveCores.splice(soulCoreIndex, 1)[0];
+    } else {
+        // なければ最初のコアを移動
+        coreToMove = reserveCores.shift();
+    }
+    summonedCard.coresOnCard.push({ type: coreToMove, sourceArrayName: 'reserveCores' });
     showToast('infoToast', `${summonedCard.name}にリザーブからコアを1個置きました。`, { duration: 1500 });
     renderAll();
   } else {
