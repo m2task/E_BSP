@@ -359,26 +359,43 @@ export function showConfirmationModal(message, onConfirm, onCancel) {
 
   messageElement.textContent = message;
 
-  // 古いイベントリスナーを削除して多重登録を防ぐ
+  // --- イベントリスナーのクリーンアップと再設定 ---
   const newConfirmButton = confirmButton.cloneNode(true);
   confirmButton.parentNode.replaceChild(newConfirmButton, confirmButton);
 
   const newCancelButton = cancelButton.cloneNode(true);
   cancelButton.parentNode.replaceChild(newCancelButton, cancelButton);
 
-  const closeModal = () => {
-    modal.style.display = 'none';
-  };
-
-  newConfirmButton.onclick = () => {
+  // --- リスナーの定義 ---
+  const handleConfirm = () => {
     closeModal();
     if (onConfirm) onConfirm();
   };
 
-  newCancelButton.onclick = () => {
+  const handleCancel = () => {
     closeModal();
     if (onCancel) onCancel();
   };
 
+  const handleClickOutside = (e) => {
+    if (e.target === modal) { // 背景部分がクリックされた場合のみ
+      handleCancel();
+    }
+  };
+
+  const closeModal = () => {
+    modal.style.display = 'none';
+    // イベントリスナーを削除
+    modal.removeEventListener('click', handleClickOutside);
+    newConfirmButton.removeEventListener('click', handleConfirm);
+    newCancelButton.removeEventListener('click', handleCancel);
+  };
+
+  // --- リスナーの設定 ---
+  newConfirmButton.addEventListener('click', handleConfirm);
+  newCancelButton.addEventListener('click', handleCancel);
+  modal.addEventListener('click', handleClickOutside);
+
+  // --- モーダルの表示 ---
   modal.style.display = 'flex';
 }
