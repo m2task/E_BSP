@@ -4,7 +4,6 @@ import { setupEventListeners } from './src/event_handlers.js';
 import { renderAll } from './src/ui_render.js';
 import { shuffle } from './src/utils.js';
 import { cancelPayment } from './src/core_logic.js';
-import { initializeMagnifierToggle } from './src/magnify_logic.js';
 
 function getURLParams() {
     const params = new URLSearchParams(window.location.search);
@@ -107,6 +106,5 @@ async function initializeGame() {
 document.addEventListener('DOMContentLoaded', () => {
     initializeGame();
     setupEventListeners();
-    initializeMagnifierToggle();
     document.getElementById('cancelPaymentButton').addEventListener('click', cancelPayment);
 });
