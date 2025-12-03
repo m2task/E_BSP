@@ -750,7 +750,7 @@ body {
 .maintain-core-container {
     position: absolute;
     top: 20px; /* 上からの位置 */
-    right: 100px; /* 右からの位置を増やして左に寄せる */
+    right: 150px; /* 右からの位置を増やしてさらに左に寄せる */
     z-index: 100;
 }
 
