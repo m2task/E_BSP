@@ -72,8 +72,8 @@ export function initializeMagnifyButton() {
             // 状態を反転
             isMagnifyEnabled = !isMagnifyEnabled;
             
-            // ボタンのテキストを更新
-            toggleButton.textContent = isMagnifyEnabled ? 'カード拡大ON' : 'カード拡大OFF';
+            // ボタンのテキストを更新 (次に押したときの動作を示す)
+            toggleButton.textContent = isMagnifyEnabled ? 'カード拡大OFF' : 'カード拡大ON';
 
             if (!isMagnifyEnabled) {
                 hideMagnifier(); // OFFにした瞬間に拡大表示を消す
