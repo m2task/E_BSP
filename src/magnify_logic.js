@@ -4,6 +4,8 @@ import { draggedElement, isDragging, field, hand, trash, burst, openArea } from 
 const loupe = document.getElementById('magnifying-loupe');
 const magnifiedImage = document.getElementById('magnified-card-image');
 
+let isMagnifierEnabled = true; // デフォルトはON
+
 // プレビューパネルの固定サイズ
 const PREVIEW_WIDTH = 200; // 80px * 2.5
 const PREVIEW_HEIGHT = 300; // 120px * 2.5
@@ -19,8 +21,8 @@ function getCardData(cardId) {
 }
 
 function handleCardMouseOver(e) {
-    if (draggedElement || isDragging) {
-        loupe.style.display = 'none'; // ドラッグ中は非表示を徹底
+    if (!isMagnifierEnabled || draggedElement || isDragging) { // ガード節を追加
+        loupe.style.display = 'none';
         return;
     }
 
@@ -61,4 +63,17 @@ export function updateMagnifierEventListeners() {
         card.addEventListener('mouseover', handleCardMouseOver);
         card.addEventListener('mouseout', handleCardMouseOut);
     });
+}
+
+export function initializeMagnifierToggle() {
+    const toggle = document.getElementById('magnifierToggle');
+    if (toggle) {
+        isMagnifierEnabled = toggle.checked; // 初期状態をセット
+        toggle.addEventListener('change', (e) => {
+            isMagnifierEnabled = e.target.checked;
+            if (!isMagnifierEnabled) {
+                hideMagnifier(); // OFFにしたら即座に非表示にする
+            }
+        });
+    }
 }
