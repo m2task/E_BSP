@@ -9,6 +9,8 @@ const PREVIEW_WIDTH = 200; // 80px * 2.5
 const PREVIEW_HEIGHT = 300; // 120px * 2.5
 const OFFSET = 10; // カードとプレビューパネルの間のオフセット
 
+let isMagnifyEnabled = true; // 拡大機能のON/OFF状態を管理
+
 function getCardData(cardId) {
     const allCardArrays = [field, hand, trash, burst, openArea];
     for (const arr of allCardArrays) {
@@ -19,7 +21,7 @@ function getCardData(cardId) {
 }
 
 function handleCardMouseOver(e) {
-    if (draggedElement || isDragging) {
+    if (!isMagnifyEnabled || draggedElement || isDragging) {
         loupe.style.display = 'none'; // ドラッグ中は非表示を徹底
         return;
     }
@@ -61,4 +63,16 @@ export function updateMagnifierEventListeners() {
         card.addEventListener('mouseover', handleCardMouseOver);
         card.addEventListener('mouseout', handleCardMouseOut);
     });
+}
+
+export function initializeMagnifyToggle() {
+    const toggle = document.getElementById('magnify-toggle');
+    if (toggle) {
+        toggle.addEventListener('change', (e) => {
+            isMagnifyEnabled = e.target.checked;
+            if (!isMagnifyEnabled) {
+                hideMagnifier(); // OFFにした瞬間に拡大表示を消す
+            }
+        });
+    }
 }
