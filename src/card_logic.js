@@ -220,3 +220,23 @@ export function createSpecialCardOnField(cardType, position) {
 
     renderAll();
 }
+
+export function discardAllOpenCards() {
+    if (openArea.length === 0) {
+        return; // 対象のカードがない場合は何もしない
+    }
+
+    // 確認ダイアログ
+    if (!confirm(`オープンされている ${openArea.length} 枚のカードをすべて破棄しますか？`)) {
+        return;
+    }
+
+    // openArea のカードを trash に移動
+    setTrash([...trash, ...openArea]);
+
+    // openArea を空にする
+    setOpenArea([]);
+
+    // UIを更新
+    renderAll();
+}
