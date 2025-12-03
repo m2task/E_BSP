@@ -59,13 +59,48 @@ document.addEventListener('DOMContentLoaded', () => {
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
+
+        // 背景を白で塗りつぶし
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, width, height);
+
+        // テキスト設定
         ctx.fillStyle = 'black';
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(text, width / 2, height / 2);
+        ctx.textBaseline = 'middle'; // 垂直方向の中央揃えの基準
+
+        const padding = 5; // 左右のパディング
+        const maxWidth = width - (padding * 2);
+        const lineHeight = 14; // 行の高さ（フォントサイズより少し大きめ）
+
+        let lines = [];
+        let currentLine = '';
+
+        // テキストを1文字ずつ処理して行に分割
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const testLine = currentLine + char;
+            const metrics = ctx.measureText(testLine);
+            const testWidth = metrics.width;
+            if (testWidth > maxWidth && i > 0) {
+                lines.push(currentLine);
+                currentLine = char;
+            } else {
+                currentLine = testLine;
+            }
+        }
+        lines.push(currentLine);
+
+        // 描画開始Y座標を計算してテキストブロック全体が上下中央に来るようにする
+        const totalTextHeight = (lines.length - 1) * lineHeight;
+        let startY = (height - totalTextHeight) / 2;
+
+        // 各行を描画
+        for (let i = 0; i < lines.length; i++) {
+            ctx.fillText(lines[i], width / 2, startY + (i * lineHeight));
+        }
+
         return canvas.toDataURL('image/png');
     }
 
