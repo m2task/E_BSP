@@ -9,7 +9,7 @@ const PREVIEW_WIDTH = 200; // 80px * 2.5
 const PREVIEW_HEIGHT = 300; // 120px * 2.5
 const OFFSET = 10; // カードとプレビューパネルの間のオフセット
 
-let isMagnifyEnabled = false; // 拡大機能のON/OFF状態を管理 (初期状態はOFF)
+let isMagnifyEnabled = true; // 拡大機能のON/OFF状態を管理 (初期状態はON)
 
 function getCardData(cardId) {
     const allCardArrays = [field, hand, trash, burst, openArea];
