@@ -7,6 +7,7 @@ import { showToast } from './utils.js';
 let maintainCoreTimeoutTimer = null; // setTimeout用のタイマーID
 let maintainCoreIntervalTimer = null; // setInterval用のタイマーID
 let maintainCoreButtonHandler = null; // イベントハンドラを保持する変数
+let maintainCoreCancelHandler = null; // キャンセルボタンのイベントハンドラ
 
 export function createCardElement(cardData) {
     const div = document.createElement('div');
@@ -407,6 +408,7 @@ export function showConfirmationModal(message, onConfirm, onCancel) {
 export function showMaintainCoreButton(onYes, onNo) {
     const container = document.getElementById('maintainCoreContainer');
     const button = document.getElementById('maintainCoreButton');
+    const cancelButton = document.getElementById('cancelMaintainCoreButton');
     const originalText = '維持コアを置く';
     let remainingTime = 3;
 
@@ -426,15 +428,20 @@ export function showMaintainCoreButton(onYes, onNo) {
 
     // イベントハンドラを定義
     maintainCoreButtonHandler = () => {
-        cancelMaintainCore(); // タイマーとリスナーをすべてクリア
+        cancelMaintainCore();
         if (onYes) onYes();
+    };
+    maintainCoreCancelHandler = () => {
+        cancelMaintainCore();
+        if (onNo) onNo();
     };
 
     button.addEventListener('click', maintainCoreButtonHandler);
+    cancelButton.addEventListener('click', maintainCoreCancelHandler);
 
     // 3秒後に実行されるタイムアウト
     maintainCoreTimeoutTimer = setTimeout(() => {
-        cancelMaintainCore(); // タイマーとリスナーをすべてクリア
+        cancelMaintainCore();
         if (onNo) onNo();
     }, 3000);
 }
@@ -458,6 +465,13 @@ export function cancelMaintainCore() {
     if (button && maintainCoreButtonHandler) {
         button.removeEventListener('click', maintainCoreButtonHandler);
         maintainCoreButtonHandler = null;
-        button.textContent = '維持コアを置く'; // テキストを元に戻す
+        button.textContent = '維持コアを置く';
+    }
+
+    const cancelButton = document.getElementById('cancelMaintainCoreButton');
+    if (cancelButton && maintainCoreCancelHandler) {
+        cancelButton.removeEventListener('click', maintainCoreCancelHandler);
+        maintainCoreCancelHandler = null;
     }
 }
+
