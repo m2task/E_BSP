@@ -577,24 +577,25 @@ export function cancelPayment(updateUI = true) {
 
 export function placeCoreOnSummonedCard(summonedCard) {
   if (reserveCores.length > 0) {
-    // 1. リザーブからコアを乗せる (ソウルコア優先)
-    let coreToMove;
-    const soulCoreIndex = reserveCores.findIndex(c => c === 'soul');
+    // 1. リザーブからすべてのコアを乗せる
+    const coresToMove = [...reserveCores]; // すべてのコアをコピー
+    reserveCores.length = 0; // リザーブを空にする
 
-    if (soulCoreIndex !== -1) {
-        // ソウルコアがあれば優先的に移動
-        coreToMove = reserveCores.splice(soulCoreIndex, 1)[0];
-    } else {
-        // なければ最初のコアを移動
-        coreToMove = reserveCores.shift();
-    }
     const cardWidth = 104;
     const cardHeight = 156;
-    const preferredX = cardWidth / 2 - 10; // 中央少し左
-    const preferredY = cardHeight / 2 - 10; // 中央少し上
-    const { x, y } = findEmptySlot(preferredX, preferredY, summonedCard.coresOnCard, cardWidth, cardHeight);
-    summonedCard.coresOnCard.push({ type: coreToMove, sourceArrayName: 'reserveCores', x, y });
-    showToast('infoToast', `リザーブからコアを置きました。`, { duration: 1500 });
+    let preferredX = cardWidth / 2 - 10;
+    let preferredY = cardHeight / 2 - 10;
+
+    // 各コアを重ならないように配置
+    coresToMove.forEach(coreType => {
+        const { x, y } = findEmptySlot(preferredX, preferredY, summonedCard.coresOnCard, cardWidth, cardHeight);
+        summonedCard.coresOnCard.push({ type: coreType, sourceArrayName: 'reserveCores', x, y });
+        // 次のコアの配置場所を少しずらす
+        preferredX += 5;
+        preferredY += 5;
+    });
+
+    showToast('infoToast', `リザーブから ${coresToMove.length}個のコアを置きました。`, { duration: 1500 });
     renderAll();
   } else {
     // 2. リザーブにコアがない場合、フィールドの他のカードから移動
