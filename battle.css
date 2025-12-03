@@ -749,9 +749,8 @@ body {
 /* 維持コアボタンのスタイル */
 .maintain-core-container {
     position: absolute;
-    bottom: 300px; /* 位置をさらに上に変更 */
-    left: 50%;
-    transform: translateX(-50%);
+    top: 20px; /* 上からの位置 */
+    right: 20px; /* 右からの位置 */
     z-index: 100;
 }
 
