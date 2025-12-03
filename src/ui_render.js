@@ -4,7 +4,8 @@ import { handleCoreClick } from './core_logic.js';
 import { updateMagnifierEventListeners } from './magnify_logic.js';
 import { showToast } from './utils.js';
 
-let maintainCoreTimer = null;
+let maintainCoreTimeoutTimer = null; // setTimeout用のタイマーID
+let maintainCoreIntervalTimer = null; // setInterval用のタイマーID
 let maintainCoreButtonHandler = null; // イベントハンドラを保持する変数
 
 export function createCardElement(cardData) {
@@ -406,45 +407,57 @@ export function showConfirmationModal(message, onConfirm, onCancel) {
 export function showMaintainCoreButton(onYes, onNo) {
     const container = document.getElementById('maintainCoreContainer');
     const button = document.getElementById('maintainCoreButton');
+    const originalText = '維持コアを置く';
+    let remainingTime = 3;
 
     // 既存のタイマーやリスナーがあればクリア
     cancelMaintainCore();
 
     container.style.display = 'block';
+    button.textContent = `${originalText} (${remainingTime})`;
+
+    // 1秒ごとにテキストを更新するインターバルを開始
+    maintainCoreIntervalTimer = setInterval(() => {
+        remainingTime--;
+        if (remainingTime >= 0) {
+            button.textContent = `${originalText} (${remainingTime})`;
+        }
+    }, 1000);
 
     // イベントハンドラを定義
     maintainCoreButtonHandler = () => {
-        clearTimeout(maintainCoreTimer);
-        container.style.display = 'none';
+        cancelMaintainCore(); // タイマーとリスナーをすべてクリア
         if (onYes) onYes();
-        button.removeEventListener('click', maintainCoreButtonHandler);
-        maintainCoreTimer = null;
-        maintainCoreButtonHandler = null;
     };
 
     button.addEventListener('click', maintainCoreButtonHandler);
 
-    maintainCoreTimer = setTimeout(() => {
-        container.style.display = 'none';
+    // 3秒後に実行されるタイムアウト
+    maintainCoreTimeoutTimer = setTimeout(() => {
+        cancelMaintainCore(); // タイマーとリスナーをすべてクリア
         if (onNo) onNo();
-        button.removeEventListener('click', maintainCoreButtonHandler);
-        maintainCoreTimer = null;
-        maintainCoreButtonHandler = null;
     }, 3000);
 }
 
 export function cancelMaintainCore() {
-    if (maintainCoreTimer) {
-        clearTimeout(maintainCoreTimer);
-        maintainCoreTimer = null;
+    if (maintainCoreTimeoutTimer) {
+        clearTimeout(maintainCoreTimeoutTimer);
+        maintainCoreTimeoutTimer = null;
     }
+    if (maintainCoreIntervalTimer) {
+        clearInterval(maintainCoreIntervalTimer);
+        maintainCoreIntervalTimer = null;
+    }
+
     const container = document.getElementById('maintainCoreContainer');
     if (container) {
         container.style.display = 'none';
     }
+
     const button = document.getElementById('maintainCoreButton');
     if (button && maintainCoreButtonHandler) {
         button.removeEventListener('click', maintainCoreButtonHandler);
         maintainCoreButtonHandler = null;
+        button.textContent = '維持コアを置く'; // テキストを元に戻す
     }
 }

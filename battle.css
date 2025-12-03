@@ -749,7 +749,7 @@ body {
 /* 維持コアボタンのスタイル */
 .maintain-core-container {
     position: absolute;
-    bottom: 200px; /* 位置を上に変更 */
+    bottom: 300px; /* 位置をさらに上に変更 */
     left: 50%;
     transform: translateX(-50%);
     z-index: 100;
@@ -760,7 +760,7 @@ body {
     font-size: 16px;
     font-weight: bold;
     color: white; /* 白文字 */
-    background-color: rgba(0, 0, 0, 0.7); /* 黒背景・透過 */
+    background-color: rgba(0, 0, 0, 0.5); /* 黒背景・透過度を上げる */
     border: 1px solid white; /* 視認性向上のための白枠 */
     border-radius: 5px;
     cursor: pointer;
@@ -769,5 +769,5 @@ body {
 }
 
 .maintain-core-button:hover {
-    background-color: rgba(0, 0, 0, 0.9); /* ホバー時は少し濃くする */
+    background-color: rgba(0, 0, 0, 0.7); /* ホバー時は少し濃くする */
 }
