@@ -226,11 +226,6 @@ export function discardAllOpenCards() {
         return; // 対象のカードがない場合は何もしない
     }
 
-    // 確認ダイアログ
-    if (!confirm(`オープンされている ${openArea.length} 枚のカードをすべて破棄しますか？`)) {
-        return;
-    }
-
     // openArea のカードを trash に移動
     setTrash([...trash, ...openArea]);
 
