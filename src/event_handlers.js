@@ -1,10 +1,10 @@
 // src/event_handlers.js
 import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, hand, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging, paymentState, moveState } from './game_data.js';
-import { renderAll, renderTrashModalContent, showCostConfirmButton } from './ui_render.js';
+import { renderAll, renderTrashModalContent, showSummonActionChoice } from './ui_render.js';
 import { showToast, getZoneName, isMobileDevice } from './utils.js';
 import { hideMagnifier } from './magnify_logic.js';
 import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField, discardAllOpenCards, initiateSummon } from './card_logic.js';
-import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, payCostFromField, cancelPayment, moveCoreFromField, cancelCoreMove } from './core_logic.js';
+import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, payCostFromField, cancelPayment, moveCoreFromField, cancelCoreMove, placeCoreOnSummonedCard } from './core_logic.js';
 
 export function setupEventListeners() {
     // デッキボタンのドラッグイベントリスナーを追加
@@ -446,18 +446,20 @@ function handleCardDrop(e) {
             top: e.clientY - fieldRect.top - offsetY
         };
         renderAll(); // 先にカードをフィールドに表示
+        hideMagnifier();
 
-        hideMagnifier(); // ★拡大鏡を隠す処理を追加
-        // コスト確認ボタンを表示
-        showCostConfirmButton(
-            () => { // onConfirm: コストを支払う場合
+        // アクション選択ボタンを表示
+        showSummonActionChoice(
+            () => { // onSummon: コストを支払って召喚する場合
                 initiateSummon(cardId, sourceZoneName);
             },
-            () => { // onCancel: コストを支払わない場合
+            () => { // onPlaceCore: コアを置くだけの場合
+                placeCoreOnSummonedCard(cardData);
+            },
+            () => { // onCancel: 何もしない場合
                 // 何もしない（カードはフィールドに残る）
             }
         );
-        hideMagnifier();
     } else {
         // --- 元々のロジック ---
         // それ以外のすべてのカード移動
