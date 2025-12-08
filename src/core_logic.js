@@ -35,7 +35,7 @@ function isOverlapping(core1, core2) {
  * @param {number} cardHeight - カードの高さ
  * @returns {{x: number, y: number}} - 配置可能な新しい座標
  */
-function findEmptySlot(preferredX, preferredY, existingCores, cardWidth, cardHeight) {
+export function findEmptySlot(preferredX, preferredY, existingCores, cardWidth, cardHeight) {
     let newPos = { x: preferredX, y: preferredY };
 
     // まず希望の座標をカード内にクランプ
