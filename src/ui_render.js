@@ -529,3 +529,51 @@ export function hideSummonActionChoice() {
     }
 }
 
+let singleActionTimeoutTimer = null;
+let singleActionButtonHandler = null;
+
+export function showSingleActionChoice(buttonText, onConfirm, onCancel) {
+    let container = document.getElementById('singleActionContainer');
+    if (!container) return;
+
+    container.remove();
+    document.body.appendChild(container);
+
+    const button = document.getElementById('singleActionButton');
+    
+    hideSingleActionChoice();
+
+    container.style.display = 'block';
+    button.textContent = buttonText;
+
+    singleActionButtonHandler = () => {
+        hideSingleActionChoice();
+        if (onConfirm) onConfirm();
+    };
+
+    button.addEventListener('click', singleActionButtonHandler);
+
+    singleActionTimeoutTimer = setTimeout(() => {
+        hideSingleActionChoice();
+        if (onCancel) onCancel();
+    }, 3000);
+}
+
+export function hideSingleActionChoice() {
+    if (singleActionTimeoutTimer) {
+        clearTimeout(singleActionTimeoutTimer);
+        singleActionTimeoutTimer = null;
+    }
+
+    const container = document.getElementById('singleActionContainer');
+    if (container) {
+        container.style.display = 'none';
+    }
+
+    const button = document.getElementById('singleActionButton');
+    if (button && singleActionButtonHandler) {
+        button.removeEventListener('click', singleActionButtonHandler);
+        singleActionButtonHandler = null;
+    }
+}
+

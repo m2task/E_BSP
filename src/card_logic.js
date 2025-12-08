@@ -98,77 +98,69 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
     renderAll();
 }
 
-export function initiateSummon(cardId, sourceZoneId) {
+export function initiateSummon(cardId, sourceZoneId, position) {
     const sourceArray = getArrayByZoneName(sourceZoneId);
     const cardIndex = sourceArray.findIndex(c => c.id === cardId);
-    if (cardIndex === -1) {
-        // This can happen if the card was already moved, which is expected in the new flow.
-        // Let's find the card in the field instead.
-        const cardData = field.find(c => c.id === cardId);
-        if (!cardData) return; // Still not found, something is wrong.
-
-        // Card is already on the field, proceed with payment logic.
-        const onSummonSuccess = () => {
-            cancelMaintainCore();
-            renderAll(); // Re-render to update any states.
-            if (!cardData.isSpecial) {
-                showMaintainCoreButton(
-                    () => placeCoreOnSummonedCard(cardData),
-                    () => {} // No action on "No"
-                );
-            }
-        };
-
-        showCostModal(
-            cardData,
-            (cost) => {
-                if (canPayTotal(cost)) {
-                    payCost(cost, cardData, onSummonSuccess);
-                } else {
-                    renderAll();
-                }
-            },
-            () => onSummonSuccess() // Cost 0 summon
-        );
-        return;
-    }
-
-    // This part of the logic is for summons from zones other than hand-to-field (e.g. burst)
+    if (cardIndex === -1) return;
     const cardData = sourceArray[cardIndex];
+
+    // --- Summoning Logic ---
     const onSummonSuccess = () => {
         cancelMaintainCore();
-
-        const currentSourceArray = getArrayByZoneName(sourceZoneId);
-        const currentCardIndex = currentSourceArray.findIndex(c => c.id === cardId);
-        if (currentCardIndex === -1) return;
-
-        const [movedCard] = currentSourceArray.splice(currentCardIndex, 1);
-        field.push(movedCard);
+        // The card is already moved before payment, so we just need to render
         renderAll();
 
-        if (!movedCard.isSpecial) {
+        if (!cardData.isSpecial) {
             showMaintainCoreButton(
-                () => placeCoreOnSummonedCard(movedCard),
+                () => placeCoreOnSummonedCard(cardData),
                 () => {} // No action on "No"
             );
         }
     };
 
+    // Burst summon doesn't require cost
     if (sourceZoneId === 'burst') {
+        // Move card data first
+        sourceArray.splice(cardIndex, 1);
+        field.push(cardData);
+        cardPositions[cardId] = position;
         onSummonSuccess();
     } else {
+        // Other summons (from hand, trash, etc.) go through cost payment
         showCostModal(
             cardData,
             (cost) => {
                 if (canPayTotal(cost)) {
+                    // Move card data only if payment is initiated
+                    sourceArray.splice(cardIndex, 1);
+                    field.push(cardData);
+                    cardPositions[cardId] = position;
                     payCost(cost, cardData, onSummonSuccess);
                 } else {
-                    renderAll();
+                    showToast('errorToast', 'コストを支払えません。', { duration: 2000 });
+                    renderAll(); // Re-render to show card back in source
                 }
             },
-            () => onSummonSuccess() // Cost 0 summon
+            () => { // Cost 0 summon
+                sourceArray.splice(cardIndex, 1);
+                field.push(cardData);
+                cardPositions[cardId] = position;
+                onSummonSuccess();
+            }
         );
     }
+}
+
+export function placeCardOnFieldWithoutPayment(cardId, sourceZoneId, position) {
+    const sourceArray = getArrayByZoneName(sourceZoneId);
+    const cardIndex = sourceArray.findIndex(c => c.id === cardId);
+    if (cardIndex === -1) return;
+
+    const [cardData] = sourceArray.splice(cardIndex, 1);
+    field.push(cardData);
+    cardPositions[cardId] = position;
+
+    renderAll();
 }
 
 export function openDeck() {

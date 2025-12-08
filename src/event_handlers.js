@@ -1,10 +1,10 @@
 // src/event_handlers.js
 import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, hand, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging, paymentState, moveState } from './game_data.js';
-import { renderAll, renderTrashModalContent, showSummonActionChoice } from './ui_render.js';
+import { renderAll, renderTrashModalContent, showSummonActionChoice, showSingleActionChoice, showCostModal } from './ui_render.js';
 import { showToast, getZoneName, isMobileDevice } from './utils.js';
 import { hideMagnifier } from './magnify_logic.js';
-import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField, discardAllOpenCards, initiateSummon } from './card_logic.js';
-import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, payCostFromField, cancelPayment, moveCoreFromField, cancelCoreMove, placeCoreOnSummonedCard } from './core_logic.js';
+import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField, discardAllOpenCards, initiateSummon, placeCardOnFieldWithoutPayment } from './card_logic.js';
+import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, payCost, payCostFromField, cancelPayment, moveCoreFromField, cancelCoreMove, placeCoreOnSummonedCard } from './core_logic.js';
 
 export function setupEventListeners() {
     // デッキボタンのドラッグイベントリスナーを追加
@@ -430,52 +430,85 @@ function handleCardDrop(e) {
     const targetZoneName = getZoneName(actualTargetZoneElement);
     if (targetZoneName === 'deck') return;
 
+    const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
+    const position = {
+        left: e.clientX - fieldRect.left - offsetX,
+        top: e.clientY - fieldRect.top - offsetY
+    };
+
     // --- 新しいロジック ---
     // 手札、トラッシュ、バーストからフィールドへの移動（召喚）の場合
     if (targetZoneName === 'field' && ['hand', 'trash', 'burst'].includes(sourceZoneName)) {
         const sourceArray = getArrayByZoneName(sourceZoneName);
         if (!sourceArray) return;
+        const cardData = sourceArray.find(c => c.id === cardId);
+        if (!cardData) return;
 
-        // カードを先にデータ移動させておく
-        const cardIndex = sourceArray.findIndex(c => c.id === cardId);
-        if (cardIndex === -1) return;
-        const [cardData] = sourceArray.splice(cardIndex, 1);
-        field.push(cardData);
-
-        // 見た目の位置を更新
-        const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
-        cardPositions[cardId] = {
-            left: e.clientX - fieldRect.left - offsetX,
-            top: e.clientY - fieldRect.top - offsetY
-        };
-        renderAll(); // 先にカードをフィールドに表示
         hideMagnifier();
 
         // アクション選択ボタンを表示
         showSummonActionChoice(
             () => { // onSummon: コストを支払って召喚する場合
-                initiateSummon(cardId, sourceZoneName);
+                initiateSummon(cardId, sourceZoneName, position);
             },
             () => { // onPlaceCore: コアを置くだけの場合
-                placeCoreOnSummonedCard(cardData);
+                // 先にカードを移動させてからコアを置く処理を呼ぶ
+                placeCardOnFieldWithoutPayment(cardId, sourceZoneName, position);
+                // placeCoreOnSummonedCard は cardData を必要とするので、fieldから再取得
+                const summonedCard = field.find(c => c.id === cardId);
+                if(summonedCard) placeCoreOnSummonedCard(summonedCard);
             },
-            () => { // onCancel: 何もしない場合
-                // 何もしない（カードはフィールドに残る）
+            () => { // onCancel: 何もせずフィールドに置くだけの場合
+                placeCardOnFieldWithoutPayment(cardId, sourceZoneName, position);
+            }
+        );
+    } else if (targetZoneName === 'trash' && sourceZoneName === 'hand') {
+        // 手札からトラッシュへの移動（マジック使用など）の場合
+        const cardData = hand.find(c => c.id === cardId);
+        if (!cardData) return;
+
+        hideMagnifier();
+
+        // 確認ボタンを表示
+        showSingleActionChoice(
+            "コストを支払う", // ボタンのテキスト
+            () => { // onConfirm: ボタンが押された場合
+                // 1. カードを手札からトラッシュへ移動
+                const cardIndex = hand.findIndex(c => c.id === cardId);
+                if (cardIndex > -1) {
+                    const [movedCard] = hand.splice(cardIndex, 1);
+                    trash.push(movedCard);
+                }
+                
+                // 2. コストモーダルを表示して支払いに進む
+                showCostModal(cardData, (cost) => {
+                    payCost(cost, null, () => { // cardToPlayはnull
+                        showToast('infoToast', `${cardData.name}の効果を使用しました。`, { duration: 2000 });
+                        renderAll();
+                    });
+                }, () => {
+                    // コストモーダルがキャンセルされたらカードを手札に戻す
+                    const trashIndex = trash.findIndex(c => c.id === cardId);
+                    if (trashIndex > -1) {
+                        const [returnedCard] = trash.splice(trashIndex, 1);
+                        hand.push(returnedCard);
+                        renderAll();
+                    }
+                });
+            },
+            () => { // onCancel: タイムアウトした場合
+                // 何もせず、カードは手札に残る
             }
         );
     } else {
         // --- 元々のロジック ---
         // それ以外のすべてのカード移動
         if (targetZoneName === 'field') {
-            const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
-            cardPositions[cardId] = {
-                left: e.clientX - fieldRect.left - offsetX,
-                top: e.clientY - fieldRect.top - offsetY
-            };
+            cardPositions[cardId] = position;
         } else {
             delete cardPositions[cardId];
         }
-        moveCardData(cardId, sourceZoneName, targetZoneName, false); // isSummon=false
+        moveCardData(cardId, sourceZoneName, targetZoneName);
         hideMagnifier();
     }
 }
