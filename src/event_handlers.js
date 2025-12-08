@@ -431,12 +431,15 @@ function handleCardDrop(e) {
     if (targetZoneName === 'deck') return;
 
     // --- 新しいロジック ---
-    // 手札からフィールドへの移動（召喚）の場合
-    if (sourceZoneName === 'hand' && targetZoneName === 'field') {
+    // 手札、トラッシュ、バーストからフィールドへの移動（召喚）の場合
+    if (targetZoneName === 'field' && ['hand', 'trash', 'burst'].includes(sourceZoneName)) {
+        const sourceArray = getArrayByZoneName(sourceZoneName);
+        if (!sourceArray) return;
+
         // カードを先にデータ移動させておく
-        const cardIndex = hand.findIndex(c => c.id === cardId);
+        const cardIndex = sourceArray.findIndex(c => c.id === cardId);
         if (cardIndex === -1) return;
-        const [cardData] = hand.splice(cardIndex, 1);
+        const [cardData] = sourceArray.splice(cardIndex, 1);
         field.push(cardData);
 
         // 見た目の位置を更新
