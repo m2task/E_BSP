@@ -447,7 +447,6 @@ function handleCardDrop(e) {
         };
         renderAll(); // 先にカードをフィールドに表示
 
-        showToast('infoToast', '召喚を検知しました。', { duration: 2000 }); // ★デバッグ用トースト
         hideMagnifier(); // ★拡大鏡を隠す処理を追加
         // コスト確認ボタンを表示
         showCostConfirmButton(
