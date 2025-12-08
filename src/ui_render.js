@@ -481,8 +481,12 @@ let costConfirmButtonHandler = null;
 let costConfirmCancelHandler = null;
 
 export function showCostConfirmButton(onConfirm, onCancel) {
-    const container = document.getElementById('costConfirmContainer');
-    if (!container) return; // コンテナがない場合は何もしない
+    let container = document.getElementById('costConfirmContainer');
+    if (!container) return;
+
+    // コンテナを一度DOMから削除し、bodyの末尾に再追加する（強制表示のため）
+    container.remove();
+    document.body.appendChild(container);
 
     const button = document.getElementById('costConfirmButton');
     const cancelButton = document.getElementById('cancelCostConfirmButton');
@@ -491,7 +495,7 @@ export function showCostConfirmButton(onConfirm, onCancel) {
 
     hideCostConfirmButton(); // 既存のタイマーやリスナーがあればクリア
 
-    container.style.display = 'flex'; // flexboxでボタンを横並びにする
+    container.style.display = 'flex';
     button.textContent = `${originalText} (${remainingTime})`;
 
     costConfirmIntervalTimer = setInterval(() => {
