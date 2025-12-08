@@ -435,12 +435,9 @@ function handleCardDrop(e) {
         // --- 召喚フロー ---
         const sourceArray = getArrayByZoneName(sourceZoneName);
         if (!sourceArray) return;
-        const cardData = sourceArray.find(c => c.id === cardId);
-        if (!cardData) return;
-
-        // 1. 先にカードをデータ上移動させ、UIに反映させる
         const cardIndex = sourceArray.findIndex(c => c.id === cardId);
         if (cardIndex === -1) return;
+        
         const [movedCardData] = sourceArray.splice(cardIndex, 1);
         field.push(movedCardData);
 
@@ -452,7 +449,6 @@ function handleCardDrop(e) {
         renderAll();
         hideMagnifier();
 
-        // 2. アクション選択ボタンを表示
         showSummonActionChoice({
             onSummon: () => startPaymentProcess(movedCardData, sourceZoneName),
             onPlaceCore: () => placeCoreOnSummonedCard(movedCardData),
@@ -466,39 +462,26 @@ function handleCardDrop(e) {
 
         hideMagnifier();
 
-        // 「コストを支払う」ボタンのみを表示
-        showSummonActionChoice({
-            onSummon: () => {
-                // 1. 先にカードをトラッシュに移動し、UIに反映
-                const cardIndex = hand.findIndex(c => c.id === cardId);
-                if (cardIndex === -1) return;
-                const [movedCard] = hand.splice(cardIndex, 1);
-                trash.push(movedCard);
-                renderAll();
+        // 1. 即座にカードをトラッシュに移動し、UIに反映
+        const cardIndex = hand.findIndex(c => c.id === cardId);
+        if (cardIndex > -1) {
+            const [movedCard] = hand.splice(cardIndex, 1);
+            trash.push(movedCard);
+            renderAll();
+        }
 
-                // 2. コストモーダルを表示
+        // 2. コストを支払うかの選択肢を表示
+        showSummonActionChoice({
+            onSummon: () => { // 「コストを支払う」ボタンが押された場合
                 showCostModal(cardData, (cost) => {
-                    // 支払いに進む場合
                     payCost(cost, null, () => {
-                        // 支払い成功時
                         showToast('infoToast', `${cardData.name}の効果を使用しました。`, { duration: 2000 });
-                        // カードは既にトラッシュにあるので、再描画のみ
-                        renderAll();
                     });
-                }, () => {
-                    // コストモーダルがキャンセルされたらカードを手札に戻す
-                    const trashIndex = trash.findIndex(c => c.id === cardId);
-                    if (trashIndex > -1) {
-                        const [returnedCard] = trash.splice(trashIndex, 1);
-                        hand.push(returnedCard);
-                        renderAll();
-                    }
-                });
+                }, () => {}); // コストモーダルがキャンセルされた場合は何もしない
             },
             onPlaceCore: null, // 「維持コアを置く」ボタンは非表示
-            onCancel: () => {}
+            onCancel: () => {}  // タイムアウトした場合は何もしない
         });
-
     } else {
         // --- その他の移動 ---
         const position = {
