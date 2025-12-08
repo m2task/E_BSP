@@ -98,18 +98,10 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
     renderAll();
 }
 
-export function initiateSummon(cardId, sourceZoneId, position) {
-    const sourceArray = getArrayByZoneName(sourceZoneId);
-    const cardIndex = sourceArray.findIndex(c => c.id === cardId);
-    if (cardIndex === -1) return;
-    const cardData = sourceArray[cardIndex];
-
-    // --- Summoning Logic ---
+export function startPaymentProcess(cardData, sourceZoneId) {
     const onSummonSuccess = () => {
         cancelMaintainCore();
-        // The card is already moved before payment, so we just need to render
         renderAll();
-
         if (!cardData.isSpecial) {
             showMaintainCoreButton(
                 () => placeCoreOnSummonedCard(cardData),
@@ -120,10 +112,6 @@ export function initiateSummon(cardId, sourceZoneId, position) {
 
     // Burst summon doesn't require cost
     if (sourceZoneId === 'burst') {
-        // Move card data first
-        sourceArray.splice(cardIndex, 1);
-        field.push(cardData);
-        cardPositions[cardId] = position;
         onSummonSuccess();
     } else {
         // Other summons (from hand, trash, etc.) go through cost payment
@@ -131,36 +119,22 @@ export function initiateSummon(cardId, sourceZoneId, position) {
             cardData,
             (cost) => {
                 if (canPayTotal(cost)) {
-                    // Move card data only if payment is initiated
-                    sourceArray.splice(cardIndex, 1);
-                    field.push(cardData);
-                    cardPositions[cardId] = position;
                     payCost(cost, cardData, onSummonSuccess);
                 } else {
                     showToast('errorToast', 'コストを支払えません。', { duration: 2000 });
-                    renderAll(); // Re-render to show card back in source
+                    // If payment fails, move the card back to the source
+                    const fieldIndex = field.findIndex(c => c.id === cardData.id);
+                    if (fieldIndex > -1) {
+                        const [returnedCard] = field.splice(fieldIndex, 1);
+                        const sourceArray = getArrayByZoneName(sourceZoneId);
+                        if (sourceArray) sourceArray.push(returnedCard);
+                        renderAll();
+                    }
                 }
             },
-            () => { // Cost 0 summon
-                sourceArray.splice(cardIndex, 1);
-                field.push(cardData);
-                cardPositions[cardId] = position;
-                onSummonSuccess();
-            }
+            () => onSummonSuccess() // Cost 0 summon
         );
     }
-}
-
-export function placeCardOnFieldWithoutPayment(cardId, sourceZoneId, position) {
-    const sourceArray = getArrayByZoneName(sourceZoneId);
-    const cardIndex = sourceArray.findIndex(c => c.id === cardId);
-    if (cardIndex === -1) return;
-
-    const [cardData] = sourceArray.splice(cardIndex, 1);
-    field.push(cardData);
-    cardPositions[cardId] = position;
-
-    renderAll();
 }
 
 export function openDeck() {

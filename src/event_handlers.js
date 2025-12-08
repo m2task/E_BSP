@@ -3,7 +3,7 @@ import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selec
 import { renderAll, renderTrashModalContent, showSummonActionChoice, showSingleActionChoice, showCostModal } from './ui_render.js';
 import { showToast, getZoneName, isMobileDevice } from './utils.js';
 import { hideMagnifier } from './magnify_logic.js';
-import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField, discardAllOpenCards, initiateSummon, placeCardOnFieldWithoutPayment } from './card_logic.js';
+import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField, discardAllOpenCards, startPaymentProcess } from './card_logic.js';
 import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, payCost, payCostFromField, cancelPayment, moveCoreFromField, cancelCoreMove, placeCoreOnSummonedCard } from './core_logic.js';
 
 export function setupEventListeners() {
@@ -430,64 +430,61 @@ function handleCardDrop(e) {
     const targetZoneName = getZoneName(actualTargetZoneElement);
     if (targetZoneName === 'deck') return;
 
-    const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
-    const position = {
-        left: e.clientX - fieldRect.left - offsetX,
-        top: e.clientY - fieldRect.top - offsetY
-    };
-
-    // --- 新しいロジック ---
-    // 手札、トラッシュ、バーストからフィールドへの移動（召喚）の場合
+    // --- 召喚、マジック使用、またはその他の移動 ---
     if (targetZoneName === 'field' && ['hand', 'trash', 'burst'].includes(sourceZoneName)) {
+        // --- 召喚フロー ---
         const sourceArray = getArrayByZoneName(sourceZoneName);
         if (!sourceArray) return;
-        const cardData = sourceArray.find(c => c.id === cardId);
-        if (!cardData) return;
 
+        const cardIndex = sourceArray.findIndex(c => c.id === cardId);
+        if (cardIndex === -1) return;
+        
+        // 1. 先にカードをデータ上移動させ、UIに反映させる
+        const [cardData] = sourceArray.splice(cardIndex, 1);
+        field.push(cardData);
+
+        const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
+        cardPositions[cardId] = {
+            left: e.clientX - fieldRect.left - offsetX,
+            top: e.clientY - fieldRect.top - offsetY
+        };
+        renderAll();
         hideMagnifier();
 
-        // アクション選択ボタンを表示
+        // 2. アクション選択ボタンを表示
         showSummonActionChoice(
-            () => { // onSummon: コストを支払って召喚する場合
-                initiateSummon(cardId, sourceZoneName, position);
+            () => { // onSummon: コストを支払う場合
+                startPaymentProcess(cardData, sourceZoneName);
             },
             () => { // onPlaceCore: コアを置くだけの場合
-                // 先にカードを移動させてからコアを置く処理を呼ぶ
-                placeCardOnFieldWithoutPayment(cardId, sourceZoneName, position);
-                // placeCoreOnSummonedCard は cardData を必要とするので、fieldから再取得
-                const summonedCard = field.find(c => c.id === cardId);
-                if(summonedCard) placeCoreOnSummonedCard(summonedCard);
+                placeCoreOnSummonedCard(cardData);
             },
             () => { // onCancel: 何もせずフィールドに置くだけの場合
-                placeCardOnFieldWithoutPayment(cardId, sourceZoneName, position);
+                // 何もしない（カードは既にフィールドにある）
             }
         );
     } else if (targetZoneName === 'trash' && sourceZoneName === 'hand') {
-        // 手札からトラッシュへの移動（マジック使用など）の場合
+        // --- マジック使用フロー ---
         const cardData = hand.find(c => c.id === cardId);
         if (!cardData) return;
 
         hideMagnifier();
 
-        // 確認ボタンを表示
         showSingleActionChoice(
-            "コストを支払う", // ボタンのテキスト
-            () => { // onConfirm: ボタンが押された場合
-                // 1. カードを手札からトラッシュへ移動
+            "コストを支払う",
+            () => { // onConfirm
                 const cardIndex = hand.findIndex(c => c.id === cardId);
                 if (cardIndex > -1) {
                     const [movedCard] = hand.splice(cardIndex, 1);
                     trash.push(movedCard);
                 }
                 
-                // 2. コストモーダルを表示して支払いに進む
                 showCostModal(cardData, (cost) => {
-                    payCost(cost, null, () => { // cardToPlayはnull
+                    payCost(cost, null, () => {
                         showToast('infoToast', `${cardData.name}の効果を使用しました。`, { duration: 2000 });
                         renderAll();
                     });
                 }, () => {
-                    // コストモーダルがキャンセルされたらカードを手札に戻す
                     const trashIndex = trash.findIndex(c => c.id === cardId);
                     if (trashIndex > -1) {
                         const [returnedCard] = trash.splice(trashIndex, 1);
@@ -496,13 +493,14 @@ function handleCardDrop(e) {
                     }
                 });
             },
-            () => { // onCancel: タイムアウトした場合
-                // 何もせず、カードは手札に残る
-            }
+            () => {} // onCancel
         );
     } else {
-        // --- 元々のロジック ---
-        // それ以外のすべてのカード移動
+        // --- その他の移動 ---
+        const position = {
+            left: e.clientX - document.getElementById('fieldCards').getBoundingClientRect().left - offsetX,
+            top: e.clientY - document.getElementById('fieldCards').getBoundingClientRect().top - offsetY
+        };
         if (targetZoneName === 'field') {
             cardPositions[cardId] = position;
         } else {
