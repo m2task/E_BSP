@@ -795,7 +795,7 @@ body {
     position: absolute;
     top: 20px;
     right: 150px;
-    z-index: 100;
+    z-index: 1050;
 }
 
 .cost-confirm-button {

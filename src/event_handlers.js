@@ -447,6 +447,7 @@ function handleCardDrop(e) {
         };
         renderAll(); // 先にカードをフィールドに表示
 
+        showToast('infoToast', '召喚を検知しました。', { duration: 2000 }); // ★デバッグ用トースト
         // コスト確認ボタンを表示
         showCostConfirmButton(
             () => { // onConfirm: コストを支払う場合
