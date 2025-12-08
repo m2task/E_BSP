@@ -435,13 +435,14 @@ function handleCardDrop(e) {
         // --- 召喚フロー ---
         const sourceArray = getArrayByZoneName(sourceZoneName);
         if (!sourceArray) return;
+        const cardData = sourceArray.find(c => c.id === cardId);
+        if (!cardData) return;
 
+        // 1. 先にカードをデータ上移動させ、UIに反映させる
         const cardIndex = sourceArray.findIndex(c => c.id === cardId);
         if (cardIndex === -1) return;
-        
-        // 1. 先にカードをデータ上移動させ、UIに反映させる
-        const [cardData] = sourceArray.splice(cardIndex, 1);
-        field.push(cardData);
+        const [movedCardData] = sourceArray.splice(cardIndex, 1);
+        field.push(movedCardData);
 
         const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
         cardPositions[cardId] = {
@@ -452,17 +453,12 @@ function handleCardDrop(e) {
         hideMagnifier();
 
         // 2. アクション選択ボタンを表示
-        showSummonActionChoice(
-            () => { // onSummon: コストを支払う場合
-                startPaymentProcess(cardData, sourceZoneName);
-            },
-            () => { // onPlaceCore: コアを置くだけの場合
-                placeCoreOnSummonedCard(cardData);
-            },
-            () => { // onCancel: 何もせずフィールドに置くだけの場合
-                // 何もしない（カードは既にフィールドにある）
-            }
-        );
+        showSummonActionChoice({
+            onSummon: () => startPaymentProcess(movedCardData, sourceZoneName),
+            onPlaceCore: () => placeCoreOnSummonedCard(movedCardData),
+            onCancel: () => {}
+        });
+
     } else if (targetZoneName === 'trash' && sourceZoneName === 'hand') {
         // --- マジック使用フロー ---
         const cardData = hand.find(c => c.id === cardId);
@@ -470,23 +466,25 @@ function handleCardDrop(e) {
 
         hideMagnifier();
 
-        // 確認ボタンをスキップし、直接コストモーダルを表示
-        showCostModal(cardData, (cost) => {
-            // onConfirm: コストが選択された場合
-            payCost(cost, null, () => {
-                // onPaymentSuccess: 支払い成功時
-                const cardIndex = hand.findIndex(c => c.id === cardId);
-                if (cardIndex > -1) {
-                    const [movedCard] = hand.splice(cardIndex, 1);
-                    trash.push(movedCard);
-                }
-                showToast('infoToast', `${cardData.name}の効果を使用しました。`, { duration: 2000 });
-                renderAll();
-            });
-        }, () => {
-            // onCancel: コストモーダルがキャンセルされた場合
-            // 何もせず、カードは手札に残る
+        // 「コストを支払う」ボタンのみを表示
+        showSummonActionChoice({
+            onSummon: () => {
+                showCostModal(cardData, (cost) => {
+                    payCost(cost, null, () => {
+                        const cardIndex = hand.findIndex(c => c.id === cardId);
+                        if (cardIndex > -1) {
+                            const [movedCard] = hand.splice(cardIndex, 1);
+                            trash.push(movedCard);
+                        }
+                        showToast('infoToast', `${cardData.name}の効果を使用しました。`, { duration: 2000 });
+                        renderAll();
+                    });
+                }, () => {});
+            },
+            onPlaceCore: null, // 「維持コアを置く」ボタンは非表示
+            onCancel: () => {}
         });
+
     } else {
         // --- その他の移動 ---
         const position = {
