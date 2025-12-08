@@ -790,6 +790,13 @@ body {
     background-color: #5a6268; /* ホバー時は少し濃くする */
 }
 
+/* 召喚アクションボタンを縦並びにするためのスタイル */
+.summon-action-container-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* ボタンの間の隙間 */
+}
+
 /* コスト確認ボタンのスタイル */
 .cost-confirm-container {
     position: absolute;
