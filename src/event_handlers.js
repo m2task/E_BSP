@@ -1,6 +1,6 @@
 // src/event_handlers.js
 import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, hand, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging, paymentState, moveState } from './game_data.js';
-import { renderAll, renderTrashModalContent, showSummonActionChoice, showSingleActionChoice, showCostModal } from './ui_render.js';
+import { renderAll, renderTrashModalContent, showSummonActionChoice, showCostModal } from './ui_render.js';
 import { showToast, getZoneName, isMobileDevice, getArrayByZoneName } from './utils.js';
 import { hideMagnifier } from './magnify_logic.js';
 import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField, discardAllOpenCards, startPaymentProcess } from './card_logic.js';
@@ -470,32 +470,23 @@ function handleCardDrop(e) {
 
         hideMagnifier();
 
-        showSingleActionChoice(
-            "コストを支払う",
-            () => { // onConfirm
+        // 確認ボタンをスキップし、直接コストモーダルを表示
+        showCostModal(cardData, (cost) => {
+            // onConfirm: コストが選択された場合
+            payCost(cost, null, () => {
+                // onPaymentSuccess: 支払い成功時
                 const cardIndex = hand.findIndex(c => c.id === cardId);
                 if (cardIndex > -1) {
                     const [movedCard] = hand.splice(cardIndex, 1);
                     trash.push(movedCard);
                 }
-                
-                // 2. コストモーダルを表示して支払いに進む
-                showCostModal(cardData, (cost) => {
-                    payCost(cost, null, () => { // cardToPlayはnull
-                        showToast('infoToast', `${cardData.name}の効果を使用しました。`, { duration: 2000 });
-                        renderAll();
-                    });
-                }, () => {
-                    const trashIndex = trash.findIndex(c => c.id === cardId);
-                    if (trashIndex > -1) {
-                        const [returnedCard] = trash.splice(trashIndex, 1);
-                        hand.push(returnedCard);
-                        renderAll();
-                    }
-                });
-            },
-            () => {} // onCancel
-        );
+                showToast('infoToast', `${cardData.name}の効果を使用しました。`, { duration: 2000 });
+                renderAll();
+            });
+        }, () => {
+            // onCancel: コストモーダルがキャンセルされた場合
+            // 何もせず、カードは手札に残る
+        });
     } else {
         // --- その他の移動 ---
         const position = {
