@@ -33,110 +33,141 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
     const sourceArray = getArrayByZoneName(sourceZoneId);
     const cardIndex = sourceArray.findIndex(c => c.id === cardId);
     if (cardIndex === -1) return;
-    const cardData = sourceArray[cardIndex];
+    const movedCardData = sourceArray[cardIndex];
 
     // Handle special card logic (if moved from field to non-field, it disappears)
-    if (cardData.isSpecial && targetZoneName !== 'field') {
+    if (movedCardData.isSpecial && targetZoneName !== 'field') {
         sourceArray.splice(cardIndex, 1);
-        if (cardData.coresOnCard && cardData.coresOnCard.length > 0) {
-            reserveCores.push(...cardData.coresOnCard.map(core => core.type));
-            cardData.coresOnCard = [];
+        if (movedCardData.coresOnCard && movedCardData.coresOnCard.length > 0) {
+            reserveCores.push(...movedCardData.coresOnCard.map(core => core.type));
+            movedCardData.coresOnCard = [];
         }
         delete cardPositions[cardId];
         renderAll();
         return;
     }
+    
+    // --- Non-Summoning Move Logic (e.g., field to hand, hand to trash) ---
+    sourceArray.splice(cardIndex, 1);
+    hideMagnifier();
 
-    const isSummoning = targetZoneName === 'field' && sourceZoneId !== 'field';
+    let shouldTransferCoresToReserve = (sourceZoneId === 'field' && targetZoneName !== 'field' && movedCardData.coresOnCard && movedCardData.coresOnCard.length > 0);
 
-    if (isSummoning) {
-        // --- Summoning Logic ---
+    if (targetZoneName === 'deck') {
+        shouldTransferCoresToReserve = true;
+        let putOnBottom = false;
+        if (dropEvent && dropTargetElement) {
+            const rect = dropTargetElement.getBoundingClientRect();
+            const clickY = dropEvent.clientY - rect.top;
+            putOnBottom = clickY > rect.height * (2 / 3);
+        } else {
+            putOnBottom = confirm(`${movedCardData.name}をデッキの下に戻しますか？`);
+        }
+        if (putOnBottom) {
+            deck.push(movedCardData);
+            showToast('cardMoveToast', `${movedCardData.name}をデッキの下に戻しました`, { duration: 1000 });
+        } else {
+            deck.unshift(movedCardData);
+            showToast('cardMoveToast', `${movedCardData.name}をデッキの上に戻しました`, { duration: 1000 });
+        }
+    } else if (targetZoneName === 'void') {
+        if (!confirm(`${movedCardData.name}をゲームから除外していいですか？`)) {
+            sourceArray.splice(cardIndex, 0, movedCardData);
+            return;
+        }
+    } else {
+        if (targetZoneName === 'hand') {
+            movedCardData.isRotated = false;
+            movedCardData.isExhausted = false;
+        }
+        const targetArray = getArrayByZoneName(targetZoneName);
+        if (targetArray) {
+            targetArray.push(movedCardData);
+        }
+    }
+
+    if (shouldTransferCoresToReserve) {
+        reserveCores.push(...movedCardData.coresOnCard.map(core => core.type));
+        movedCardData.coresOnCard = [];
+    }
+
+    if (sourceZoneId === 'openArea' && openArea.length === 0) {
+        document.getElementById('openAreaModal').style.display = 'none';
+    }
+
+    renderAll();
+}
+
+export function initiateSummon(cardId, sourceZoneId) {
+    const sourceArray = getArrayByZoneName(sourceZoneId);
+    const cardIndex = sourceArray.findIndex(c => c.id === cardId);
+    if (cardIndex === -1) {
+        // This can happen if the card was already moved, which is expected in the new flow.
+        // Let's find the card in the field instead.
+        const cardData = field.find(c => c.id === cardId);
+        if (!cardData) return; // Still not found, something is wrong.
+
+        // Card is already on the field, proceed with payment logic.
         const onSummonSuccess = () => {
             cancelMaintainCore();
-
-            const currentSourceArray = getArrayByZoneName(sourceZoneId);
-            const currentCardIndex = currentSourceArray.findIndex(c => c.id === cardId);
-            if (currentCardIndex === -1) return;
-
-            const [movedCard] = currentSourceArray.splice(currentCardIndex, 1);
-            field.push(movedCard);
-            renderAll();
-
-            if (!movedCard.isSpecial) {
+            renderAll(); // Re-render to update any states.
+            if (!cardData.isSpecial) {
                 showMaintainCoreButton(
-                    () => placeCoreOnSummonedCard(movedCard),
+                    () => placeCoreOnSummonedCard(cardData),
                     () => {} // No action on "No"
                 );
             }
         };
 
-        // Burst summon doesn't require cost
-        if (sourceZoneId === 'burst') {
-            onSummonSuccess();
-        } else {
-            // Other summons (from hand, trash, etc.) go through cost payment
-            showCostModal(
-                cardData,
-                (cost) => {
-                    if (canPayTotal(cost)) {
-                        payCost(cost, cardData, onSummonSuccess);
-                    } else {
-                        renderAll();
-                    }
-                },
-                () => onSummonSuccess() // Cost 0 summon
+        showCostModal(
+            cardData,
+            (cost) => {
+                if (canPayTotal(cost)) {
+                    payCost(cost, cardData, onSummonSuccess);
+                } else {
+                    renderAll();
+                }
+            },
+            () => onSummonSuccess() // Cost 0 summon
+        );
+        return;
+    }
+
+    // This part of the logic is for summons from zones other than hand-to-field (e.g. burst)
+    const cardData = sourceArray[cardIndex];
+    const onSummonSuccess = () => {
+        cancelMaintainCore();
+
+        const currentSourceArray = getArrayByZoneName(sourceZoneId);
+        const currentCardIndex = currentSourceArray.findIndex(c => c.id === cardId);
+        if (currentCardIndex === -1) return;
+
+        const [movedCard] = currentSourceArray.splice(currentCardIndex, 1);
+        field.push(movedCard);
+        renderAll();
+
+        if (!movedCard.isSpecial) {
+            showMaintainCoreButton(
+                () => placeCoreOnSummonedCard(movedCard),
+                () => {} // No action on "No"
             );
         }
+    };
+
+    if (sourceZoneId === 'burst') {
+        onSummonSuccess();
     } else {
-        // --- Non-Summoning Move Logic (e.g., field to hand, hand to trash) ---
-        const [movedCardData] = sourceArray.splice(cardIndex, 1);
-        hideMagnifier();
-
-        let shouldTransferCoresToReserve = (sourceZoneId === 'field' && targetZoneName !== 'field' && movedCardData.coresOnCard && movedCardData.coresOnCard.length > 0);
-
-        if (targetZoneName === 'deck') {
-            shouldTransferCoresToReserve = true;
-            let putOnBottom = false;
-            if (dropEvent && dropTargetElement) {
-                const rect = dropTargetElement.getBoundingClientRect();
-                const clickY = dropEvent.clientY - rect.top;
-                putOnBottom = clickY > rect.height * (2 / 3);
-            } else {
-                putOnBottom = confirm(`${movedCardData.name}をデッキの下に戻しますか？`);
-            }
-            if (putOnBottom) {
-                deck.push(movedCardData);
-                showToast('cardMoveToast', `${movedCardData.name}をデッキの下に戻しました`, { duration: 1000 });
-            } else {
-                deck.unshift(movedCardData);
-                showToast('cardMoveToast', `${movedCardData.name}をデッキの上に戻しました`, { duration: 1000 });
-            }
-        } else if (targetZoneName === 'void') {
-            if (!confirm(`${movedCardData.name}をゲームから除外していいですか？`)) {
-                sourceArray.splice(cardIndex, 0, movedCardData);
-                return;
-            }
-        } else {
-            if (targetZoneName === 'hand') {
-                movedCardData.isRotated = false;
-                movedCardData.isExhausted = false;
-            }
-            const targetArray = getArrayByZoneName(targetZoneName);
-            if (targetArray) {
-                targetArray.push(movedCardData);
-            }
-        }
-
-        if (shouldTransferCoresToReserve) {
-            reserveCores.push(...movedCardData.coresOnCard.map(core => core.type));
-            movedCardData.coresOnCard = [];
-        }
-
-        if (sourceZoneId === 'openArea' && openArea.length === 0) {
-            document.getElementById('openAreaModal').style.display = 'none';
-        }
-
-        renderAll();
+        showCostModal(
+            cardData,
+            (cost) => {
+                if (canPayTotal(cost)) {
+                    payCost(cost, cardData, onSummonSuccess);
+                } else {
+                    renderAll();
+                }
+            },
+            () => onSummonSuccess() // Cost 0 summon
+        );
     }
 }
 

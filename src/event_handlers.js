@@ -1,9 +1,9 @@
 // src/event_handlers.js
-import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging, paymentState, moveState } from './game_data.js';
-import { renderAll, renderTrashModalContent } from './ui_render.js';
+import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, hand, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging, paymentState, moveState } from './game_data.js';
+import { renderAll, renderTrashModalContent, showCostConfirmButton } from './ui_render.js';
 import { showToast, getZoneName, isMobileDevice } from './utils.js';
 import { hideMagnifier } from './magnify_logic.js';
-import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField, discardAllOpenCards } from './card_logic.js';
+import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField, discardAllOpenCards, initiateSummon } from './card_logic.js';
 import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, payCostFromField, cancelPayment, moveCoreFromField, cancelCoreMove } from './core_logic.js';
 
 export function setupEventListeners() {
@@ -418,32 +418,60 @@ function handleCardDrop(e) {
     const sourceZoneId = e.dataTransfer.getData("sourceZoneId");
     const sourceZoneName = getZoneName(document.getElementById(sourceZoneId));
 
-    // ドロップされた要素から、最も近いゾーン要素を特定
-    // カード自体にドロップされた場合でも、その親のゾーンを実際のターゲットとする
-    const targetElement = e.target.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea, .card'); // .card も含める
+    const targetElement = e.target.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea, .card');
     if (!targetElement) return;
 
     let actualTargetZoneElement = targetElement;
-    // もしドロップされたのがカード要素であれば、その親要素（ゾーン）を実際のターゲットとする
     if (targetElement.classList.contains('card')) {
         actualTargetZoneElement = targetElement.parentElement.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea');
     }
-    if (!actualTargetZoneElement) return; // 適切なゾーンが見つからなければ処理を中断
+    if (!actualTargetZoneElement) return;
 
     const targetZoneName = getZoneName(actualTargetZoneElement);
-    if (targetZoneName === 'deck') return; // デッキへのドロップは専用ハンドラで処理
+    if (targetZoneName === 'deck') return;
 
-    if (targetZoneName === 'field') {
+    // --- 新しいロジック ---
+    // 手札からフィールドへの移動（召喚）の場合
+    if (sourceZoneName === 'hand' && targetZoneName === 'field') {
+        // カードを先にデータ移動させておく
+        const cardIndex = hand.findIndex(c => c.id === cardId);
+        if (cardIndex === -1) return;
+        const [cardData] = hand.splice(cardIndex, 1);
+        field.push(cardData);
+
+        // 見た目の位置を更新
         const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
         cardPositions[cardId] = {
             left: e.clientX - fieldRect.left - offsetX,
             top: e.clientY - fieldRect.top - offsetY
         };
+        renderAll(); // 先にカードをフィールドに表示
+
+        // コスト確認ボタンを表示
+        showCostConfirmButton(
+            () => { // onConfirm: コストを支払う場合
+                initiateSummon(cardId, sourceZoneName);
+            },
+            () => { // onCancel: コストを支払わない場合
+                // 何もしない（カードはフィールドに残る）
+            }
+        );
+        hideMagnifier();
     } else {
-        delete cardPositions[cardId];
+        // --- 元々のロジック ---
+        // それ以外のすべてのカード移動
+        if (targetZoneName === 'field') {
+            const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
+            cardPositions[cardId] = {
+                left: e.clientX - fieldRect.left - offsetX,
+                top: e.clientY - fieldRect.top - offsetY
+            };
+        } else {
+            delete cardPositions[cardId];
+        }
+        moveCardData(cardId, sourceZoneName, targetZoneName, false); // isSummon=false
+        hideMagnifier();
     }
-    moveCardData(cardId, sourceZoneName, targetZoneName);
-    hideMagnifier();
 }
 
 function handleCoreDrop(e) {

@@ -475,3 +475,76 @@ export function cancelMaintainCore() {
     }
 }
 
+let costConfirmTimeoutTimer = null;
+let costConfirmIntervalTimer = null;
+let costConfirmButtonHandler = null;
+let costConfirmCancelHandler = null;
+
+export function showCostConfirmButton(onConfirm, onCancel) {
+    const container = document.getElementById('costConfirmContainer');
+    if (!container) return; // コンテナがない場合は何もしない
+
+    const button = document.getElementById('costConfirmButton');
+    const cancelButton = document.getElementById('cancelCostConfirmButton');
+    const originalText = 'コストを支払う';
+    let remainingTime = 3;
+
+    hideCostConfirmButton(); // 既存のタイマーやリスナーがあればクリア
+
+    container.style.display = 'flex'; // flexboxでボタンを横並びにする
+    button.textContent = `${originalText} (${remainingTime})`;
+
+    costConfirmIntervalTimer = setInterval(() => {
+        remainingTime--;
+        if (remainingTime >= 0) {
+            button.textContent = `${originalText} (${remainingTime})`;
+        }
+    }, 1000);
+
+    costConfirmButtonHandler = () => {
+        hideCostConfirmButton();
+        if (onConfirm) onConfirm();
+    };
+    costConfirmCancelHandler = () => {
+        hideCostConfirmButton();
+        if (onCancel) onCancel();
+    };
+
+    button.addEventListener('click', costConfirmButtonHandler);
+    cancelButton.addEventListener('click', costConfirmCancelHandler);
+
+    costConfirmTimeoutTimer = setTimeout(() => {
+        hideCostConfirmButton();
+        if (onCancel) onCancel();
+    }, 3000);
+}
+
+export function hideCostConfirmButton() {
+    if (costConfirmTimeoutTimer) {
+        clearTimeout(costConfirmTimeoutTimer);
+        costConfirmTimeoutTimer = null;
+    }
+    if (costConfirmIntervalTimer) {
+        clearInterval(costConfirmIntervalTimer);
+        costConfirmIntervalTimer = null;
+    }
+
+    const container = document.getElementById('costConfirmContainer');
+    if (container) {
+        container.style.display = 'none';
+    }
+
+    const button = document.getElementById('costConfirmButton');
+    if (button && costConfirmButtonHandler) {
+        button.removeEventListener('click', costConfirmButtonHandler);
+        costConfirmButtonHandler = null;
+        button.textContent = 'コストを支払う';
+    }
+
+    const cancelButton = document.getElementById('cancelCostConfirmButton');
+    if (cancelButton && costConfirmCancelHandler) {
+        cancelButton.removeEventListener('click', costConfirmCancelHandler);
+        costConfirmCancelHandler = null;
+    }
+}
+
