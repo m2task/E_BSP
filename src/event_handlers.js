@@ -470,7 +470,7 @@ function handleCardDrop(e) {
             onSummon: () => { // 「コストを支払う」ボタンが押された場合
                 showCostModal(cardData, (cost) => {
                     payCost(cost, null, () => {
-                        showToast('infoToast', `${cardData.name}の効果を使用しました。`, { duration: 2000 });
+                        // メッセージを削除
                     });
                 }, () => {}); // コストモーダルがキャンセルされた場合は何もしない
             },
