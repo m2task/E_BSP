@@ -480,7 +480,6 @@ function handleCardDrop(e) {
                 }
                 
                 // 2. コストモーダルを表示して支払いに進む
-                showToast('infoToast', 'コストモーダルを呼び出します。', { duration: 2000 }); // ★デバッグ
                 showCostModal(cardData, (cost) => {
                     payCost(cost, null, () => { // cardToPlayはnull
                         showToast('infoToast', `${cardData.name}の効果を使用しました。`, { duration: 2000 });

@@ -530,33 +530,39 @@ export function hideSummonActionChoice() {
 }
 
 let singleActionTimeoutTimer = null;
-let singleActionButtonHandler = null;
 
 export function showSingleActionChoice(buttonText, onConfirm, onCancel) {
-    let container = document.getElementById('singleActionContainer');
-    if (!container) return;
+    // 既存のタイマーが残っていればクリア
+    if (singleActionTimeoutTimer) {
+        clearTimeout(singleActionTimeoutTimer);
+    }
 
-    container.remove();
-    document.body.appendChild(container);
-
+    const container = document.getElementById('singleActionContainer');
     const button = document.getElementById('singleActionButton');
-    
-    hideSingleActionChoice();
+    if (!container || !button) return;
 
-    container.style.display = 'block';
-    button.textContent = buttonText;
-
-    singleActionButtonHandler = () => {
+    // --- イベントハンドラを定義 ---
+    // クリックされた時の処理
+    const clickHandler = () => {
         hideSingleActionChoice();
         if (onConfirm) onConfirm();
     };
 
-    button.addEventListener('click', singleActionButtonHandler);
-
-    singleActionTimeoutTimer = setTimeout(() => {
+    // タイムアウトした時の処理
+    const timeoutHandler = () => {
         hideSingleActionChoice();
         if (onCancel) onCancel();
-    }, 3000);
+    };
+
+    // --- 表示とイベント設定 ---
+    container.style.display = 'block';
+    button.textContent = buttonText;
+
+    // { once: true } を使い、一度クリックされたら自動でリスナーが削除されるようにする
+    button.addEventListener('click', clickHandler, { once: true });
+
+    // タイムアウトを設定
+    singleActionTimeoutTimer = setTimeout(timeoutHandler, 3000);
 }
 
 export function hideSingleActionChoice() {
@@ -569,11 +575,6 @@ export function hideSingleActionChoice() {
     if (container) {
         container.style.display = 'none';
     }
-
-    const button = document.getElementById('singleActionButton');
-    if (button && singleActionButtonHandler) {
-        button.removeEventListener('click', singleActionButtonHandler);
-        singleActionButtonHandler = null;
-    }
+    // { once: true } を使っているので、クリック後のリスナー削除は不要
 }
 
