@@ -469,17 +469,31 @@ function handleCardDrop(e) {
         // 「コストを支払う」ボタンのみを表示
         showSummonActionChoice({
             onSummon: () => {
+                // 1. 先にカードをトラッシュに移動し、UIに反映
+                const cardIndex = hand.findIndex(c => c.id === cardId);
+                if (cardIndex === -1) return;
+                const [movedCard] = hand.splice(cardIndex, 1);
+                trash.push(movedCard);
+                renderAll();
+
+                // 2. コストモーダルを表示
                 showCostModal(cardData, (cost) => {
+                    // 支払いに進む場合
                     payCost(cost, null, () => {
-                        const cardIndex = hand.findIndex(c => c.id === cardId);
-                        if (cardIndex > -1) {
-                            const [movedCard] = hand.splice(cardIndex, 1);
-                            trash.push(movedCard);
-                        }
+                        // 支払い成功時
                         showToast('infoToast', `${cardData.name}の効果を使用しました。`, { duration: 2000 });
+                        // カードは既にトラッシュにあるので、再描画のみ
                         renderAll();
                     });
-                }, () => {});
+                }, () => {
+                    // コストモーダルがキャンセルされたらカードを手札に戻す
+                    const trashIndex = trash.findIndex(c => c.id === cardId);
+                    if (trashIndex > -1) {
+                        const [returnedCard] = trash.splice(trashIndex, 1);
+                        hand.push(returnedCard);
+                        renderAll();
+                    }
+                });
             },
             onPlaceCore: null, // 「維持コアを置く」ボタンは非表示
             onCancel: () => {}
