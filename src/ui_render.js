@@ -408,7 +408,6 @@ export function showConfirmationModal(message, onConfirm, onCancel) {
 export function showMaintainCoreButton(onYes, onNo) {
     const container = document.getElementById('maintainCoreContainer');
     const button = document.getElementById('maintainCoreButton');
-    const cancelButton = document.getElementById('cancelMaintainCoreButton');
     const originalText = '維持コアを置く';
     let remainingTime = 3;
 
@@ -431,13 +430,8 @@ export function showMaintainCoreButton(onYes, onNo) {
         cancelMaintainCore();
         if (onYes) onYes();
     };
-    maintainCoreCancelHandler = () => {
-        cancelMaintainCore();
-        if (onNo) onNo();
-    };
 
     button.addEventListener('click', maintainCoreButtonHandler);
-    cancelButton.addEventListener('click', maintainCoreCancelHandler);
 
     // 3秒後に実行されるタイムアウト
     maintainCoreTimeoutTimer = setTimeout(() => {
@@ -466,12 +460,6 @@ export function cancelMaintainCore() {
         button.removeEventListener('click', maintainCoreButtonHandler);
         maintainCoreButtonHandler = null;
         button.textContent = '維持コアを置く';
-    }
-
-    const cancelButton = document.getElementById('cancelMaintainCoreButton');
-    if (cancelButton && maintainCoreCancelHandler) {
-        cancelButton.removeEventListener('click', maintainCoreCancelHandler);
-        maintainCoreCancelHandler = null;
     }
 }
 
