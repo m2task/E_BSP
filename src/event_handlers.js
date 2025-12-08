@@ -462,13 +462,8 @@ function handleCardDrop(e) {
 
         hideMagnifier();
 
-        // 1. 即座にカードをトラッシュに移動し、UIに反映
-        const cardIndex = hand.findIndex(c => c.id === cardId);
-        if (cardIndex > -1) {
-            const [movedCard] = hand.splice(cardIndex, 1);
-            trash.push(movedCard);
-            renderAll();
-        }
+        // 1. 共通関数を使ってカードをトラッシュに移動し、UIに反映
+        moveCardData(cardId, sourceZoneName, targetZoneName);
 
         // 2. コストを支払うかの選択肢を表示
         showSummonActionChoice({
