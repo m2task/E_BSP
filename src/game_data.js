@@ -39,31 +39,27 @@ export let currentTouchX = 0;
 export let currentTouchY = 0;
 export let touchOffsetX = 0;
 export let touchOffsetY = 0;
-export let isDragging = false;
+export let isDragging = false; // ドラッグ中かどうかを示すフラグ
+
+export const discardState = { counter: 0, names: [], timer: null };
+
+// --- コスト支払い状態 ---
 export let paymentState = {
     isPaying: false,
     totalCost: 0,
     paidAmount: 0,
-    cardToPlay: null,
+    cardToPlay: null, // プレイしようとしているカードのデータ
     source: 'reserve', // 'reserve' or 'field'
-    callback: null,
-    paymentLog: [], // フィールドからの支払い記録
+    callback: null, // 支払い完了後のコールバック
+    paymentLog: [], // 支払いの操作ログ { fromCardId: string, paidCores: object[] }
 };
+
+// --- コア移動状態 ---
 export let moveState = {
     isMoving: false,
-    targetCard: null,
-    callback: null,
+    targetCard: null, // 移動先のカード
+    callback: null, // 移動完了後のコールバック
 };
-export let brushSelectState = {
-    isSelecting: false, // ブラシ選択中か
-};
-
-export let discardState = {
-    counter: 0,
-    names: [],
-    timer: null,
-};
-
 
 
 // Setters for game data
@@ -98,10 +94,6 @@ export function setPaymentState(newState) {
 
 export function setMoveState(newState) {
     moveState = { ...moveState, ...newState };
-}
-
-export function setBrushSelectState(newState) {
-    brushSelectState = { ...brushSelectState, ...newState };
 }
 
 

@@ -695,37 +695,3 @@ export function cancelCoreMove() {
     showToast('infoToast', 'コアの移動をキャンセルしました。', { duration: 1500 });
     renderAll();
 }
-
-
-/**
- * 選択されたコアを指定のカードに移動する
- * @param {HTMLElement} targetCardElement - 移動先のカード要素
- */
-export function moveSelectedCoresToCard(targetCardElement) {
-    const targetCardId = targetCardElement.dataset.id;
-    const targetCard = field.find(card => card.id === targetCardId);
-    if (!targetCard) return;
-
-    // 移動元と移動先が同じカード内の場合、何もしない
-    const isInternalMove = selectedCores.every(core => core.sourceCardId === targetCardId);
-    if (isInternalMove) {
-        return;
-    }
-
-    // コアをソースから削除
-    removeCoresFromSource(selectedCores);
-
-    // 重なりを避けてカード上に配置
-    const cardWidth = 104;
-    const cardHeight = 156;
-    let preferredX = cardWidth / 2 - 10;
-    let preferredY = cardHeight / 2 - 10;
-
-    selectedCores.forEach(coreInfo => {
-        const { x, y } = findEmptySlot(preferredX, preferredY, targetCard.coresOnCard, cardWidth, cardHeight);
-        targetCard.coresOnCard.push({ type: coreInfo.type, x, y });
-        // 次のコアの配置場所を少しずらす
-        preferredX += 5;
-        preferredY += 5;
-    });
-}
