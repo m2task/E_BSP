@@ -61,6 +61,15 @@ export let moveState = {
     callback: null, // 移動完了後のコールバック
 };
 
+// --- ブラシ選択関連 ---
+export let brushSelection = {
+    isActive: false,
+    startPoint: { x: 0, y: 0 },
+    currentPoint: { x: 0, y: 0 },
+    selectedCores: [],
+    actionState: 'none', // 'none', 'selected', 'movingToCard'
+};
+
 
 // Setters for game data
 export function setDeck(newDeck) { deck = newDeck; }
@@ -94,6 +103,10 @@ export function setPaymentState(newState) {
 
 export function setMoveState(newState) {
     moveState = { ...moveState, ...newState };
+}
+
+export function setBrushSelection(newState) {
+    brushSelection = { ...brushSelection, ...newState };
 }
 
 
