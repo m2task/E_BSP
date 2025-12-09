@@ -1,4 +1,196 @@
+/* battle.css */
 
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 10px;
+    background-color: #333; /* ダークな背景 */
+    color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    user-select: none;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 180px; /* カラムの幅を固定 */
+}
+
+.main-field {
+    flex-grow: 1;
+    border: 2px solid #555;
+    border-radius: 10px;
+    padding: 10px;
+    position: relative; /* アクションボタンの基準点 */
+    background-color: #282828;
+    min-height: 600px;
+}
+
+.zone {
+    border: 1px solid #555;
+    border-radius: 8px;
+    padding: 8px;
+    background-color: #444;
+    min-height: 80px;
+    position: relative;
+}
+
+.zone-title {
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #ccc;
+    text-align: center;
+    font-size: 14px;
+}
+
+.special-zone {
+    background-color: #3a3a3a;
+}
+
+.core-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-height: 30px; /* コアがない時でも高さを確保 */
+}
+
+.core {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    cursor: grab;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+.core.selected {
+    box-shadow: 0 0 8px 2px #00ffff, inset 0 0 5px #00ffff;
+    border: 1px solid #00ffff;
+    transform: scale(1.1);
+}
+
+
+.core[data-core-type="blue"] { background-color: #007bff; }
+.core[data-core-type="red"] { background-color: #dc3545; }
+.core[data-core-type="green"] { background-color: #28a745; }
+.core[data-core-type="soul"] {
+    background: radial-gradient(circle, #ffd700, #ff8c00);
+    border: 1px solid #fff;
+}
+
+.void-core {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    cursor: grab;
+    font-size: 20px;
+}
+
+.hand-zone-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.85);
+    border-top: 2px solid #666;
+    z-index: 1000;
+    transition: transform 0.3s ease-in-out;
+}
+.hand-zone-container.closed {
+    transform: translateY(100%);
+}
+
+.hand-toggle {
+    text-align: center;
+    padding: 5px;
+    background-color: #555;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.hand-zone {
+    display: flex;
+    padding: 10px;
+    gap: 8px;
+    overflow-x: auto;
+    min-height: 160px;
+}
+
+.open-hand-toggle {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #555;
+    padding: 8px 15px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    cursor: pointer;
+    z-index: 999;
+}
+.open-hand-toggle.hidden {
+    display: none;
+}
+
+.card {
+    width: 104px;
+    height: 156px;
+    border-radius: 5px;
+    background-color: #666;
+    border: 1px solid #888;
+    position: relative;
+    flex-shrink: 0; /* 手札でカードが縮まないように */
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.7);
+}
+.card.dragging {
+    opacity: 0.5;
+}
+.card.rotated {
+    transform: rotate(90deg);
+}
+.card.exhausted {
+    transform: rotate(180deg);
+}
+
+.field-cards {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.field-cards .card {
+    position: absolute; /* フィールドのカードは絶対配置 */
+}
+
+.toast-message {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    z-index: 1001;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+.toast-message.show {
+    opacity: 1;
+}
+.toast-message.local {
+    width: 80%;
+}
+
+/* 新しく追加したアクションボタンのスタイル */
 .core-action-container {
     position: absolute;
     bottom: 20px;
