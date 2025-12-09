@@ -1,10 +1,10 @@
 // src/event_handlers.js
-import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, hand, trash, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, isDragging, setIsDragging, paymentState, moveState, brushSelection, setBrushSelection } from './game_data.js';
+import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, hand, trash, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging, paymentState, moveState } from './game_data.js';
 import { renderAll, renderTrashModalContent, showSummonActionChoice, showCostModal } from './ui_render.js';
 import { showToast, getZoneName, isMobileDevice, getArrayByZoneName } from './utils.js';
 import { hideMagnifier } from './magnify_logic.js';
 import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField, discardAllOpenCards, startPaymentProcess } from './card_logic.js';
-import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, payCost, payCostFromField, cancelPayment, moveCoreFromField, cancelCoreMove, placeCoreOnSummonedCard, moveBrushSelectedCoresToCard, moveBrushSelectedCoresToTrash } from './core_logic.js';
+import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, payCost, payCostFromField, cancelPayment, moveCoreFromField, cancelCoreMove, placeCoreOnSummonedCard } from './core_logic.js';
 
 export function setupEventListeners() {
     // デッキボタンのドラッグイベントリスナーを追加
@@ -19,18 +19,6 @@ export function setupEventListeners() {
         const cardElement = e.target.closest('.card');
         if (!cardElement || e.target.classList.contains('exhaust-button')) {
             return;
-        }
-
-        // ★★★ ブラシ選択からのコア移動処理 ★★★
-        if (brushSelection.actionState === 'movingToCard' && cardElement.classList.contains('selectable-for-core-move')) {
-            const cardId = cardElement.dataset.id;
-            const targetCardData = field.find(c => c.id === cardId);
-            if (targetCardData) {
-                moveBrushSelectedCoresToCard(targetCardData);
-                cancelBrushSelection(); // UIと状態をリセット
-                renderAll();
-            }
-            return; // これ以降の処理はしない
         }
         
         showToast('infoToast', '', { hide: true });
@@ -102,13 +90,8 @@ export function setupEventListeners() {
 
     // 画面のどこかをクリックしたらコアの選択を解除
     document.addEventListener('click', (e) => {
-        // ブラシ選択中は何もしない
-        if (brushSelection.isActive) return;
-
-        // コア、カード、ボタンなど特定のUI要素以外をクリックした場合
-        if (!e.target.closest('.core, .card, button, .brush-action-container')) {
+        if (!e.target.closest('.core')) {
             clearSelectedCores();
-            cancelBrushSelection(); // ブラシ選択もキャンセル
         }
         // ボイドアイコン以外の場所をクリックしたらチャージ数をリセット
         if (e.target.id !== 'voidCore') {
@@ -253,15 +236,6 @@ export function setupEventListeners() {
 
     // オープンエリアの全破棄ボタン
     document.getElementById('discardAllOpenBtn').addEventListener('click', discardAllOpenCards);
-
-    // ブラシ選択の開始
-    const brushableZones = ['fieldZone', 'reserveZone', 'trashZoneFrame', 'lifeZone'];
-    brushableZones.forEach(zoneId => {
-        const zoneElement = document.getElementById(zoneId);
-        if (zoneElement) {
-            zoneElement.addEventListener('mousedown', handleBrushMouseDown);
-        }
-    });
 }
 
 // --- 共通コア情報取得関数 ---
@@ -810,211 +784,5 @@ export function refreshAll() {
     while (trashCores.length > 0) {
         reserveCores.push(trashCores.shift());
     }
-    renderAll();
-}
-
-// --- ブラシ選択関連の関数 ---
-
-function handleBrushMouseDown(e) {
-    // 左クリック以外は無視
-    if (e.button !== 0) return;
-
-    // コアやカードなど、特定の要素の上で開始された場合は何もしない
-    if (e.target.closest('.core, .card, button, .deck-button, .exhaust-button')) {
-        return;
-    }
-    
-    // 既存の選択があれば解除して終了
-    if (brushSelection.selectedCores.length > 0) {
-        cancelBrushSelection();
-        return;
-    }
-
-    // ブラシ選択を開始
-    startBrushSelection(e);
-}
-
-function startBrushSelection(e) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    setBrushSelection({
-        isActive: true,
-        startPoint: { x: e.clientX, y: e.clientY },
-        currentPoint: { x: e.clientX, y: e.clientY },
-    });
-
-    const existingOverlay = document.getElementById('brush-selection-overlay');
-    if (existingOverlay) {
-        existingOverlay.remove();
-    }
-
-    const overlay = document.createElement('div');
-    overlay.id = 'brush-selection-overlay';
-    document.body.appendChild(overlay);
-
-    document.addEventListener('mousemove', doBrushSelection);
-    document.addEventListener('mouseup', endBrushSelection);
-}
-
-function doBrushSelection(e) {
-    if (!brushSelection.isActive) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    setBrushSelection({ currentPoint: { x: e.clientX, y: e.clientY } });
-
-    const overlay = document.getElementById('brush-selection-overlay');
-    if (!overlay) return;
-
-    const { startPoint, currentPoint } = brushSelection;
-    const rect = {
-        left: Math.min(startPoint.x, currentPoint.x),
-        top: Math.min(startPoint.y, currentPoint.y),
-        width: Math.abs(startPoint.x - currentPoint.x),
-        height: Math.abs(startPoint.y - currentPoint.y)
-    };
-
-    overlay.style.left = `${rect.left}px`;
-    overlay.style.top = `${rect.top}px`;
-    overlay.style.width = `${rect.width}px`;
-    overlay.style.height = `${rect.height}px`;
-
-    const allCores = document.querySelectorAll('.core:not(#voidCore)');
-    allCores.forEach(coreEl => {
-        const coreRect = coreEl.getBoundingClientRect();
-        const isIntersecting = !(
-            coreRect.right < rect.left ||
-            coreRect.left > rect.left + rect.width ||
-            coreRect.bottom < rect.top ||
-            coreRect.top > rect.top + rect.height
-        );
-
-        if (isIntersecting) {
-            coreEl.classList.add('brush-hover');
-        } else {
-            coreEl.classList.remove('brush-hover');
-        }
-    });
-}
-
-function endBrushSelection(e) {
-    if (!brushSelection.isActive) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    const finalSelectedCores = [];
-    const coreElements = document.querySelectorAll('.core.brush-hover');
-
-    coreElements.forEach(coreEl => {
-        coreEl.classList.remove('brush-hover');
-        coreEl.classList.add('brush-selected');
-
-        const parentElement = coreEl.parentElement;
-        const sourceCardId = coreEl.dataset.sourceCardId;
-        let sourceArrayName = parentElement.id;
-        
-        if (sourceCardId) {
-            sourceArrayName = null; 
-        }
-
-        const coreData = {
-            type: coreEl.dataset.coreType,
-            index: parseInt(coreEl.dataset.index, 10),
-            sourceCardId: sourceCardId,
-            sourceArrayName: sourceArrayName,
-        };
-        finalSelectedCores.push(coreData);
-    });
-
-    const overlay = document.getElementById('brush-selection-overlay');
-    if (overlay) {
-        overlay.remove();
-    }
-
-    document.removeEventListener('mousemove', doBrushSelection);
-    document.removeEventListener('mouseup', endBrushSelection);
-
-    setBrushSelection({ isActive: false });
-
-    if (finalSelectedCores.length > 0) {
-        setBrushSelection({
-            selectedCores: finalSelectedCores,
-            actionState: 'selected'
-        });
-        showBrushActionButtons();
-    }
-}
-
-function cancelBrushSelection() {
-    document.querySelectorAll('.core.brush-selected').forEach(el => el.classList.remove('brush-selected'));
-    document.querySelectorAll('.card.selectable-for-core-move').forEach(el => el.classList.remove('selectable-for-core-move'));
-    
-    const actionContainer = document.getElementById('brushActionContainer');
-    if (actionContainer) {
-        actionContainer.style.display = 'none';
-        actionContainer.innerHTML = '';
-    }
-
-    setBrushSelection({
-        selectedCores: [],
-        actionState: 'none'
-    });
-}
-
-function showBrushActionButtons() {
-    const container = document.getElementById('brushActionContainer');
-    if (!container) return;
-    container.innerHTML = '';
-
-    if (brushSelection.actionState === 'none' || brushSelection.selectedCores.length === 0) {
-        container.style.display = 'none';
-        return;
-    }
-
-    if (brushSelection.actionState === 'selected') {
-        const moveToCardBtn = document.createElement('button');
-        moveToCardBtn.textContent = 'カードへ移動';
-        moveToCardBtn.onclick = () => {
-            setBrushSelection({ actionState: 'movingToCard' });
-            showBrushActionButtons();
-        };
-
-        const moveToTrashBtn = document.createElement('button');
-        moveToTrashBtn.textContent = 'トラッシュへ送る';
-        moveToTrashBtn.onclick = handleBrushMoveToTrash;
-
-        container.appendChild(moveToCardBtn);
-        container.appendChild(moveToTrashBtn);
-        container.style.display = 'flex';
-
-    } else if (brushSelection.actionState === 'movingToCard') {
-        container.textContent = '移動先のカードをクリックしてください...';
-
-        const cancelBtn = document.createElement('button');
-        cancelBtn.textContent = 'キャンセル';
-        cancelBtn.className = 'cancel-button';
-        cancelBtn.style.marginLeft = '15px';
-        cancelBtn.onclick = (e) => {
-            e.stopPropagation();
-            setBrushSelection({ actionState: 'selected' });
-            showBrushActionButtons();
-            document.querySelectorAll('.card.selectable-for-core-move').forEach(el => el.classList.remove('selectable-for-core-move'));
-        };
-
-        container.appendChild(cancelBtn);
-        container.style.display = 'flex';
-
-        document.querySelectorAll('#fieldCards .card').forEach(cardEl => {
-            cardEl.classList.add('selectable-for-core-move');
-        });
-    }
-}
-
-function handleBrushMoveToTrash() {
-    moveBrushSelectedCoresToTrash();
-    cancelBrushSelection();
     renderAll();
 }

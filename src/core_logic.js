@@ -1,5 +1,5 @@
 // src/core_logic.js
-import { lifeCores, reserveCores, countCores, trashCores, field, voidChargeCount, selectedCores, draggedCoreData, paymentState, setPaymentState, setVoidChargeCount, setSelectedCores, setDraggedCoreData, draggedElement, setMoveState, moveState, brushSelection } from './game_data.js';
+import { lifeCores, reserveCores, countCores, trashCores, field, voidChargeCount, selectedCores, draggedCoreData, paymentState, setPaymentState, setVoidChargeCount, setSelectedCores, setDraggedCoreData, draggedElement, setMoveState, moveState } from './game_data.js';
 import { renderAll } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
 
@@ -694,45 +694,4 @@ export function cancelCoreMove() {
     });
     showToast('infoToast', 'コアの移動をキャンセルしました。', { duration: 1500 });
     renderAll();
-}
-
-/**
- * ブラシ選択されたコアをトラッシュに移動する
- */
-export function moveBrushSelectedCoresToTrash() {
-    const coresToMove = [...brushSelection.selectedCores];
-    if (coresToMove.length === 0) return;
-
-    removeCoresFromSource(coresToMove);
-
-    coresToMove.forEach(coreInfo => {
-        trashCores.push(coreInfo.type);
-    });
-    
-    showToast('infoToast', `${coresToMove.length}個のコアをトラッシュに移動しました。`, { duration: 1500 });
-}
-
-/**
- * ブラシ選択されたコアを指定されたカードに移動する
- * @param {object} targetCardData - 移動先のカードのデータ
- */
-export function moveBrushSelectedCoresToCard(targetCardData) {
-    const coresToMove = [...brushSelection.selectedCores];
-    if (coresToMove.length === 0 || !targetCardData) return;
-
-    removeCoresFromSource(coresToMove);
-
-    const cardWidth = 104;
-    const cardHeight = 156;
-    let preferredX = cardWidth / 2 - 10;
-    let preferredY = cardHeight / 2 - 10;
-
-    coresToMove.forEach(coreInfo => {
-        const { x, y } = findEmptySlot(preferredX, preferredY, targetCardData.coresOnCard, cardWidth, cardHeight);
-        targetCardData.coresOnCard.push({ type: coreInfo.type, x, y });
-        preferredX += 5;
-        preferredY += 5;
-    });
-
-    showToast('infoToast', `${coresToMove.length}個のコアをカード「${targetCardData.name}」に移動しました。`, { duration: 2000 });
 }
