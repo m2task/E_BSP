@@ -1,5 +1,5 @@
 // src/ui_render.js
-import { deck, hand, field, trash, burst, lifeCores, reserveCores, countCores, trashCores, selectedCores, cardPositions, countShowCountAsNumber, openArea, handPinned, paymentState, moveState } from './game_data.js';
+import { deck, hand, field, trash, burst, lifeCores, reserveCores, countCores, trashCores, selectedCores, cardPositions, countShowCountAsNumber, openArea, handPinned, paymentState, moveState, selectionActionMode, isBrushSelecting, brushSelectionRect } from './game_data.js';
 import { handleCoreClick } from './core_logic.js';
 import { updateMagnifierEventListeners } from './magnify_logic.js';
 import { showToast } from './utils.js';
@@ -110,6 +110,11 @@ export function renderField() {
         // 維持コアシステムの移動元選択中のスタイルを適用
         if (moveState.isMoving && cardData.coresOnCard.length > 0 && (!moveState.targetCard || moveState.targetCard.id !== cardData.id)) {
             cardElement.classList.add('payable'); // 同じハイライトスタイルを流用
+        }
+
+        // ブラシ選択での「カードへ移動」モード中のスタイルを適用
+        if (selectionActionMode === 'moveToCard') {
+            cardElement.classList.add('payable');
         }
 
         // カード上のコアを描画
@@ -265,6 +270,46 @@ export function renderAll() {
 
     // Update magnifier listeners on all cards after every render
     updateMagnifierEventListeners();
+
+    // ブラシ選択の矩形を描画
+    const existingRect = document.querySelector('.brush-selection-rect');
+    if (isBrushSelecting && brushSelectionRect) {
+        let rectDiv = existingRect;
+        if (!rectDiv) {
+            rectDiv = document.createElement('div');
+            rectDiv.className = 'brush-selection-rect';
+            document.body.appendChild(rectDiv);
+        }
+        rectDiv.style.left = `${brushSelectionRect.x}px`;
+        rectDiv.style.top = `${brushSelectionRect.y}px`;
+        rectDiv.style.width = `${brushSelectionRect.width}px`;
+        rectDiv.style.height = `${brushSelectionRect.height}px`;
+    } else if (existingRect) {
+        existingRect.remove();
+    }
+
+    // ブラシ選択アクションボタンの表示制御
+    const actionsContainer = document.getElementById('brush-selection-actions');
+    const messageEl = document.getElementById('brush-selection-message');
+    const moveToCardBtn = document.getElementById('move-to-card-btn');
+    const moveToTrashBtn = document.getElementById('move-to-trash-btn');
+    const cancelMoveBtn = document.getElementById('cancel-move-btn');
+
+    if (selectionActionMode === 'none') {
+        actionsContainer.style.display = 'none';
+    } else if (selectionActionMode === 'select') {
+        actionsContainer.style.display = 'flex';
+        messageEl.textContent = `${selectedCores.length}個のコアを選択中`;
+        moveToCardBtn.style.display = 'inline-block';
+        moveToTrashBtn.style.display = 'inline-block';
+        cancelMoveBtn.style.display = 'none';
+    } else if (selectionActionMode === 'moveToCard') {
+        actionsContainer.style.display = 'flex';
+        messageEl.textContent = '移動先のカードをクリックしてください...';
+        moveToCardBtn.style.display = 'none';
+        moveToTrashBtn.style.display = 'none';
+        cancelMoveBtn.style.display = 'inline-block';
+    }
 }
 
 export function renderOpenArea() {

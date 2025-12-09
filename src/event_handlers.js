@@ -1,12 +1,45 @@
 // src/event_handlers.js
-import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, hand, trash, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging, paymentState, moveState } from './game_data.js';
+import { 
+    draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, 
+    setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, 
+    field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, hand, 
+    trash, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, 
+    currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, 
+    setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging, 
+    paymentState, moveState,
+    selectionActionMode, isBrushSelecting, brushStartPos, setSelectionActionMode, setIsBrushSelecting, 
+    setBrushStartPos, setBrushSelectionRect, brushSelectionRect
+} from './game_data.js';
 import { renderAll, renderTrashModalContent, showSummonActionChoice, showCostModal } from './ui_render.js';
 import { showToast, getZoneName, isMobileDevice, getArrayByZoneName } from './utils.js';
 import { hideMagnifier } from './magnify_logic.js';
 import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField, discardAllOpenCards, startPaymentProcess } from './card_logic.js';
-import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, payCost, payCostFromField, cancelPayment, moveCoreFromField, cancelCoreMove, placeCoreOnSummonedCard } from './core_logic.js';
+import { 
+    handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, 
+    handleCoreDropOnZone, payCost, payCostFromField, cancelPayment, moveCoreFromField, cancelCoreMove, 
+    placeCoreOnSummonedCard,
+    cancelSelection, moveSelectedCoresToTrash, moveSelectedCoresToCard
+} from './core_logic.js';
 
 export function setupEventListeners() {
+    // ブラシ選択アクションボタンのイベントリスナー
+    document.getElementById('move-to-card-btn').addEventListener('click', () => {
+        setSelectionActionMode('moveToCard');
+        renderAll();
+    });
+
+    document.getElementById('move-to-trash-btn').addEventListener('click', () => {
+        moveSelectedCoresToTrash();
+    });
+
+    document.getElementById('cancel-move-btn').addEventListener('click', () => {
+        // 「移動先のカードを選択」をキャンセルして、コア選択状態に戻る
+        if (selectionActionMode === 'moveToCard') {
+            setSelectionActionMode('select');
+            renderAll();
+        }
+    });
+
     // デッキボタンのドラッグイベントリスナーを追加
     const deckButton = document.querySelector('.deck-button');
     deckButton.addEventListener('dragenter', handleDeckDragEnter);
@@ -21,9 +54,16 @@ export function setupEventListeners() {
             return;
         }
         
+        const cardId = cardElement.dataset.id;
+
+        // ブラシ選択の「カードへ移動」モードの場合
+        if (selectionActionMode === 'moveToCard') {
+            moveSelectedCoresToCard(cardId);
+            return; // 以降の処理は行わない
+        }
+        
         showToast('infoToast', '', { hide: true });
 
-        const cardId = cardElement.dataset.id;
         const cardData = field.find(card => card.id === cardId);
         if (!cardData) return;
 
@@ -90,9 +130,13 @@ export function setupEventListeners() {
 
     // 画面のどこかをクリックしたらコアの選択を解除
     document.addEventListener('click', (e) => {
-        if (!e.target.closest('.core')) {
-            clearSelectedCores();
+        // コア、アクションボタン、支払い/移動モードでハイライトされたカード以外をクリックした場合に選択を解除
+        if (!e.target.closest('.core, #brush-selection-actions, .card.payable')) {
+            if (selectionActionMode !== 'none') {
+                cancelSelection();
+            }
         }
+
         // ボイドアイコン以外の場所をクリックしたらチャージ数をリセット
         if (e.target.id !== 'voidCore') {
             setVoidChargeCount(0);
@@ -236,6 +280,101 @@ export function setupEventListeners() {
 
     // オープンエリアの全破棄ボタン
     document.getElementById('discardAllOpenBtn').addEventListener('click', discardAllOpenCards);
+
+    // ブラシ選択のイベントリスナー
+    const fieldZone = document.getElementById('fieldZone');
+
+    fieldZone.addEventListener('mousedown', (e) => {
+        // クリックした場所がカードやコアなどのインタラクティブな要素でなく、
+        // かつ、支払いモードや移動モードでない場合のみブラシ選択を開始
+        const targetClasses = e.target.classList;
+        if (!e.target.closest('.card, .core, .zone-title, button') && 
+            !paymentState.isPaying && !moveState.isMoving) {
+            
+            // 既存の選択をクリア
+            if (selectionActionMode !== 'none') {
+                cancelSelection();
+            }
+
+            setIsBrushSelecting(true);
+            const rect = fieldZone.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            setBrushStartPos({ x, y });
+            setBrushSelectionRect({ x, y, width: 0, height: 0 });
+            e.preventDefault(); // テキスト選択などを防ぐ
+        }
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isBrushSelecting) return;
+
+        const fieldRect = fieldZone.getBoundingClientRect();
+        const currentX = e.clientX - fieldRect.left;
+        const currentY = e.clientY - fieldRect.top;
+
+        const newRect = {
+            x: Math.min(brushStartPos.x, currentX),
+            y: Math.min(brushStartPos.y, currentY),
+            width: Math.abs(currentX - brushStartPos.x),
+            height: Math.abs(currentY - brushStartPos.y)
+        };
+        setBrushSelectionRect(newRect);
+        renderAll(); // 矩形をリアルタイムで描画
+    });
+
+    document.addEventListener('mouseup', (e) => {
+        if (!isBrushSelecting) return;
+
+        setIsBrushSelecting(false);
+
+        const coresToSelect = [];
+        const allCoreElements = document.querySelectorAll('.core');
+        
+        allCoreElements.forEach(coreEl => {
+            const coreRect = coreEl.getBoundingClientRect();
+            const fieldRect = fieldZone.getBoundingClientRect();
+
+            // コアの座標をfieldZone基準に変換
+            const corePos = {
+                x: coreRect.left - fieldRect.left,
+                y: coreRect.top - fieldRect.top,
+                width: coreRect.width,
+                height: coreRect.height
+            };
+
+            // 矩形とコアが重なっているか判定
+            if (brushSelectionRect &&
+                corePos.x < brushSelectionRect.x + brushSelectionRect.width &&
+                corePos.x + corePos.width > brushSelectionRect.x &&
+                corePos.y < brushSelectionRect.y + brushSelectionRect.height &&
+                corePos.y + corePos.height > brushSelectionRect.y)
+            {
+                const coreIdentifier = {
+                    type: coreEl.dataset.coreType,
+                    index: parseInt(coreEl.dataset.index)
+                };
+                if (coreEl.dataset.sourceCardId) {
+                    coreIdentifier.sourceCardId = coreEl.dataset.sourceCardId;
+                } else {
+                    coreIdentifier.sourceArrayName = coreEl.parentElement.id;
+                }
+                coresToSelect.push(coreIdentifier);
+            }
+        });
+
+        setBrushSelectionRect(null); // 矩形情報をクリア
+
+        if (coresToSelect.length > 0) {
+            setSelectedCores(coresToSelect);
+            setSelectionActionMode('select');
+        } else {
+            // 何も選択されなかった場合はモードをリセット
+            setSelectionActionMode('none');
+        }
+
+        renderAll();
+    });
 }
 
 // --- 共通コア情報取得関数 ---
