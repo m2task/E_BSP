@@ -58,6 +58,12 @@ export let brushSelectState = {
     isSelecting: false, // ブラシ選択中か
 };
 
+export let discardState = {
+    counter: 0,
+    names: [],
+    timer: null,
+};
+
 
 
 // Setters for game data
