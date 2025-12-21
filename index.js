@@ -262,6 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let croppedCardCount = 0;
             const cardRects = [];
+            const IDEAL_ASPECT_RATIO = 63 / 88; // カードの理想的なアスペクト比
 
             for (let i = 0; i < contours.size(); ++i) {
                 const cnt = contours.get(i);
@@ -273,11 +274,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 // これらの値は、実際の画像に合わせて調整が必要な場合があります。
                 const minCardArea = 5000; // 最小のカード面積（小さすぎるノイズを除外）
                 const maxCardArea = 500000; // 最大のカード面積（大きすぎる領域を除外）
-                const minAspectRatio = 0.6; // 最小のアスペクト比（細すぎるものを除外）
-                const maxAspectRatio = 0.9; // 最大のアスペクト比（太すぎるものを除外）
+                const minAspectRatio = 0.5; // 最小のアスペクト比（細すぎるものを除外）- 少し許容度を広げる
+                const maxAspectRatio = 1.0; // 最大のアスペクト比（太すぎるものを除外）- 少し許容度を広げる
 
                 if (area > minCardArea && area < maxCardArea && aspectRatio > minAspectRatio && aspectRatio < maxAspectRatio) {
-                    cardRects.push(rect);
+                    // --- 矩形の補正ロジック ---
+                    // 検出した矩形の面積を基準に、理想のアスペクト比から新しい幅と高さを計算
+                    const rectArea = rect.width * rect.height;
+                    const newWidth = Math.sqrt(rectArea * IDEAL_ASPECT_RATIO);
+                    const newHeight = Math.sqrt(rectArea / IDEAL_ASPECT_RATIO);
+
+                    // 元の矩形の中心座標を計算
+                    const centerX = rect.x + rect.width / 2;
+                    const centerY = rect.y + rect.height / 2;
+
+                    // 新しい矩形の左上座標を計算
+                    const newX = centerX - newWidth / 2;
+                    const newY = centerY - newHeight / 2;
+
+                    // 補正された新しい矩形を作成
+                    const correctedRect = new cv.Rect(newX, newY, newWidth, newHeight);
+                    cardRects.push(correctedRect);
                 }
                 cnt.delete();
             }
