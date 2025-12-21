@@ -266,18 +266,31 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let i = 0; i < contours.size(); ++i) {
                 const cnt = contours.get(i);
                 const area = cv.contourArea(cnt);
-                const rect = cv.boundingRect(cnt);
-                const aspectRatio = rect.width / rect.height;
 
                 // --- カード選別（フィルタリング）---
-                // これらの値は、実際の画像に合わせて調整が必要な場合があります。
                 const minCardArea = 5000; // 最小のカード面積（小さすぎるノイズを除外）
                 const maxCardArea = 500000; // 最大のカード面積（大きすぎる領域を除外）
-                const minAspectRatio = 0.6; // 最小のアスペクト比（細すぎるものを除外）
-                const maxAspectRatio = 0.9; // 最大のアスペクト比（太すぎるものを除外）
 
-                if (area > minCardArea && area < maxCardArea && aspectRatio > minAspectRatio && aspectRatio < maxAspectRatio) {
-                    cardRects.push(rect);
+                if (area > minCardArea && area < maxCardArea) {
+                    const approx = new cv.Mat();
+                    const peri = cv.arcLength(cnt, true);
+                    // 輪郭を単純化する。epsilon の値が小さいほど、元の輪郭に近くなる。
+                    const epsilon = 0.02 * peri;
+                    cv.approxPolyDP(cnt, approx, epsilon, true);
+
+                    // 単純化された輪郭の頂点が4つ（四角形）の場合のみ処理を進める
+                    if (approx.rows === 4) {
+                        const rect = cv.boundingRect(approx);
+                        const aspectRatio = rect.width / rect.height;
+
+                        const minAspectRatio = 0.6; // 最小のアスペクト比
+                        const maxAspectRatio = 0.9; // 最大のアスペクト比
+
+                        if (aspectRatio > minAspectRatio && aspectRatio < maxAspectRatio) {
+                            cardRects.push(rect);
+                        }
+                    }
+                    approx.delete();
                 }
                 cnt.delete();
             }
