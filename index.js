@@ -31,6 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveDeckAsButton = document.getElementById('saveDeckAsButton');
     const overwriteSaveButton = document.getElementById('overwriteSaveButton');
 
+    // --- New UI Elements for Auto-cropping ---
+    const manualModeRadio = document.getElementById('manual-mode');
+    const autoModeRadio = document.getElementById('auto-mode');
+    const manualControls = document.getElementById('manual-controls');
+    const autoCropButton = document.getElementById('auto-crop-button');
+
     // --- State ---
     const gridState = { x: 50, y: 50, cellWidth: 80, cellHeight: 110 };
     const gapState = { horizontal: 10, vertical: 20 };
@@ -465,6 +471,26 @@ document.addEventListener('DOMContentLoaded', () => {
         handleZoom(e.deltaY < 0 ? 'in' : 'out');
     });
 
+    // --- Mode Switching ---
+    manualModeRadio.addEventListener('change', () => {
+        if (manualModeRadio.checked) {
+            manualControls.style.display = 'block';
+            cropButton.classList.remove('hidden');
+            autoCropButton.classList.add('hidden');
+            handlesContainer.style.display = 'block';
+            overlayMask.style.display = 'block';
+        }
+    });
+    autoModeRadio.addEventListener('change', () => {
+        if (autoModeRadio.checked) {
+            manualControls.style.display = 'none';
+            cropButton.classList.add('hidden');
+            autoCropButton.classList.remove('hidden');
+            handlesContainer.style.display = 'none';
+            overlayMask.style.display = 'none';
+        }
+    });
+
     // Other controls
     rowsInput.addEventListener('change', drawGridAndHandles);
     colsInput.addEventListener('change', drawGridAndHandles);
@@ -490,13 +516,54 @@ document.addEventListener('DOMContentLoaded', () => {
                     imageState.scale = 1.0;
                     imageState.isLoaded = true;
                     applyImageTransform();
-                    drawGridAndHandles();
+                    // If in manual mode, draw the grid
+                    if (manualModeRadio.checked) {
+                        drawGridAndHandles();
+                    }
                 };
             };
             reader.readAsDataURL(file);
         }
     });
 
+    /**
+     * Takes an array of image data URLs and adds them to the current deck.
+     * @param {string[]} imgDataUrls - Array of image data URLs.
+     */
+    function addCardsToDeck(imgDataUrls) {
+        imgDataUrls.forEach(imgDataUrl => {
+            const existingCardIndex = deck.findIndex(card => card.imgDataUrl === imgDataUrl);
+            if (existingCardIndex !== -1) {
+                deck[existingCardIndex].quantity++;
+            } else {
+                deck.push({ id: generateUniqueId(), imgDataUrl: imgDataUrl, quantity: 1 });
+            }
+        });
+        renderEditedDeck();
+    }
+
+    /**
+     * Processes cropping based on an array of rectangles.
+     * @param {Array<{x, y, width, height}>} rects - Array of rectangles in source image coordinates.
+     */
+    function processCroppedImages(rects) {
+        const imgDataUrls = [];
+        rects.forEach(rect => {
+            if (rect.width <= 0 || rect.height <= 0) return;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(sourceImage, rect.x, rect.y, rect.width, rect.height, 0, 0, rect.width, rect.height);
+            imgDataUrls.push(canvas.toDataURL('image/jpeg', 0.9));
+        });
+        
+        addCardsToDeck(imgDataUrls);
+        return imgDataUrls.length;
+    }
+
+    // Manual crop button
     cropButton.addEventListener('click', () => {
         if (!imageState.isLoaded) {
             alert('まず画像を選択してください。');
@@ -511,30 +578,221 @@ document.addEventListener('DOMContentLoaded', () => {
         const cropperRect = cropperContainer.getBoundingClientRect();
         const imageRect = sourceImage.getBoundingClientRect();
         const ratio = sourceImage.naturalWidth / imageRect.width;
+
+        const rects = [];
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
                 const sx = (cropperRect.left + gridState.x + c * totalCellWidth - imageRect.left) * ratio;
                 const sy = (cropperRect.top + gridState.y + r * totalCellHeight - imageRect.top) * ratio;
                 const sWidth = gridState.cellWidth * ratio;
                 const sHeight = gridState.cellHeight * ratio;
-                if (sWidth <= 0 || sHeight <= 0) continue;
-                const canvas = document.createElement('canvas');
-                canvas.width = sWidth;
-                canvas.height = sHeight;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(sourceImage, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
-                const imgDataUrl = canvas.toDataURL('image/jpeg', 0.9);
-                const existingCardIndex = deck.findIndex(card => card.imgDataUrl === imgDataUrl);
-                if (existingCardIndex !== -1) {
-                    deck[existingCardIndex].quantity++;
-                } else {
-                    deck.push({ id: generateUniqueId(), imgDataUrl: imgDataUrl, quantity: 1 });
-                }
+                rects.push({ x: sx, y: sy, width: sWidth, height: sHeight });
             }
         }
-        renderEditedDeck();
-        alert(`${rows * cols}枚のカードをデッキに追加しました。`);
+        
+        const count = processCroppedImages(rects);
+        alert(`${count}枚のカードをデッキに追加しました。`);
         deckEditingArea.scrollIntoView({ behavior: 'smooth' });
+    });
+
+    /**
+     * Analyzes the source image to find card boundaries automatically.
+     * @param {HTMLImageElement} imageElement The image to analyze.
+     * @returns {Promise<Array<{x, y, width, height}>>} A promise that resolves with an array of found rectangles.
+     */
+    async function findCardRects(imageElement) {
+        return new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            canvas.width = imageElement.naturalWidth;
+            canvas.height = imageElement.naturalHeight;
+            ctx.drawImage(imageElement, 0, 0);
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const { data, width, height } = imageData;
+
+            const WHITE_THRESHOLD = 250;
+            const MIN_GAP_SIZE = 5; // Minimum pixels to be considered a gap
+            const MIN_CARD_SIZE = 50; // Minimum pixels for a card's width/height
+
+            const isWhite = (x, y) => {
+                const i = (y * width + x) * 4;
+                return data[i] > WHITE_THRESHOLD && data[i + 1] > WHITE_THRESHOLD && data[i + 2] > WHITE_THRESHOLD;
+            };
+
+            // 1. Trim background
+            let contentBox = { top: -1, bottom: -1, left: -1, right: -1 };
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    if (!isWhite(x, y)) {
+                        if (contentBox.top === -1) contentBox.top = y;
+                        contentBox.bottom = y;
+                        if (contentBox.left === -1 || x < contentBox.left) contentBox.left = x;
+                        if (contentBox.right === -1 || x > contentBox.right) contentBox.right = x;
+                    }
+                }
+            }
+            if (contentBox.top === -1) { // Image is all white
+                resolve([]);
+                return;
+            }
+
+            // 2. Find column boundaries
+            const columns = [];
+            let inCardColumn = false;
+            let columnStart = contentBox.left;
+            for (let x = contentBox.left; x <= contentBox.right; x++) {
+                let isGap = true;
+                for (let y = contentBox.top; y <= contentBox.bottom; y++) {
+                    if (!isWhite(x, y)) {
+                        isGap = false;
+                        break;
+                    }
+                }
+                if (!isGap && !inCardColumn) {
+                    inCardColumn = true;
+                    columnStart = x;
+                } else if (isGap && inCardColumn) {
+                    inCardColumn = false;
+                    const col = { start: columnStart, end: x - 1 };
+                    if (col.end - col.start > MIN_CARD_SIZE) columns.push(col);
+                }
+            }
+            if (inCardColumn) {
+                const col = { start: columnStart, end: contentBox.right };
+                if (col.end - col.start > MIN_CARD_SIZE) columns.push(col);
+            }
+
+            // 3. Find row boundaries
+            const rows = [];
+            let inCardRow = false;
+            let rowStart = contentBox.top;
+            for (let y = contentBox.top; y <= contentBox.bottom; y++) {
+                let isGap = true;
+                for (let x = contentBox.left; x <= contentBox.right; x++) {
+                    if (!isWhite(x, y)) {
+                        isGap = false;
+                        break;
+                    }
+                }
+                if (!isGap && !inCardRow) {
+                    inCardRow = true;
+                    rowStart = y;
+                } else if (isGap && inCardRow) {
+                    inCardRow = false;
+                    const row = { start: rowStart, end: y - 1 };
+                    if (row.end - row.start > MIN_CARD_SIZE) rows.push(row);
+                }
+            }
+            if (inCardRow) {
+                const row = { start: rowStart, end: contentBox.bottom };
+                if (row.end - row.start > MIN_CARD_SIZE) rows.push(row);
+            }
+
+            // 4. Generate and validate rectangles
+            const foundRects = [];
+            // This simple approach assumes a grid. A more robust solution would find connected components.
+            // For now, we find the average card size to deduce the grid.
+            if (columns.length === 0 || rows.length === 0) {
+                resolve([]);
+                return;
+            }
+
+            const avgCardWidth = columns.reduce((sum, col) => sum + (col.end - col.start), 0) / columns.length;
+            const avgCardHeight = rows.reduce((sum, row) => sum + (row.end - row.start), 0) / rows.length;
+
+            const numCols = Math.round((contentBox.right - contentBox.left) / avgCardWidth);
+            const numRows = Math.round((contentBox.bottom - contentBox.top) / avgCardHeight);
+
+            const stepX = (contentBox.right - contentBox.left + 1) / numCols;
+            const stepY = (contentBox.bottom - contentBox.top + 1) / numRows;
+
+            for (let r = 0; r < numRows; r++) {
+                for (let c = 0; c < numCols; c++) {
+                    const roughX = contentBox.left + c * stepX;
+                    const roughY = contentBox.top + r * stepY;
+
+                    // Refine the box by finding the actual content within the rough box
+                    let cardBox = {
+                        x: Math.floor(roughX),
+                        y: Math.floor(roughY),
+                        width: Math.ceil(stepX),
+                        height: Math.ceil(stepY)
+                    };
+                    
+                    // Simple validation: check if center is not white
+                    const centerX = Math.floor(cardBox.x + cardBox.width / 2);
+                    const centerY = Math.floor(cardBox.y + cardBox.height / 2);
+
+                    if (centerX < width && centerY < height && !isWhite(centerX, centerY)) {
+                         // Find precise boundaries within the rough box
+                        let preciseTop = -1, preciseBottom = -1, preciseLeft = -1, preciseRight = -1;
+                        for(let y = cardBox.y; y < cardBox.y + cardBox.height; y++) {
+                            if (y >= height) break;
+                            for (let x = cardBox.x; x < cardBox.x + cardBox.width; x++) {
+                                if (x >= width) break;
+                                if (!isWhite(x, y)) {
+                                    if (preciseTop === -1) preciseTop = y;
+                                    preciseBottom = y;
+                                    if (preciseLeft === -1 || x < preciseLeft) preciseLeft = x;
+                                    if (preciseRight === -1 || x > preciseRight) preciseRight = x;
+                                }
+                            }
+                        }
+                        if(preciseTop !== -1) {
+                            foundRects.push({
+                                x: preciseLeft,
+                                y: preciseTop,
+                                width: preciseRight - preciseLeft + 1,
+                                height: preciseBottom - preciseTop + 1
+                            });
+                        }
+                    }
+                }
+            }
+            
+            // Remove duplicate rects (can happen with imperfect detection)
+            const uniqueRects = [];
+            foundRects.forEach(rect => {
+                if (!uniqueRects.some(r => Math.abs(r.x - rect.x) < 10 && Math.abs(r.y - rect.y) < 10)) {
+                    uniqueRects.push(rect);
+                }
+            });
+
+            resolve(uniqueRects);
+        });
+    }
+
+    // Auto crop button
+    autoCropButton.addEventListener('click', async () => {
+        if (!imageState.isLoaded) {
+            alert('まず画像を選択してください。');
+            return;
+        }
+        
+        autoCropButton.textContent = '処理中...';
+        autoCropButton.disabled = true;
+
+        try {
+            const cropRects = await findCardRects(sourceImage);
+
+            if (cropRects.length === 0) {
+                alert('カードを検出できませんでした。画像を確認するか、手動モードを試してください。');
+                return;
+            }
+
+            const count = processCroppedImages(cropRects);
+
+            alert(`${count}枚のカードを検出し、デッキに追加しました。`);
+            deckEditingArea.scrollIntoView({ behavior: 'smooth' });
+
+        } catch (error) {
+            console.error('自動切り取りでエラーが発生しました:', error);
+            alert('エラーが発生しました。開発者コンソールを確認してください。');
+        } finally {
+            autoCropButton.textContent = '自動で切り取り実行';
+            autoCropButton.disabled = false;
+        }
     });
 
     // Deck Editor Listeners
@@ -545,12 +803,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         const imgDataUrl = createCardImageFromText(cardName);
-        const existingCardIndex = deck.findIndex(card => card.imgDataUrl === imgDataUrl);
-        if (existingCardIndex !== -1) {
-            deck[existingCardIndex].quantity++;
-        } else {
-            deck.push({ id: generateUniqueId(), imgDataUrl: imgDataUrl, quantity: 1, name: cardName });
-        }
+        addCardsToDeck([imgDataUrl]); // Use the new function
         renderEditedDeck();
         cardNameInput.value = '';
     });
