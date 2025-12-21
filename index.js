@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const showDeckListBtn = document.getElementById('show-deck-list-btn');
     const rowsInput = document.getElementById('rows');
     const colsInput = document.getElementById('cols');
+    const topOffsetInput = document.getElementById('top-offset'); // New
     const imageLoader = document.getElementById('imageLoader');
     const cropButton = document.getElementById('crop-button');
     const zoomOutButton = document.getElementById('zoom-out-button');
@@ -65,31 +66,22 @@ document.addEventListener('DOMContentLoaded', () => {
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
-
-        // 背景を白で塗りつぶし
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, width, height);
-
-        // テキスト設定
         ctx.fillStyle = 'black';
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle'; // 垂直方向の中央揃えの基準
-
-        const padding = 5; // 左右のパディング
+        ctx.textBaseline = 'middle';
+        const padding = 5;
         const maxWidth = width - (padding * 2);
-        const lineHeight = 14; // 行の高さ（フォントサイズより少し大きめ）
-
+        const lineHeight = 14;
         let lines = [];
         let currentLine = '';
-
-        // テキストを1文字ずつ処理して行に分割
         for (let i = 0; i < text.length; i++) {
             const char = text[i];
             const testLine = currentLine + char;
             const metrics = ctx.measureText(testLine);
-            const testWidth = metrics.width;
-            if (testWidth > maxWidth && i > 0) {
+            if (metrics.width > maxWidth && i > 0) {
                 lines.push(currentLine);
                 currentLine = char;
             } else {
@@ -97,16 +89,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         lines.push(currentLine);
-
-        // 描画開始Y座標を計算してテキストブロック全体が上下中央に来るようにする
         const totalTextHeight = (lines.length - 1) * lineHeight;
         let startY = (height - totalTextHeight) / 2;
-
-        // 各行を描画
         for (let i = 0; i < lines.length; i++) {
             ctx.fillText(lines[i], width / 2, startY + (i * lineHeight));
         }
-
         return canvas.toDataURL('image/png');
     }
 
@@ -198,7 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const battleButton = document.createElement('button');
             battleButton.textContent = 'このデッキで対戦';
             battleButton.className = 'battle-button';
-            battleButton.dataset.deckName = deckName;
             battleButton.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const isChecked = e.target.closest('li').querySelector('.deck-checkbox').checked;
@@ -210,7 +196,6 @@ document.addEventListener('DOMContentLoaded', () => {
             listItem.appendChild(deckNameSpan);
             const deleteButton = document.createElement('button');
             deleteButton.textContent = '削除';
-            deleteButton.dataset.deckName = deckName;
             deleteButton.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 if (confirm(`デッキ「${deckName}」を本当に削除しますか？`)) {
@@ -267,93 +252,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 cell.style.width = `${gridState.cellWidth}px`;
                 cell.style.height = `${gridState.cellHeight}px`;
                 handlesContainer.appendChild(cell);
-                if (c < cols - 1) {
-                    const hGap = document.createElement('div');
-                    hGap.className = 'gap-visual';
-                    hGap.style.left = `${gridState.x + c * totalCellWidth + gridState.cellWidth}px`;
-                    hGap.style.top = `${gridState.y + r * totalCellHeight}px`;
-                    hGap.style.width = `${gapH}px`;
-                    hGap.style.height = `${gridState.cellHeight}px`;
-                    handlesContainer.appendChild(hGap);
-                }
-                if (r < rows - 1) {
-                    const vGap = document.createElement('div');
-                    vGap.className = 'gap-visual';
-                    vGap.style.left = `${gridState.x + c * totalCellWidth}px`;
-                    vGap.style.top = `${gridState.y + r * totalCellHeight + gridState.cellHeight}px`;
-                    vGap.style.width = `${gridState.cellWidth}px`;
-                    vGap.style.height = `${gapV}px`;
-                    handlesContainer.appendChild(vGap);
-                }
-                if (c < cols - 1 && r < rows - 1) {
-                    const cornerGap = document.createElement('div');
-                    cornerGap.className = 'gap-visual';
-                    cornerGap.style.left = `${gridState.x + c * totalCellWidth + gridState.cellWidth}px`;
-                    cornerGap.style.top = `${gridState.y + r * totalCellHeight + gridState.cellHeight}px`;
-                    cornerGap.style.width = `${gapH}px`;
-                    cornerGap.style.height = `${gapV}px`;
-                    handlesContainer.appendChild(cornerGap);
-                }
             }
         }
-        const moveHandle = document.createElement('div');
-        moveHandle.className = 'handle move-handle';
-        moveHandle.dataset.target = 'move';
-        moveHandle.style.left = `${gridState.x}px`;
-        moveHandle.style.top = `${gridState.y}px`;
-        moveHandle.style.width = `${gridState.cellWidth}px`;
-        moveHandle.style.height = `${gridState.cellHeight}px`;
-        handlesContainer.appendChild(moveHandle);
-        const resizeVHandle = document.createElement('div');
-        resizeVHandle.className = 'handle resize-handle-v';
-        resizeVHandle.dataset.target = 'resize-v';
-        resizeVHandle.style.left = `${gridState.x + gridState.cellWidth}px`;
-        resizeVHandle.style.top = `${gridState.y}px`;
-        resizeVHandle.style.width = `10px`;
-        resizeVHandle.style.height = `${gridState.cellHeight}px`;
-        handlesContainer.appendChild(resizeVHandle);
-        const resizeHHandle = document.createElement('div');
-        resizeHHandle.className = 'handle resize-handle-h';
-        resizeHHandle.dataset.target = 'resize-h';
-        resizeHHandle.style.left = `${gridState.x}px`;
-        resizeHHandle.style.top = `${gridState.y + gridState.cellHeight}px`;
-        resizeHHandle.style.width = `${gridState.cellWidth}px`;
-        resizeHHandle.style.height = `10px`;
-        handlesContainer.appendChild(resizeHHandle);
-        const maskTop = document.createElement('div');
-        maskTop.className = 'mask-pane';
-        maskTop.style.height = `${gridState.y}px`;
-        overlayMask.appendChild(maskTop);
-        const maskBottom = document.createElement('div');
-        maskBottom.className = 'mask-pane';
-        maskBottom.style.top = `${gridState.y + totalGridDisplayHeight}px`;
-        maskBottom.style.height = `${cropperContainer.clientHeight - (gridState.y + totalGridDisplayHeight)}px`;
-        overlayMask.appendChild(maskBottom);
-        const maskLeft = document.createElement('div');
-        maskLeft.className = 'mask-pane';
-        maskLeft.style.top = `${gridState.y}px`;
-        maskLeft.style.width = `${gridState.x}px`;
-        maskLeft.style.height = `${totalGridDisplayHeight}px`;
-        overlayMask.appendChild(maskLeft);
-        const maskRight = document.createElement('div');
-        maskRight.className = 'mask-pane';
-        maskRight.style.top = `${gridState.y}px`;
-        maskRight.style.left = `${gridState.x + totalGridDisplayWidth}px`;
-        maskRight.style.width = `${cropperContainer.clientWidth - (gridState.x + totalGridDisplayWidth)}px`;
-        maskRight.style.height = `${totalGridDisplayHeight}px`;
-        overlayMask.appendChild(maskRight);
     }
 
     function applyImageTransform() {
         sourceImage.style.transform = `translate(${imageState.x}px, ${imageState.y}px) scale(${imageState.scale})`;
     }
 
-    // --- Event Listeners (Unified for Mouse and Touch) ---
-
-    function getPointer(e) {
-        return e.touches ? e.touches[0] : e;
-    }
-
+    // --- Event Listeners ---
+    function getPointer(e) { return e.touches ? e.touches[0] : e; }
     function onDragStart(e) {
         if (e.target.classList.contains('handle')) {
             e.preventDefault();
@@ -365,7 +273,6 @@ document.addEventListener('DOMContentLoaded', () => {
             interactionState.initialState = { ...gridState };
         }
     }
-
     function onPanStart(e) {
         e.preventDefault();
         const pointer = getPointer(e);
@@ -374,18 +281,6 @@ document.addEventListener('DOMContentLoaded', () => {
         interactionState.panStartY = pointer.clientY - imageState.y;
         imageContainer.classList.add('grabbing');
     }
-
-    function onPinchStart(e) {
-        if (e.touches.length === 2) {
-            e.preventDefault();
-            interactionState.isPinching = true;
-            interactionState.initialPinchDistance = Math.hypot(
-                e.touches[0].clientX - e.touches[1].clientX,
-                e.touches[0].clientY - e.touches[1].clientY
-            );
-        }
-    }
-
     function onInteractionMove(e) {
         if (interactionState.isDragging) {
             e.preventDefault();
@@ -407,56 +302,25 @@ document.addEventListener('DOMContentLoaded', () => {
             imageState.x = pointer.clientX - interactionState.panStartX;
             imageState.y = pointer.clientY - interactionState.panStartY;
             applyImageTransform();
-        } else if (interactionState.isPinching && e.touches.length === 2) {
-            e.preventDefault();
-            const currentPinchDistance = Math.hypot(
-                e.touches[0].clientX - e.touches[1].clientX,
-                e.touches[0].clientY - e.touches[1].clientY
-            );
-            const scaleFactor = currentPinchDistance / interactionState.initialPinchDistance;
-            imageState.scale = Math.max(0.1, imageState.scale * scaleFactor);
-            applyImageTransform();
-            interactionState.initialPinchDistance = currentPinchDistance; // Update for continuous zoom
         }
     }
-
     function onInteractionEnd(e) {
         interactionState.isDragging = false;
         interactionState.isPanning = false;
-        interactionState.isPinching = false;
         imageContainer.classList.remove('grabbing');
     }
 
-    // Section visibility
-    showCropperBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        cropperSection.style.display = 'block';
-        deckListSection.style.display = 'none';
-        deckEditingArea.style.display = 'block';
-    });
-    showDeckListBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        cropperSection.style.display = 'none';
-        deckListSection.style.display = 'block';
-        deckEditingArea.style.display = 'block';
-    });
-
-    // Cropper interaction listeners
+    showCropperBtn.addEventListener('click', (e) => { e.preventDefault(); cropperSection.style.display = 'block'; deckListSection.style.display = 'none'; deckEditingArea.style.display = 'block'; });
+    showDeckListBtn.addEventListener('click', (e) => { e.preventDefault(); cropperSection.style.display = 'none'; deckListSection.style.display = 'block'; deckEditingArea.style.display = 'block'; });
     handlesContainer.addEventListener('mousedown', onDragStart);
     handlesContainer.addEventListener('touchstart', onDragStart, { passive: false });
-
     imageContainer.addEventListener('mousedown', onPanStart);
     imageContainer.addEventListener('touchstart', onPanStart, { passive: false });
-
-    cropperContainer.addEventListener('touchstart', onPinchStart, { passive: false });
-
     window.addEventListener('mousemove', onInteractionMove);
     window.addEventListener('touchmove', onInteractionMove, { passive: false });
-
     window.addEventListener('mouseup', onInteractionEnd);
     window.addEventListener('touchend', onInteractionEnd);
 
-    // Zoom buttons and wheel
     const handleZoom = (direction) => {
         if (!imageState.isLoaded) return;
         const scaleAmount = direction === 'in' ? 1.1 : 1 / 1.1;
@@ -466,12 +330,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     zoomInButton.addEventListener('click', () => handleZoom('in'));
     zoomOutButton.addEventListener('click', () => handleZoom('out'));
-    cropperContainer.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        handleZoom(e.deltaY < 0 ? 'in' : 'out');
-    });
+    cropperContainer.addEventListener('wheel', (e) => { e.preventDefault(); handleZoom(e.deltaY < 0 ? 'in' : 'out'); });
 
-    // --- Mode Switching ---
     manualModeRadio.addEventListener('change', () => {
         if (manualModeRadio.checked) {
             manualGapControls.style.display = 'block';
@@ -491,13 +351,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Other controls
-    rowsInput.addEventListener('change', drawGridAndHandles);
-    colsInput.addEventListener('change', drawGridAndHandles);
+    rowsInput.addEventListener('change', () => { if (manualModeRadio.checked) drawGridAndHandles(); });
+    colsInput.addEventListener('change', () => { if (manualModeRadio.checked) drawGridAndHandles(); });
     const updateGapDisplayAndDraw = () => {
         gapHValueSpan.textContent = gapState.horizontal;
         gapVValueSpan.textContent = gapState.vertical;
-        drawGridAndHandles();
+        if (manualModeRadio.checked) drawGridAndHandles();
     };
     gapHDecreaseBtn.addEventListener('click', () => { gapState.horizontal = Math.max(0, gapState.horizontal - 1); updateGapDisplayAndDraw(); });
     gapHIncreaseBtn.addEventListener('click', () => { gapState.horizontal++; updateGapDisplayAndDraw(); });
@@ -511,46 +370,28 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.onload = (event) => {
                 sourceImage.src = event.target.result;
                 sourceImage.onload = () => {
-                    imageState.x = 0;
-                    imageState.y = 0;
-                    imageState.scale = 1.0;
-                    imageState.isLoaded = true;
+                    imageState.x = 0; y = 0; imageState.scale = 1.0; imageState.isLoaded = true;
                     applyImageTransform();
-                    // If in manual mode, draw the grid
-                    if (manualModeRadio.checked) {
-                        drawGridAndHandles();
-                    }
+                    if (manualModeRadio.checked) drawGridAndHandles();
                 };
             };
             reader.readAsDataURL(file);
         }
     });
 
-    /**
-     * Takes an array of image data URLs and adds them to the current deck.
-     * @param {string[]} imgDataUrls - Array of image data URLs.
-     */
     function addCardsToDeck(imgDataUrls) {
         imgDataUrls.forEach(imgDataUrl => {
             const existingCardIndex = deck.findIndex(card => card.imgDataUrl === imgDataUrl);
-            if (existingCardIndex !== -1) {
-                deck[existingCardIndex].quantity++;
-            } else {
-                deck.push({ id: generateUniqueId(), imgDataUrl: imgDataUrl, quantity: 1 });
-            }
+            if (existingCardIndex !== -1) deck[existingCardIndex].quantity++;
+            else deck.push({ id: generateUniqueId(), imgDataUrl: imgDataUrl, quantity: 1 });
         });
         renderEditedDeck();
     }
 
-    /**
-     * Processes cropping based on an array of rectangles.
-     * @param {Array<{x, y, width, height}>} rects - Array of rectangles in source image coordinates.
-     */
     function processCroppedImages(rects) {
         const imgDataUrls = [];
         rects.forEach(rect => {
             if (rect.width <= 0 || rect.height <= 0) return;
-
             const canvas = document.createElement('canvas');
             canvas.width = rect.width;
             canvas.height = rect.height;
@@ -558,17 +399,12 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.drawImage(sourceImage, rect.x, rect.y, rect.width, rect.height, 0, 0, rect.width, rect.height);
             imgDataUrls.push(canvas.toDataURL('image/jpeg', 0.9));
         });
-        
         addCardsToDeck(imgDataUrls);
         return imgDataUrls.length;
     }
 
-    // Manual crop button
     cropButton.addEventListener('click', () => {
-        if (!imageState.isLoaded) {
-            alert('まず画像を選択してください。');
-            return;
-        }
+        if (!imageState.isLoaded) { alert('まず画像を選択してください。'); return; }
         const rows = parseInt(rowsInput.value, 10);
         const cols = parseInt(colsInput.value, 10);
         const gapH = gapState.horizontal;
@@ -578,7 +414,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const cropperRect = cropperContainer.getBoundingClientRect();
         const imageRect = sourceImage.getBoundingClientRect();
         const ratio = sourceImage.naturalWidth / imageRect.width;
-
         const rects = [];
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
@@ -589,69 +424,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 rects.push({ x: sx, y: sy, width: sWidth, height: sHeight });
             }
         }
-        
         const count = processCroppedImages(rects);
         alert(`${count}枚のカードをデッキに追加しました。`);
         deckEditingArea.scrollIntoView({ behavior: 'smooth' });
     });
 
-    /**
-     * Analyzes the source image to find card boundaries automatically using a grid-based approach.
-     * @param {HTMLImageElement} imageElement The image to analyze.
-     * @param {number} rows The number of rows in the grid.
-     * @param {number} cols The number of columns in the grid.
-     * @returns {Promise<Array<{x, y, width, height}>>} A promise that resolves with an array of found rectangles.
-     */
-    async function findCardRects(imageElement, rows, cols) {
+    async function findCardRects(imageElement, rows, cols, topOffset) {
         return new Promise((resolve) => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
             canvas.width = imageElement.naturalWidth;
             canvas.height = imageElement.naturalHeight;
             ctx.drawImage(imageElement, 0, 0);
-
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const { data, width, height } = imageData;
 
-            const WHITE_THRESHOLD = 240; // Be a bit more tolerant to off-white
-            const BLACK_THRESHOLD = 50;
-            const MIN_CARD_SIZE = 50; // Minimum pixels for a card's width/height
+            const WHITE_THRESHOLD = 240;
+            const MIN_CARD_SIZE = 50;
 
             const isWhite = (x, y) => {
                 if (x < 0 || x >= width || y < 0 || y >= height) return true;
                 const i = (y * width + x) * 4;
                 return data[i] > WHITE_THRESHOLD && data[i + 1] > WHITE_THRESHOLD && data[i + 2] > WHITE_THRESHOLD;
             };
-            const isBlack = (x, y) => {
-                if (x < 0 || x >= width || y < 0 || y >= height) return false;
-                const i = (y * width + x) * 4;
-                return data[i] < BLACK_THRESHOLD && data[i + 1] < BLACK_THRESHOLD && data[i + 2] < BLACK_THRESHOLD;
-            };
 
-            // 1. Detect and exclude the top black bar
-            let barBottomY = 0;
-            const BAR_SCAN_HEIGHT = Math.floor(height * 0.1); // Scan top 10% of the image
-            const BAR_BLACK_PIXEL_RATIO = 0.7; // 70% of the row should be black
-            for (let y = 0; y < BAR_SCAN_HEIGHT; y++) {
-                let blackPixels = 0;
-                for (let x = 0; x < width; x++) {
-                    if (isBlack(x, y)) {
-                        blackPixels++;
-                    }
-                }
-                if (blackPixels / width > BAR_BLACK_PIXEL_RATIO) {
-                    barBottomY = y; // Keep updating to find the bottom of the bar
-                }
-            }
-            // Add a small margin
-            if (barBottomY > 0) {
-                barBottomY += 5;
-            }
-
-
-            // 2. Find the main content box below the bar
             let contentBox = { top: -1, bottom: -1, left: -1, right: -1 };
-            for (let y = barBottomY; y < height; y++) {
+            for (let y = topOffset; y < height; y++) {
                 for (let x = 0; x < width; x++) {
                     if (!isWhite(x, y)) {
                         if (contentBox.top === -1) contentBox.top = y;
@@ -662,12 +460,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            if (contentBox.top === -1) { // No content found
-                resolve([]);
-                return;
-            }
+            if (contentBox.top === -1) { resolve([]); return; }
 
-            // 3. Divide the content box into a grid
             const foundRects = [];
             const cellWidth = (contentBox.right - contentBox.left) / cols;
             const cellHeight = (contentBox.bottom - contentBox.top) / rows;
@@ -681,30 +475,63 @@ document.addEventListener('DOMContentLoaded', () => {
                         height: Math.ceil(cellHeight)
                     };
 
-                    // 4. Find precise boundaries within each grid cell
-                    let preciseRect = { top: -1, bottom: -1, left: -1, right: -1 };
-                    const endY = Math.min(roughRect.y + roughRect.height, height);
-                    const endX = Math.min(roughRect.x + roughRect.width, width);
+                    const visited = new Uint8Array(roughRect.width * roughRect.height);
+                    let largestComponent = null;
 
-                    for (let y = roughRect.y; y < endY; y++) {
-                        for (let x = roughRect.x; x < endX; x++) {
-                            if (!isWhite(x, y)) {
-                                if (preciseRect.top === -1) preciseRect.top = y;
-                                preciseRect.bottom = y;
-                                if (preciseRect.left === -1 || x < preciseRect.left) preciseRect.left = x;
-                                if (preciseRect.right === -1 || x > preciseRect.right) preciseRect.right = x;
+                    for (let y = 0; y < roughRect.height; y++) {
+                        for (let x = 0; x < roughRect.width; x++) {
+                            const visitedIdx = y * roughRect.width + x;
+                            if (visited[visitedIdx]) continue;
+                            visited[visitedIdx] = 1;
+
+                            const imgX = roughRect.x + x;
+                            const imgY = roughRect.y + y;
+
+                            if (!isWhite(imgX, imgY)) {
+                                const component = {
+                                    pixels: [],
+                                    minX: imgX, maxX: imgX, minY: imgY, maxY: imgY
+                                };
+                                const queue = [[imgX, imgY]];
+                                visited[visitedIdx] = 1;
+
+                                while (queue.length > 0) {
+                                    const [curX, curY] = queue.shift();
+                                    component.pixels.push([curX, curY]);
+                                    component.minX = Math.min(component.minX, curX);
+                                    component.maxX = Math.max(component.maxX, curX);
+                                    component.minY = Math.min(component.minY, curY);
+                                    component.maxY = Math.max(component.maxY, curY);
+
+                                    const neighbors = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                                    for (const [dx, dy] of neighbors) {
+                                        const nextX = curX + dx;
+                                        const nextY = curY + dy;
+                                        const nextVisitedIdx = (nextY - roughRect.y) * roughRect.width + (nextX - roughRect.x);
+
+                                        if (nextX >= roughRect.x && nextX < roughRect.x + roughRect.width &&
+                                            nextY >= roughRect.y && nextY < roughRect.y + roughRect.height &&
+                                            !visited[nextVisitedIdx] && !isWhite(nextX, nextY)) {
+                                            
+                                            visited[nextVisitedIdx] = 1;
+                                            queue.push([nextX, nextY]);
+                                        }
+                                    }
+                                }
+                                if (!largestComponent || component.pixels.length > largestComponent.pixels.length) {
+                                    largestComponent = component;
+                                }
                             }
                         }
                     }
 
-                    if (preciseRect.top !== -1) {
-                        const finalWidth = preciseRect.right - preciseRect.left + 1;
-                        const finalHeight = preciseRect.bottom - preciseRect.top + 1;
-
+                    if (largestComponent) {
+                        const finalWidth = largestComponent.maxX - largestComponent.minX + 1;
+                        const finalHeight = largestComponent.maxY - largestComponent.minY + 1;
                         if (finalWidth > MIN_CARD_SIZE && finalHeight > MIN_CARD_SIZE) {
                             foundRects.push({
-                                x: preciseRect.left,
-                                y: preciseRect.top,
+                                x: largestComponent.minX,
+                                y: largestComponent.minY,
                                 width: finalWidth,
                                 height: finalHeight
                             });
@@ -716,36 +543,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Auto crop button
     autoCropButton.addEventListener('click', async () => {
-        if (!imageState.isLoaded) {
-            alert('まず画像を選択してください。');
-            return;
-        }
-        
+        if (!imageState.isLoaded) { alert('まず画像を選択してください。'); return; }
         const rows = parseInt(rowsInput.value, 10);
         const cols = parseInt(colsInput.value, 10);
-        if (isNaN(rows) || isNaN(cols) || rows < 1 || cols < 1) {
-            alert('有効な行数と列数を入力してください。');
-            return;
-        }
+        const topOffset = parseInt(topOffsetInput.value, 10) || 0;
+        if (isNaN(rows) || isNaN(cols) || rows < 1 || cols < 1) { alert('有効な行数と列数を入力してください。'); return; }
 
         autoCropButton.textContent = '処理中...';
         autoCropButton.disabled = true;
-
         try {
-            const cropRects = await findCardRects(sourceImage, rows, cols);
-
+            const cropRects = await findCardRects(sourceImage, rows, cols, topOffset);
             if (cropRects.length === 0) {
-                alert('カードを検出できませんでした。行数や列数を確認するか、手動モードを試してください。');
+                alert('カードを検出できませんでした。行数、列数、上部オフセットの値を確認するか、手動モードを試してください。');
                 return;
             }
-
             const count = processCroppedImages(cropRects);
-
             alert(`${count}枚のカードを検出し、デッキに追加しました。`);
             deckEditingArea.scrollIntoView({ behavior: 'smooth' });
-
         } catch (error) {
             console.error('自動切り取りでエラーが発生しました:', error);
             alert('エラーが発生しました。開発者コンソールを確認してください。');
@@ -755,57 +570,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Deck Editor Listeners
     addCardByNameButton.addEventListener('click', () => {
         const cardName = cardNameInput.value.trim();
-        if (cardName === '') {
-            alert('カード名を入力してください。');
-            return;
-        }
+        if (cardName === '') { alert('カード名を入力してください。'); return; }
         const imgDataUrl = createCardImageFromText(cardName);
-        addCardsToDeck([imgDataUrl]); // Use the new function
+        addCardsToDeck([imgDataUrl]);
         renderEditedDeck();
         cardNameInput.value = '';
     });
 
     saveDeckAsButton.addEventListener('click', async () => {
         const deckName = deckNameInput.value.trim();
-        if (deckName === '') {
-            alert('デッキ名を入力してください。');
-            return;
-        }
-        if (deck.length === 0) {
-            alert('デッキにカードがありません。');
-            return;
-        }
+        if (deckName === '') { alert('デッキ名を入力してください。'); return; }
+        if (deck.length === 0) { alert('デッキにカードがありません。'); return; }
         try {
             await window.cardGameDB.saveDeck(deckName, deck);
             alert(`デッキ「${deckName}」を保存しました。`);
             deckNameInput.value = '';
             renderDeckList();
             currentEditingDeckName = deckName;
-        } catch (error) {
-            console.error('デッキの保存に失敗しました:', error);
-            alert('デッキの保存に失敗しました。');
-        }
+        } catch (error) { console.error('デッキの保存に失敗しました:', error); alert('デッキの保存に失敗しました。'); }
     });
 
     overwriteSaveButton.addEventListener('click', async () => {
-        if (currentEditingDeckName === null) {
-            alert('上書き保存するには、まずデッキを読み込むか、名前を付けて保存してください。');
-            return;
-        }
+        if (currentEditingDeckName === null) { alert('上書き保存するには、まずデッキを読み込むか、名前を付けて保存してください。'); return; }
         try {
             await window.cardGameDB.saveDeck(currentEditingDeckName, deck);
             alert(`デッキ「${currentEditingDeckName}」を上書き保存しました。`);
             renderDeckList();
-        } catch (error) {
-            console.error('デッキの上書き保存に失敗しました:', error);
-            alert('デッキの上書き保存に失敗しました。');
-        }
+        } catch (error) { console.error('デッキの上書き保存に失敗しました:', error); alert('デッキの上書き保存に失敗しました。'); }
     });
 
-    // --- Initial Setup ---
     function initialize() {
         cropperSection.style.display = 'none';
         deckListSection.style.display = 'block';
