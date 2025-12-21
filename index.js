@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const perimeter = cv.arcLength(cnt, true);
                     // 輪郭を多角形で近似します。epsilonの値は調整が必要な場合があります。
-                    cv.approxPolyDP(cnt, approx, 0.02 * perimeter, true);
+                    cv.approxPolyDP(cnt, approx, 0.04 * perimeter, true);
 
                     // 近似した輪郭が4つの頂点を持つ（=四角形である）ことを確認します。
                     if (approx.rows === 4) {
