@@ -248,10 +248,8 @@ document.addEventListener('DOMContentLoaded', () => {
             cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
 
             const thresh = new cv.Mat();
-            // 背景が白(255)に近いので、240を閾値にして反転二値化
             cv.threshold(gray, thresh, 240, 255, cv.THRESH_BINARY_INV);
 
-            // ノイズ除去のためにモルフォロジー演算（オープニング）
             const kernel = cv.Mat.ones(3, 3, cv.CV_8U);
             const opening = new cv.Mat();
             cv.morphologyEx(thresh, opening, cv.MORPH_OPEN, kernel, new cv.Point(-1, -1), 2);
@@ -265,37 +263,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
             for (let i = 0; i < contours.size(); ++i) {
                 const cnt = contours.get(i);
-                const area = cv.contourArea(cnt);
-                const rect = cv.boundingRect(cnt);
+
+                // 輪郭を単純化して、突起などの影響を減らす
+                const epsilon = 0.02 * cv.arcLength(cnt, true);
+                const approx = new cv.Mat();
+                cv.approxPolyDP(cnt, approx, epsilon, true);
+
+                // 単純化された輪郭を使って面積と矩形を計算
+                const area = cv.contourArea(approx);
+                const rect = cv.boundingRect(approx);
                 const aspectRatio = rect.width / rect.height;
-                
-                // 追加: 矩形らしさを計算 (充填率)
-                const rectArea = rect.width * rect.height;
-                const fillRatio = rectArea > 0 ? area / rectArea : 0;
 
                 // --- カード選別（フィルタリング）---
-                // これらの値は、実際の画像に合わせて調整が必要な場合があります。
-                const minCardArea = 5000; // 最小のカード面積（小さすぎるノイズを除外）
-                const maxCardArea = 500000; // 最大のカード面積（大きすぎる領域を除外）
-                const minAspectRatio = 0.6; // 最小のアスペクト比（細すぎるものを除外）
-                const maxAspectRatio = 0.9; // 最大のアスペクト比（太すぎるものを除外）
-                const minFillRatio = 0.9;   // 最小の充填率（いびつな形を除外）
+                const minCardArea = 5000;
+                const maxCardArea = 500000;
+                const minAspectRatio = 0.6;
+                const maxAspectRatio = 0.9;
 
-                if (area > minCardArea && area < maxCardArea && 
-                    aspectRatio > minAspectRatio && aspectRatio < maxAspectRatio &&
-                    fillRatio > minFillRatio) {
+                // 頂点の数が4であること（四角形らしさ）を条件に追加
+                if (approx.rows === 4 &&
+                    area > minCardArea && area < maxCardArea &&
+                    aspectRatio > minAspectRatio && aspectRatio < maxAspectRatio) {
                     cardRects.push(rect);
                 }
+
                 cnt.delete();
+                approx.delete();
             }
 
             // 座標でソート (左上から右下へ)
             cardRects.sort((a, b) => {
                 const yDiff = a.y - b.y;
-                if (Math.abs(yDiff) > a.height / 2) { // Y座標が大きく違う場合は行が違うと判断
+                if (Math.abs(yDiff) > a.height / 2) {
                     return yDiff;
                 }
-                return a.x - b.x; // 同じ行ならX座標でソート
+                return a.x - b.x;
             });
 
             for (const rect of cardRects) {
