@@ -309,8 +309,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     // 黒い部分が見つかった候補のみ、次の処理へ進む
                     if (hasBlackCircle) {
                         // --- 矩形の補正ロジック (余白の切り詰め) ---
-                        const topPaddingRatio = 0.035;
-                        const rightPaddingRatio = 0.035;
+                        const topPaddingRatio = 0.020;
+                        const rightPaddingRatio = 0.025;
 
                         const topPadding = rect.height * topPaddingRatio;
                         const rightPadding = rect.width * rightPaddingRatio;
