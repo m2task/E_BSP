@@ -165,7 +165,6 @@ h1, h2, h3 {
     display: flex;
     flex-direction: column;
     align-items: center;
-    position: relative; /* For positioning the quantity badge */
 }
 
 .deck-card-item img {
@@ -197,21 +196,10 @@ h1, h2, h3 {
 }
 
 .card-quantity {
-    position: absolute;
-    top: 0;
-    right: 0;
-    transform: translate(25%, -25%); /* Adjust position to overlap the corner */
-    background-color: black;
-    color: white;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    line-height: 24px;
-    text-align: center;
     font-weight: bold;
-    font-size: 14px;
-    border: 2px solid white;
-    z-index: 1; /* Ensure it's above the card image */
+    color: black;
+    min-width: 25px;
+    text-align: center;
 }
 
 .delete-button {
