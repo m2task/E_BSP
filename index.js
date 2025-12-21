@@ -265,31 +265,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             for (let i = 0; i < contours.size(); ++i) {
                 const cnt = contours.get(i);
-                const approx = new cv.Mat();
-                try {
-                    const perimeter = cv.arcLength(cnt, true);
-                    // 輪郭を多角形で近似します。epsilonの値は調整が必要な場合があります。
-                    cv.approxPolyDP(cnt, approx, 0.04 * perimeter, true);
+                const area = cv.contourArea(cnt);
+                const rect = cv.boundingRect(cnt);
+                const aspectRatio = rect.width / rect.height;
 
-                    // 近似した輪郭が4つの頂点を持つ（=四角形である）ことを確認します。
-                    if (approx.rows === 4) {
-                        const area = cv.contourArea(approx);
-                        const rect = cv.boundingRect(approx);
-                        const aspectRatio = rect.width / rect.height;
+                // --- カード選別（フィルタリング）---
+                // これらの値は、実際の画像に合わせて調整が必要な場合があります。
+                const minCardArea = 5000; // 最小のカード面積（小さすぎるノイズを除外）
+                const maxCardArea = 500000; // 最大のカード面積（大きすぎる領域を除外）
+                const minAspectRatio = 0.6; // 最小のアスペクト比（細すぎるものを除外）
+                const maxAspectRatio = 0.9; // 最大のアスペクト比（太すぎるものを除外）
 
-                        // --- カード選別（フィルタリング）---
-                        const minCardArea = 5000;
-                        const maxCardArea = 500000;
-                        const minAspectRatio = 0.6;
-                        const maxAspectRatio = 0.9;
-
-                        if (area > minCardArea && area < maxCardArea && aspectRatio > minAspectRatio && aspectRatio < maxAspectRatio) {
-                            cardRects.push(rect);
-                        }
-                    }
-                } finally {
-                    // メモリリークを防ぐために、作成したMatは必ず解放します。
-                    if (approx && !approx.isDeleted()) approx.delete();
+                if (area > minCardArea && area < maxCardArea && aspectRatio > minAspectRatio && aspectRatio < maxAspectRatio) {
+                    cardRects.push(rect);
                 }
                 cnt.delete();
             }
