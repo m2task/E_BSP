@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const approx = new cv.Mat();
                     const peri = cv.arcLength(cnt, true);
                     // 輪郭を単純化する。epsilon の値が小さいほど、元の輪郭に近くなる。
-                    const epsilon = 0.02 * peri;
+                    const epsilon = 0.1 * peri;
                     cv.approxPolyDP(cnt, approx, epsilon, true);
 
                     // 単純化された輪郭の頂点が4つ（四角形）の場合のみ処理を進める
