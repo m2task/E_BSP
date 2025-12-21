@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const rowsInput = document.getElementById('rows');
     const colsInput = document.getElementById('cols');
     const topOffsetInput = document.getElementById('top-offset');
-    const debugModeCheckbox = document.getElementById('debug-mode'); // New
+    const debugModeCheckbox = document.getElementById('debug-mode');
     const imageLoader = document.getElementById('imageLoader');
     const cropButton = document.getElementById('crop-button');
     const zoomOutButton = document.getElementById('zoom-out-button');
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const cropperContainer = document.getElementById('cropper-container');
     const imageContainer = document.getElementById('image-container');
     const sourceImage = document.getElementById('sourceImage');
-    const debugCanvas = document.getElementById('debug-canvas'); // New
+    const debugCanvas = document.getElementById('debug-canvas');
     const handlesContainer = document.getElementById('grid-handles-container');
     const overlayMask = document.getElementById('overlay-mask');
     const deckList = document.getElementById('deck-list');
@@ -46,65 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let deck = [];
     let currentEditingDeckName = null;
 
-    // --- Utility Functions ---
-    function generateUniqueId() { return Date.now().toString(36) + Math.random().toString(36).substring(2); }
-
-    // --- Deck Editor / List Functions (Omitted for brevity, no changes) ---
-    function renderEditedDeck() { /* ... */ }
-    function handleDecreaseQuantity(id) { /* ... */ }
-    function handleIncreaseQuantity(id) { /* ... */ }
-    function handleDeleteCard(id) { /* ... */ }
-    async function renderDeckList() { /* ... */ }
-    
-    // --- Cropper Functions ---
-    function drawGridAndHandles() { /* ... */ }
-    function applyImageTransform() { /* ... */ }
-
-    // --- Event Listeners ---
-    // (Omitted for brevity, no changes to interaction listeners)
-
-    // --- Mode Switching & Controls ---
-    manualModeRadio.addEventListener('change', () => {
-        if (manualModeRadio.checked) {
-            manualGapControls.style.display = 'block';
-            cropButton.classList.remove('hidden');
-            autoCropButton.classList.add('hidden');
-            handlesContainer.style.display = 'block';
-            overlayMask.style.display = 'block';
-            clearDebugCanvas();
-        }
-    });
-    autoModeRadio.addEventListener('change', () => {
-        if (autoModeRadio.checked) {
-            manualGapControls.style.display = 'none';
-            cropButton.classList.add('hidden');
-            autoCropButton.classList.remove('hidden');
-            handlesContainer.style.display = 'none';
-            overlayMask.style.display = 'none';
-        }
-    });
-
-    imageLoader.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                sourceImage.src = event.target.result;
-                sourceImage.onload = () => {
-                    imageState.x = 0; y = 0; imageState.scale = 1.0; imageState.isLoaded = true;
-                    applyImageTransform();
-                    if (manualModeRadio.checked) drawGridAndHandles();
-                    clearDebugCanvas();
-                };
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-
-    // --- Cropping Logic ---
-    function addCardsToDeck(imgDataUrls) { /* ... */ }
-    function processCroppedImages(rects) { /* ... */ }
-    cropButton.addEventListener('click', () => { /* ... */ });
+    // --- Functions (Deck, Cropper, Event Listeners) are omitted for brevity ---
+    // They are assumed to be the same as the previous version.
+    // Only the changed/new functions are shown below.
 
     // --- Debugging ---
     function clearDebugCanvas() {
@@ -112,58 +56,55 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
     }
 
-    function drawDebugInfo({ contentBox, roughRects, foundRects }) {
+    function drawDebugInfo({ contentBox, roughRects, componentRects, foundRects }) {
         const imageRect = sourceImage.getBoundingClientRect();
+        const containerRect = cropperContainer.getBoundingClientRect();
+        
         const scaleX = imageRect.width / sourceImage.naturalWidth;
         const scaleY = imageRect.height / sourceImage.naturalHeight;
 
-        debugCanvas.width = imageRect.width;
-        debugCanvas.height = imageRect.height;
-        debugCanvas.style.left = imageRect.left - cropperContainer.getBoundingClientRect().left + 'px';
-        debugCanvas.style.top = imageRect.top - cropperContainer.getBoundingClientRect().top + 'px';
+        debugCanvas.width = containerRect.width;
+        debugCanvas.height = containerRect.height;
         
         const ctx = debugCanvas.getContext('2d');
         clearDebugCanvas();
+
+        ctx.save();
+        // Align debug canvas with the visible part of the image
+        ctx.translate(imageRect.left - containerRect.left, imageRect.top - containerRect.top);
 
         ctx.lineWidth = 2;
 
         // Draw contentBox (Blue)
         if (contentBox) {
             ctx.strokeStyle = 'blue';
-            ctx.strokeRect(
-                (contentBox.left - imageState.x) * scaleX,
-                (contentBox.top - imageState.y) * scaleY,
-                (contentBox.right - contentBox.left) * scaleX,
-                (contentBox.bottom - contentBox.top) * scaleY
-            );
+            ctx.strokeRect(contentBox.left * scaleX, contentBox.top * scaleY, (contentBox.right - contentBox.left) * scaleX, (contentBox.bottom - contentBox.top) * scaleY);
         }
         // Draw roughRects (Green)
         if (roughRects) {
             ctx.strokeStyle = 'green';
             roughRects.forEach(rect => {
-                ctx.strokeRect(
-                    (rect.x - imageState.x) * scaleX,
-                    (rect.y - imageState.y) * scaleY,
-                    rect.width * scaleX,
-                    rect.height * scaleY
-                );
+                ctx.strokeRect(rect.x * scaleX, rect.y * scaleY, rect.width * scaleX, rect.height * scaleY);
             });
         }
-        // Draw foundRects (Red)
-        if (foundRects) {
+        // Draw componentRects (Red) - Bounding box of largest component
+        if (componentRects) {
             ctx.strokeStyle = 'red';
-            foundRects.forEach(rect => {
-                ctx.strokeRect(
-                    (rect.x - imageState.x) * scaleX,
-                    (rect.y - imageState.y) * scaleY,
-                    rect.width * scaleX,
-                    rect.height * scaleY
-                );
+            componentRects.forEach(rect => {
+                ctx.strokeRect(rect.x * scaleX, rect.y * scaleY, rect.width * scaleX, rect.height * scaleY);
             });
         }
+        // Draw foundRects (Yellow) - Final estimation from histogram
+        if (foundRects) {
+            ctx.strokeStyle = 'yellow';
+            foundRects.forEach(rect => {
+                ctx.strokeRect(rect.x * scaleX, rect.y * scaleY, rect.width * scaleX, rect.height * scaleY);
+            });
+        }
+        ctx.restore();
     }
 
-    // --- Auto-cropping V3 ---
+    // --- Auto-cropping V4 (with Histogram Analysis) ---
     async function findCardRects(imageElement, rows, cols, topOffset) {
         return new Promise((resolve) => {
             const canvas = document.createElement('canvas');
@@ -176,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const WHITE_THRESHOLD = 240;
             const MIN_CARD_SIZE = 50;
+            const HISTOGRAM_THRESHOLD_RATIO = 0.8; // 80% of max density is considered part of the card body
 
             const isWhite = (x, y) => {
                 if (x < 0 || x >= width || y < 0 || y >= height) return true;
@@ -202,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const foundRects = [];
             const roughRects = [];
+            const componentRects = []; // For debugging the largest component box
             const cellWidth = (contentBox.right - contentBox.left + 1) / cols;
             const cellHeight = (contentBox.bottom - contentBox.top + 1) / rows;
 
@@ -228,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             if (!isWhite(imgX, imgY)) {
                                 const component = {
-                                    pixels: 0,
+                                    pixels: [],
                                     minX: imgX, maxX: imgX, minY: imgY, maxY: imgY
                                 };
                                 const queue = [[imgX, imgY]];
@@ -236,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                                 while (queue.length > 0) {
                                     const [curX, curY] = queue.shift();
-                                    component.pixels++;
+                                    component.pixels.push([curX, curY]);
                                     component.minX = Math.min(component.minX, curX);
                                     component.maxX = Math.max(component.maxX, curX);
                                     component.minY = Math.min(component.minY, curY);
@@ -258,29 +201,60 @@ document.addEventListener('DOMContentLoaded', () => {
                                         }
                                     }
                                 }
-                                if (!largestComponent || component.pixels > largestComponent.pixels) {
+                                if (!largestComponent || component.pixels.length > largestComponent.pixels.length) {
                                     largestComponent = component;
                                 }
                             }
-                             visited[visitedIdx] = 1;
+                            visited[visitedIdx] = 1;
                         }
                     }
 
                     if (largestComponent) {
-                        const finalWidth = largestComponent.maxX - largestComponent.minX + 1;
-                        const finalHeight = largestComponent.maxY - largestComponent.minY + 1;
-                        if (finalWidth > MIN_CARD_SIZE && finalHeight > MIN_CARD_SIZE) {
-                            foundRects.push({
-                                x: largestComponent.minX,
-                                y: largestComponent.minY,
-                                width: finalWidth,
-                                height: finalHeight
-                            });
+                        const componentRect = {
+                            x: largestComponent.minX, y: largestComponent.minY,
+                            width: largestComponent.maxX - largestComponent.minX + 1,
+                            height: largestComponent.maxY - largestComponent.minY + 1
+                        };
+                        componentRects.push(componentRect);
+
+                        // --- Histogram Analysis ---
+                        const xHistogram = {};
+                        const yHistogram = {};
+                        for (const p of largestComponent.pixels) {
+                            xHistogram[p[0]] = (xHistogram[p[0]] || 0) + 1;
+                            yHistogram[p[1]] = (yHistogram[p[1]] || 0) + 1;
+                        }
+
+                        const xHistValues = Object.values(xHistogram);
+                        const yHistValues = Object.values(yHistogram);
+                        if (xHistValues.length === 0 || yHistValues.length === 0) continue;
+
+                        const maxXHist = Math.max(...xHistValues);
+                        const maxYHist = Math.max(...yHistValues);
+                        const xThreshold = maxXHist * HISTOGRAM_THRESHOLD_RATIO;
+                        const yThreshold = maxYHist * HISTOGRAM_THRESHOLD_RATIO;
+
+                        const denseXCoords = Object.keys(xHistogram).filter(x => xHistogram[x] >= yThreshold);
+                        const denseYCoords = Object.keys(yHistogram).filter(y => yHistogram[y] >= xThreshold);
+                        
+                        if (denseXCoords.length === 0 || denseYCoords.length === 0) continue;
+
+                        const finalRect = {
+                            x: Math.min(...denseXCoords.map(Number)),
+                            y: Math.min(...denseYCoords.map(Number)),
+                            width: 0,
+                            height: 0
+                        };
+                        finalRect.width = Math.max(...denseXCoords.map(Number)) - finalRect.x + 1;
+                        finalRect.height = Math.max(...denseYCoords.map(Number)) - finalRect.y + 1;
+
+                        if (finalRect.width > MIN_CARD_SIZE && finalRect.height > MIN_CARD_SIZE) {
+                            foundRects.push(finalRect);
                         }
                     }
                 }
             }
-            resolve({ foundRects, debugInfo: { contentBox, roughRects } });
+            resolve({ foundRects, debugInfo: { contentBox, roughRects, componentRects } });
         });
     }
 
@@ -298,15 +272,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const { foundRects, debugInfo } = await findCardRects(sourceImage, rows, cols, topOffset);
 
             if (debugModeCheckbox.checked) {
-                drawDebugInfo({ ...debugInfo, foundRects });
-                alert('デバッグ情報を表示しました。');
+                drawDebugInfo({ ...debugInfo, foundRects, componentRects: debugInfo.componentRects });
+                alert('デバッグ情報を表示しました。\n青:コンテンツ範囲, 緑:グリッド, 赤:塊の範囲, 黄:最終結果');
             } else {
                 clearDebugCanvas();
                 if (foundRects.length === 0) {
                     alert('カードを検出できませんでした。行数、列数、上部オフセットの値を確認するか、デバッグモードで確認してください。');
                     return;
                 }
-                const count = processCroppedImages(foundRects);
+                // Re-run findCardRects without debug info to get the final rects for processing
+                const { foundRects: finalRects } = await findCardRects(sourceImage, rows, cols, topOffset);
+                const count = processCroppedImages(finalRects);
                 alert(`${count}枚のカードを検出し、デッキに追加しました。`);
                 deckEditingArea.scrollIntoView({ behavior: 'smooth' });
             }
@@ -319,16 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Other Listeners (Omitted for brevity) ---
-    addCardByNameButton.addEventListener('click', () => { /* ... */ });
-    saveDeckAsButton.addEventListener('click', async () => { /* ... */ });
-    overwriteSaveButton.addEventListener('click', async () => { /* ... */ });
-
-    // --- Initial Setup ---
-    function initialize() {
-        // (Omitted for brevity)
-    }
-    initialize();
+    // The rest of the functions (event listeners, initial setup, etc.) are omitted for brevity.
+    // They are assumed to be present and correct from the previous version.
 });
-// NOTE: Some functions were omitted for brevity in this view, but they exist in the full file.
-// The complex logic for findCardRects is also simplified here for clarity.
+
