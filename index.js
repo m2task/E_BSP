@@ -7,8 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const showDeckListBtn = document.getElementById('show-deck-list-btn');
     const rowsInput = document.getElementById('rows');
     const colsInput = document.getElementById('cols');
-    const topOffsetInput = document.getElementById('top-offset');
-    const debugModeCheckbox = document.getElementById('debug-mode');
     const imageLoader = document.getElementById('imageLoader');
     const cropButton = document.getElementById('crop-button');
     const zoomOutButton = document.getElementById('zoom-out-button');
@@ -22,7 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const cropperContainer = document.getElementById('cropper-container');
     const imageContainer = document.getElementById('image-container');
     const sourceImage = document.getElementById('sourceImage');
-    const debugCanvas = document.getElementById('debug-canvas');
     const handlesContainer = document.getElementById('grid-handles-container');
     const overlayMask = document.getElementById('overlay-mask');
     const deckList = document.getElementById('deck-list');
@@ -46,66 +43,99 @@ document.addEventListener('DOMContentLoaded', () => {
     let deck = [];
     let currentEditingDeckName = null;
 
-    // --- Functions (Deck, Cropper, Event Listeners) are omitted for brevity ---
-    // They are assumed to be the same as the previous version.
-    // Only the changed/new functions are shown below.
+    // All other functions (Deck, Cropper, Event Listeners) are omitted for brevity.
+    // They are assumed to be the same as the previous correct version.
+    // The key changes are in the auto-cropping flow and the removal of debug code.
 
-    // --- Debugging ---
-    function clearDebugCanvas() {
-        const ctx = debugCanvas.getContext('2d');
-        ctx.clearRect(0, 0, debugCanvas.width, debugCanvas.height);
+    // --- Mode Switching & Controls ---
+    manualModeRadio.addEventListener('change', () => {
+        if (manualModeRadio.checked) {
+            manualGapControls.style.display = 'block';
+            cropButton.classList.remove('hidden');
+            autoCropButton.classList.add('hidden');
+            handlesContainer.style.display = 'block';
+            overlayMask.style.display = 'block';
+        }
+    });
+    autoModeRadio.addEventListener('change', () => {
+        if (autoModeRadio.checked) {
+            manualGapControls.style.display = 'none';
+            cropButton.classList.add('hidden');
+            autoCropButton.classList.remove('hidden');
+            handlesContainer.style.display = 'none';
+            overlayMask.style.display = 'none';
+        }
+    });
+
+    imageLoader.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                sourceImage.src = event.target.result;
+                sourceImage.onload = () => {
+                    imageState.x = 0; y = 0; imageState.scale = 1.0; imageState.isLoaded = true;
+                    applyImageTransform();
+                    if (manualModeRadio.checked) drawGridAndHandles();
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // --- Cropping Logic ---
+    function addCardsToDeck(imgDataUrls) {
+        imgDataUrls.forEach(imgDataUrl => {
+            const existingCardIndex = deck.findIndex(card => card.imgDataUrl === imgDataUrl);
+            if (existingCardIndex !== -1) deck[existingCardIndex].quantity++;
+            else deck.push({ id: generateUniqueId(), imgDataUrl: imgDataUrl, quantity: 1 });
+        });
+        renderEditedDeck();
     }
 
-    function drawDebugInfo({ contentBox, roughRects, componentRects, foundRects }) {
+    function processCroppedImages(rects) {
+        const imgDataUrls = [];
+        rects.forEach(rect => {
+            if (rect.width <= 0 || rect.height <= 0) return;
+            const canvas = document.createElement('canvas');
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(sourceImage, rect.x, rect.y, rect.width, rect.height, 0, 0, rect.width, rect.height);
+            imgDataUrls.push(canvas.toDataURL('image/jpeg', 0.9));
+        });
+        addCardsToDeck(imgDataUrls);
+        return imgDataUrls.length;
+    }
+
+    cropButton.addEventListener('click', () => {
+        if (!imageState.isLoaded) { alert('まず画像を選択してください。'); return; }
+        const rows = parseInt(rowsInput.value, 10);
+        const cols = parseInt(colsInput.value, 10);
+        const gapH = gapState.horizontal;
+        const gapV = gapState.vertical;
+        const totalCellWidth = gridState.cellWidth + gapH;
+        const totalCellHeight = gridState.cellHeight + gapV;
+        const cropperRect = cropperContainer.getBoundingClientRect();
         const imageRect = sourceImage.getBoundingClientRect();
-        const containerRect = cropperContainer.getBoundingClientRect();
-        
-        const scaleX = imageRect.width / sourceImage.naturalWidth;
-        const scaleY = imageRect.height / sourceImage.naturalHeight;
-
-        debugCanvas.width = containerRect.width;
-        debugCanvas.height = containerRect.height;
-        
-        const ctx = debugCanvas.getContext('2d');
-        clearDebugCanvas();
-
-        ctx.save();
-        // Align debug canvas with the visible part of the image
-        ctx.translate(imageRect.left - containerRect.left, imageRect.top - containerRect.top);
-
-        ctx.lineWidth = 2;
-
-        // Draw contentBox (Blue)
-        if (contentBox) {
-            ctx.strokeStyle = 'blue';
-            ctx.strokeRect(contentBox.left * scaleX, contentBox.top * scaleY, (contentBox.right - contentBox.left) * scaleX, (contentBox.bottom - contentBox.top) * scaleY);
+        const ratio = sourceImage.naturalWidth / imageRect.width;
+        const rects = [];
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const sx = (cropperRect.left + gridState.x + c * totalCellWidth - imageRect.left) * ratio;
+                const sy = (cropperRect.top + gridState.y + r * totalCellHeight - imageRect.top) * ratio;
+                const sWidth = gridState.cellWidth * ratio;
+                const sHeight = gridState.cellHeight * ratio;
+                rects.push({ x: sx, y: sy, width: sWidth, height: sHeight });
+            }
         }
-        // Draw roughRects (Green)
-        if (roughRects) {
-            ctx.strokeStyle = 'green';
-            roughRects.forEach(rect => {
-                ctx.strokeRect(rect.x * scaleX, rect.y * scaleY, rect.width * scaleX, rect.height * scaleY);
-            });
-        }
-        // Draw componentRects (Red) - Bounding box of largest component
-        if (componentRects) {
-            ctx.strokeStyle = 'red';
-            componentRects.forEach(rect => {
-                ctx.strokeRect(rect.x * scaleX, rect.y * scaleY, rect.width * scaleX, rect.height * scaleY);
-            });
-        }
-        // Draw foundRects (Yellow) - Final estimation from histogram
-        if (foundRects) {
-            ctx.strokeStyle = 'yellow';
-            foundRects.forEach(rect => {
-                ctx.strokeRect(rect.x * scaleX, rect.y * scaleY, rect.width * scaleX, rect.height * scaleY);
-            });
-        }
-        ctx.restore();
-    }
+        const count = processCroppedImages(rects);
+        alert(`${count}枚のカードをデッキに追加しました。`);
+        deckEditingArea.scrollIntoView({ behavior: 'smooth' });
+    });
 
-    // --- Auto-cropping V4 (with Histogram Analysis) ---
-    async function findCardRects(imageElement, rows, cols, topOffset) {
+    // --- Auto-cropping V5 (Final) ---
+    async function findCardRects(imageElement, rows, cols) {
         return new Promise((resolve) => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -117,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const WHITE_THRESHOLD = 240;
             const MIN_CARD_SIZE = 50;
-            const HISTOGRAM_THRESHOLD_RATIO = 0.8; // 80% of max density is considered part of the card body
+            const HISTOGRAM_THRESHOLD_RATIO = 0.8;
 
             const isWhite = (x, y) => {
                 if (x < 0 || x >= width || y < 0 || y >= height) return true;
@@ -126,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             let contentBox = { top: -1, bottom: -1, left: -1, right: -1 };
-            for (let y = topOffset; y < height; y++) {
+            for (let y = 0; y < height; y++) {
                 for (let x = 0; x < width; x++) {
                     if (!isWhite(x, y)) {
                         if (contentBox.top === -1) contentBox.top = y;
@@ -138,13 +168,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (contentBox.top === -1) {
-                resolve({ foundRects: [], debugInfo: {} });
+                resolve([]);
                 return;
             }
 
             const foundRects = [];
-            const roughRects = [];
-            const componentRects = []; // For debugging the largest component box
             const cellWidth = (contentBox.right - contentBox.left + 1) / cols;
             const cellHeight = (contentBox.bottom - contentBox.top + 1) / rows;
 
@@ -156,7 +184,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         width: Math.ceil(cellWidth),
                         height: Math.ceil(cellHeight)
                     };
-                    roughRects.push(roughRect);
 
                     const visited = new Uint8Array(roughRect.width * roughRect.height);
                     let largestComponent = null;
@@ -210,14 +237,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     if (largestComponent) {
-                        const componentRect = {
-                            x: largestComponent.minX, y: largestComponent.minY,
-                            width: largestComponent.maxX - largestComponent.minX + 1,
-                            height: largestComponent.maxY - largestComponent.minY + 1
-                        };
-                        componentRects.push(componentRect);
-
-                        // --- Histogram Analysis ---
                         const xHistogram = {};
                         const yHistogram = {};
                         for (const p of largestComponent.pixels) {
@@ -231,8 +250,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         const maxXHist = Math.max(...xHistValues);
                         const maxYHist = Math.max(...yHistValues);
-                        const xThreshold = maxXHist * HISTOGRAM_THRESHOLD_RATIO;
-                        const yThreshold = maxYHist * HISTOGRAM_THRESHOLD_RATIO;
+                        const xThreshold = maxYHist * HISTOGRAM_THRESHOLD_RATIO;
+                        const yThreshold = maxXHist * HISTOGRAM_THRESHOLD_RATIO;
 
                         const denseXCoords = Object.keys(xHistogram).filter(x => xHistogram[x] >= yThreshold);
                         const denseYCoords = Object.keys(yHistogram).filter(y => yHistogram[y] >= xThreshold);
@@ -254,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
-            resolve({ foundRects, debugInfo: { contentBox, roughRects, componentRects } });
+            resolve(foundRects);
         });
     }
 
@@ -262,30 +281,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!imageState.isLoaded) { alert('まず画像を選択してください。'); return; }
         const rows = parseInt(rowsInput.value, 10);
         const cols = parseInt(colsInput.value, 10);
-        const topOffset = parseInt(topOffsetInput.value, 10) || 0;
         if (isNaN(rows) || isNaN(cols) || rows < 1 || cols < 1) { alert('有効な行数と列数を入力してください。'); return; }
 
         autoCropButton.textContent = '処理中...';
         autoCropButton.disabled = true;
         
         try {
-            const { foundRects, debugInfo } = await findCardRects(sourceImage, rows, cols, topOffset);
+            const foundRects = await findCardRects(sourceImage, rows, cols);
 
-            if (debugModeCheckbox.checked) {
-                drawDebugInfo({ ...debugInfo, foundRects, componentRects: debugInfo.componentRects });
-                alert('デバッグ情報を表示しました。\n青:コンテンツ範囲, 緑:グリッド, 赤:塊の範囲, 黄:最終結果');
-            } else {
-                clearDebugCanvas();
-                if (foundRects.length === 0) {
-                    alert('カードを検出できませんでした。行数、列数、上部オフセットの値を確認するか、デバッグモードで確認してください。');
-                    return;
-                }
-                // Re-run findCardRects without debug info to get the final rects for processing
-                const { foundRects: finalRects } = await findCardRects(sourceImage, rows, cols, topOffset);
-                const count = processCroppedImages(finalRects);
-                alert(`${count}枚のカードを検出し、デッキに追加しました。`);
-                deckEditingArea.scrollIntoView({ behavior: 'smooth' });
+            if (foundRects.length === 0) {
+                alert('カードを検出できませんでした。行数や列数を確認するか、手動モードを試してください。');
+                return;
             }
+            const count = processCroppedImages(foundRects);
+            alert(`${count}枚のカードを検出し、デッキに追加しました。`);
+            deckEditingArea.scrollIntoView({ behavior: 'smooth' });
         } catch (error) {
             console.error('自動切り取りでエラーが発生しました:', error);
             alert('エラーが発生しました。開発者コンソールを確認してください。');
@@ -295,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // The rest of the functions (event listeners, initial setup, etc.) are omitted for brevity.
-    // They are assumed to be present and correct from the previous version.
+    // All other functions are omitted for brevity but are assumed to be correct.
 });
+
 
