@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- New UI Elements for Auto-cropping ---
     const manualModeRadio = document.getElementById('manual-mode');
     const autoModeRadio = document.getElementById('auto-mode');
-    const manualControls = document.getElementById('manual-controls');
+    const manualGapControls = document.getElementById('manual-gap-controls');
     const autoCropButton = document.getElementById('auto-crop-button');
 
     // --- State ---
@@ -474,7 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Mode Switching ---
     manualModeRadio.addEventListener('change', () => {
         if (manualModeRadio.checked) {
-            manualControls.style.display = 'block';
+            manualGapControls.style.display = 'block';
             cropButton.classList.remove('hidden');
             autoCropButton.classList.add('hidden');
             handlesContainer.style.display = 'block';
@@ -483,7 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     autoModeRadio.addEventListener('change', () => {
         if (autoModeRadio.checked) {
-            manualControls.style.display = 'none';
+            manualGapControls.style.display = 'none';
             cropButton.classList.add('hidden');
             autoCropButton.classList.remove('hidden');
             handlesContainer.style.display = 'none';
@@ -596,11 +596,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     /**
-     * Analyzes the source image to find card boundaries automatically.
+     * Analyzes the source image to find card boundaries automatically using a grid-based approach.
      * @param {HTMLImageElement} imageElement The image to analyze.
+     * @param {number} rows The number of rows in the grid.
+     * @param {number} cols The number of columns in the grid.
      * @returns {Promise<Array<{x, y, width, height}>>} A promise that resolves with an array of found rectangles.
      */
-    async function findCardRects(imageElement) {
+    async function findCardRects(imageElement, rows, cols) {
         return new Promise((resolve) => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -611,18 +613,45 @@ document.addEventListener('DOMContentLoaded', () => {
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const { data, width, height } = imageData;
 
-            const WHITE_THRESHOLD = 250;
-            const MIN_GAP_SIZE = 5; // Minimum pixels to be considered a gap
+            const WHITE_THRESHOLD = 240; // Be a bit more tolerant to off-white
+            const BLACK_THRESHOLD = 50;
             const MIN_CARD_SIZE = 50; // Minimum pixels for a card's width/height
 
             const isWhite = (x, y) => {
+                if (x < 0 || x >= width || y < 0 || y >= height) return true;
                 const i = (y * width + x) * 4;
                 return data[i] > WHITE_THRESHOLD && data[i + 1] > WHITE_THRESHOLD && data[i + 2] > WHITE_THRESHOLD;
             };
+            const isBlack = (x, y) => {
+                if (x < 0 || x >= width || y < 0 || y >= height) return false;
+                const i = (y * width + x) * 4;
+                return data[i] < BLACK_THRESHOLD && data[i + 1] < BLACK_THRESHOLD && data[i + 2] < BLACK_THRESHOLD;
+            };
 
-            // 1. Trim background
+            // 1. Detect and exclude the top black bar
+            let barBottomY = 0;
+            const BAR_SCAN_HEIGHT = Math.floor(height * 0.1); // Scan top 10% of the image
+            const BAR_BLACK_PIXEL_RATIO = 0.7; // 70% of the row should be black
+            for (let y = 0; y < BAR_SCAN_HEIGHT; y++) {
+                let blackPixels = 0;
+                for (let x = 0; x < width; x++) {
+                    if (isBlack(x, y)) {
+                        blackPixels++;
+                    }
+                }
+                if (blackPixels / width > BAR_BLACK_PIXEL_RATIO) {
+                    barBottomY = y; // Keep updating to find the bottom of the bar
+                }
+            }
+            // Add a small margin
+            if (barBottomY > 0) {
+                barBottomY += 5;
+            }
+
+
+            // 2. Find the main content box below the bar
             let contentBox = { top: -1, bottom: -1, left: -1, right: -1 };
-            for (let y = 0; y < height; y++) {
+            for (let y = barBottomY; y < height; y++) {
                 for (let x = 0; x < width; x++) {
                     if (!isWhite(x, y)) {
                         if (contentBox.top === -1) contentBox.top = y;
@@ -632,134 +661,58 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
-            if (contentBox.top === -1) { // Image is all white
+
+            if (contentBox.top === -1) { // No content found
                 resolve([]);
                 return;
             }
 
-            // 2. Find column boundaries
-            const columns = [];
-            let inCardColumn = false;
-            let columnStart = contentBox.left;
-            for (let x = contentBox.left; x <= contentBox.right; x++) {
-                let isGap = true;
-                for (let y = contentBox.top; y <= contentBox.bottom; y++) {
-                    if (!isWhite(x, y)) {
-                        isGap = false;
-                        break;
-                    }
-                }
-                if (!isGap && !inCardColumn) {
-                    inCardColumn = true;
-                    columnStart = x;
-                } else if (isGap && inCardColumn) {
-                    inCardColumn = false;
-                    const col = { start: columnStart, end: x - 1 };
-                    if (col.end - col.start > MIN_CARD_SIZE) columns.push(col);
-                }
-            }
-            if (inCardColumn) {
-                const col = { start: columnStart, end: contentBox.right };
-                if (col.end - col.start > MIN_CARD_SIZE) columns.push(col);
-            }
-
-            // 3. Find row boundaries
-            const rows = [];
-            let inCardRow = false;
-            let rowStart = contentBox.top;
-            for (let y = contentBox.top; y <= contentBox.bottom; y++) {
-                let isGap = true;
-                for (let x = contentBox.left; x <= contentBox.right; x++) {
-                    if (!isWhite(x, y)) {
-                        isGap = false;
-                        break;
-                    }
-                }
-                if (!isGap && !inCardRow) {
-                    inCardRow = true;
-                    rowStart = y;
-                } else if (isGap && inCardRow) {
-                    inCardRow = false;
-                    const row = { start: rowStart, end: y - 1 };
-                    if (row.end - row.start > MIN_CARD_SIZE) rows.push(row);
-                }
-            }
-            if (inCardRow) {
-                const row = { start: rowStart, end: contentBox.bottom };
-                if (row.end - row.start > MIN_CARD_SIZE) rows.push(row);
-            }
-
-            // 4. Generate and validate rectangles
+            // 3. Divide the content box into a grid
             const foundRects = [];
-            // This simple approach assumes a grid. A more robust solution would find connected components.
-            // For now, we find the average card size to deduce the grid.
-            if (columns.length === 0 || rows.length === 0) {
-                resolve([]);
-                return;
-            }
+            const cellWidth = (contentBox.right - contentBox.left) / cols;
+            const cellHeight = (contentBox.bottom - contentBox.top) / rows;
 
-            const avgCardWidth = columns.reduce((sum, col) => sum + (col.end - col.start), 0) / columns.length;
-            const avgCardHeight = rows.reduce((sum, row) => sum + (row.end - row.start), 0) / rows.length;
-
-            const numCols = Math.round((contentBox.right - contentBox.left) / avgCardWidth);
-            const numRows = Math.round((contentBox.bottom - contentBox.top) / avgCardHeight);
-
-            const stepX = (contentBox.right - contentBox.left + 1) / numCols;
-            const stepY = (contentBox.bottom - contentBox.top + 1) / numRows;
-
-            for (let r = 0; r < numRows; r++) {
-                for (let c = 0; c < numCols; c++) {
-                    const roughX = contentBox.left + c * stepX;
-                    const roughY = contentBox.top + r * stepY;
-
-                    // Refine the box by finding the actual content within the rough box
-                    let cardBox = {
-                        x: Math.floor(roughX),
-                        y: Math.floor(roughY),
-                        width: Math.ceil(stepX),
-                        height: Math.ceil(stepY)
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const roughRect = {
+                        x: Math.floor(contentBox.left + c * cellWidth),
+                        y: Math.floor(contentBox.top + r * cellHeight),
+                        width: Math.ceil(cellWidth),
+                        height: Math.ceil(cellHeight)
                     };
-                    
-                    // Simple validation: check if center is not white
-                    const centerX = Math.floor(cardBox.x + cardBox.width / 2);
-                    const centerY = Math.floor(cardBox.y + cardBox.height / 2);
 
-                    if (centerX < width && centerY < height && !isWhite(centerX, centerY)) {
-                         // Find precise boundaries within the rough box
-                        let preciseTop = -1, preciseBottom = -1, preciseLeft = -1, preciseRight = -1;
-                        for(let y = cardBox.y; y < cardBox.y + cardBox.height; y++) {
-                            if (y >= height) break;
-                            for (let x = cardBox.x; x < cardBox.x + cardBox.width; x++) {
-                                if (x >= width) break;
-                                if (!isWhite(x, y)) {
-                                    if (preciseTop === -1) preciseTop = y;
-                                    preciseBottom = y;
-                                    if (preciseLeft === -1 || x < preciseLeft) preciseLeft = x;
-                                    if (preciseRight === -1 || x > preciseRight) preciseRight = x;
-                                }
+                    // 4. Find precise boundaries within each grid cell
+                    let preciseRect = { top: -1, bottom: -1, left: -1, right: -1 };
+                    const endY = Math.min(roughRect.y + roughRect.height, height);
+                    const endX = Math.min(roughRect.x + roughRect.width, width);
+
+                    for (let y = roughRect.y; y < endY; y++) {
+                        for (let x = roughRect.x; x < endX; x++) {
+                            if (!isWhite(x, y)) {
+                                if (preciseRect.top === -1) preciseRect.top = y;
+                                preciseRect.bottom = y;
+                                if (preciseRect.left === -1 || x < preciseRect.left) preciseRect.left = x;
+                                if (preciseRect.right === -1 || x > preciseRect.right) preciseRect.right = x;
                             }
                         }
-                        if(preciseTop !== -1) {
+                    }
+
+                    if (preciseRect.top !== -1) {
+                        const finalWidth = preciseRect.right - preciseRect.left + 1;
+                        const finalHeight = preciseRect.bottom - preciseRect.top + 1;
+
+                        if (finalWidth > MIN_CARD_SIZE && finalHeight > MIN_CARD_SIZE) {
                             foundRects.push({
-                                x: preciseLeft,
-                                y: preciseTop,
-                                width: preciseRight - preciseLeft + 1,
-                                height: preciseBottom - preciseTop + 1
+                                x: preciseRect.left,
+                                y: preciseRect.top,
+                                width: finalWidth,
+                                height: finalHeight
                             });
                         }
                     }
                 }
             }
-            
-            // Remove duplicate rects (can happen with imperfect detection)
-            const uniqueRects = [];
-            foundRects.forEach(rect => {
-                if (!uniqueRects.some(r => Math.abs(r.x - rect.x) < 10 && Math.abs(r.y - rect.y) < 10)) {
-                    uniqueRects.push(rect);
-                }
-            });
-
-            resolve(uniqueRects);
+            resolve(foundRects);
         });
     }
 
@@ -770,14 +723,21 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
+        const rows = parseInt(rowsInput.value, 10);
+        const cols = parseInt(colsInput.value, 10);
+        if (isNaN(rows) || isNaN(cols) || rows < 1 || cols < 1) {
+            alert('有効な行数と列数を入力してください。');
+            return;
+        }
+
         autoCropButton.textContent = '処理中...';
         autoCropButton.disabled = true;
 
         try {
-            const cropRects = await findCardRects(sourceImage);
+            const cropRects = await findCardRects(sourceImage, rows, cols);
 
             if (cropRects.length === 0) {
-                alert('カードを検出できませんでした。画像を確認するか、手動モードを試してください。');
+                alert('カードを検出できませんでした。行数や列数を確認するか、手動モードを試してください。');
                 return;
             }
 
@@ -790,7 +750,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('自動切り取りでエラーが発生しました:', error);
             alert('エラーが発生しました。開発者コンソールを確認してください。');
         } finally {
-            autoCropButton.textContent = '自動で切り取り実行';
+            autoCropButton.textContent = '自動検出＆切り取り';
             autoCropButton.disabled = false;
         }
     });
