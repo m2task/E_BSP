@@ -268,6 +268,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const area = cv.contourArea(cnt);
                 const rect = cv.boundingRect(cnt);
                 const aspectRatio = rect.width / rect.height;
+                
+                // 追加: 矩形らしさを計算 (充填率)
+                const rectArea = rect.width * rect.height;
+                const fillRatio = rectArea > 0 ? area / rectArea : 0;
 
                 // --- カード選別（フィルタリング）---
                 // これらの値は、実際の画像に合わせて調整が必要な場合があります。
@@ -275,8 +279,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const maxCardArea = 500000; // 最大のカード面積（大きすぎる領域を除外）
                 const minAspectRatio = 0.6; // 最小のアスペクト比（細すぎるものを除外）
                 const maxAspectRatio = 0.9; // 最大のアスペクト比（太すぎるものを除外）
+                const minFillRatio = 0.9;   // 最小の充填率（いびつな形を除外）
 
-                if (area > minCardArea && area < maxCardArea && aspectRatio > minAspectRatio && aspectRatio < maxAspectRatio) {
+                if (area > minCardArea && area < maxCardArea && 
+                    aspectRatio > minAspectRatio && aspectRatio < maxAspectRatio &&
+                    fillRatio > minFillRatio) {
                     cardRects.push(rect);
                 }
                 cnt.delete();
