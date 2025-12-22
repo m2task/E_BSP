@@ -7,6 +7,7 @@ import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField
 import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, payCost, payCostFromField, cancelPayment, moveCoreFromField, cancelCoreMove, placeCoreOnSummonedCard } from './core_logic.js';
 
 export function setupEventListeners() {
+    console.log('setupEventListeners called');
     // デッキボタンのドラッグイベントリスナーを追加
     const deckButton = document.querySelector('.deck-button');
     deckButton.addEventListener('dragenter', handleDeckDragEnter);
@@ -90,6 +91,8 @@ export function setupEventListeners() {
 
     // 画面のどこかをクリックしたらコアの選択を解除
     document.addEventListener('click', (e) => {
+        console.log('Click event target:', e.target);
+        console.log('Click event closest .core:', e.target.closest('.core'));
         // 次のクリックでのクリアをスキップするフラグが立っている場合
         if (skipNextClickClear) {
             setSkipNextClickClear(false); // フラグをリセット
