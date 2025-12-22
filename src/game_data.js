@@ -108,3 +108,5 @@ export function setTouchOffsetX(x) { touchOffsetX = x; }
 export function setTouchOffsetY(y) { touchOffsetY = y; }
 export function setIsDragging(dragging) { isDragging = dragging; }
 export function setIsMultiSelectingCores(selecting) { isMultiSelectingCores = selecting; }
+export let skipNextClickClear = false;
+export function setSkipNextClickClear(skip) { skipNextClickClear = skip; }

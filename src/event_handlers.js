@@ -1,5 +1,5 @@
 // src/event_handlers.js
-import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, hand, trash, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging, paymentState, moveState, isMultiSelectingCores, setIsMultiSelectingCores } from './game_data.js';
+import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, hand, trash, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging, paymentState, moveState, isMultiSelectingCores, setIsMultiSelectingCores, skipNextClickClear, setSkipNextClickClear } from './game_data.js';
 import { renderAll, renderTrashModalContent, showSummonActionChoice, showCostModal } from './ui_render.js';
 import { showToast, getZoneName, isMobileDevice, getArrayByZoneName } from './utils.js';
 import { hideMagnifier } from './magnify_logic.js';
@@ -90,6 +90,12 @@ export function setupEventListeners() {
 
     // 画面のどこかをクリックしたらコアの選択を解除
     document.addEventListener('click', (e) => {
+        // 次のクリックでのクリアをスキップするフラグが立っている場合
+        if (skipNextClickClear) {
+            setSkipNextClickClear(false); // フラグをリセット
+            return; // コアの選択解除処理をスキップ
+        }
+
         if (!e.target.closest('.core')) {
             clearSelectedCores();
         }
@@ -198,9 +204,11 @@ function handleMouseDown(e) {
 function handleMouseUp(e) {
     // マウスボタンが離されたら複数選択モードを終了
     setIsMultiSelectingCores(false);
-    // マウスアップ時に選択状態をクリアするかどうかは要検討。
-    // 現状のhandleDragEndでクリアされているので、ここでは不要かもしれない。
-    // clearSelectedCores(); // 必要であればここで呼び出す
+
+    // 選択されたコアがある場合、次のクリックイベントでのクリアをスキップ
+    if (selectedCores.length > 0) {
+        setSkipNextClickClear(true);
+    }
 }
 
 function handleMouseOver(e) {
