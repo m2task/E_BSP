@@ -90,21 +90,16 @@ export function setupEventListeners() {
 
     // 画面のどこかをクリックしたらコアの選択を解除
     document.addEventListener('click', (e) => {
-        // skipNextClickClear が true の場合、このクリックイベントでは選択解除をスキップし、フラグをリセットして終了
         if (skipNextClickClear) {
-            setSkipNextClickClear(false); // フラグをリセット
-            // ボイドアイコンの処理はスキップしない
-            if (e.target.id !== 'voidCore') {
-                setVoidChargeCount(0);
-                showToast('voidToast', '', { hide: true }); // トーストを非表示にする
+            setTimeout(() => {
+                setSkipNextClickClear(false);
+            }, 0);
+            // ここでは選択解除のロジックは実行しない
+        } else {
+            // skipNextClickClear が false の場合のみ、選択解除のロジックを実行
+            if (!e.target.closest('.core') && selectedCores.length > 0) {
+                clearSelectedCores();
             }
-            return; // 選択解除のロジックはスキップ
-        }
-
-        // skipNextClickClear が false の場合のみ、選択解除のロジックを実行
-        // クリックされた要素がコアではない、かつ選択されたコアがある場合に解除
-        if (!e.target.closest('.core') && selectedCores.length > 0) {
-            clearSelectedCores();
         }
 
         // ボイドアイコン以外の場所をクリックしたらチャージ数をリセット
