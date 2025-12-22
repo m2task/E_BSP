@@ -300,7 +300,8 @@ function handleMouseOver(e) {
 
         mouseDownStartX = e.clientX;
         mouseDownStartY = e.clientY;
-        gameDataSetIsDragging(false); // gameDataIsDragging を使用
+        setIsMultiSelectingCores(false); // 複数選択モードを初期化
+        gameDataSetIsDragging(false); // ドラッグ状態を初期化
     });
 
     document.addEventListener('mousemove', (e) => {
@@ -312,7 +313,11 @@ function handleMouseOver(e) {
 
         // 一定距離以上移動したらドラッグと判定
         if (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD) {
-            gameDataSetIsDragging(true); // gameDataIsDragging を使用
+            gameDataSetIsDragging(true); // ドラッグ中とマーク
+            // 複数選択モードがまだ開始されていない場合のみ、開始
+            if (!isMultiSelectingCores) {
+                setIsMultiSelectingCores(true);
+            }
         }
     });
 
@@ -320,8 +325,8 @@ function handleMouseOver(e) {
         // 左クリックのみを対象
         if (e.button !== 0) return;
 
-        // ドラッグ操作でなかった場合のみ、選択解除を試みる
-        if (!gameDataIsDragging) { // gameDataIsDragging を使用
+        // ドラッグ操作でなかった、かつ複数選択モードでなかった場合のみ、選択解除を試みる
+        if (!gameDataIsDragging && !isMultiSelectingCores) {
             // コア以外の場所をクリックした場合のみ選択解除
             if (!e.target.closest('.core')) {
                 clearSelectedCores();
@@ -333,7 +338,8 @@ function handleMouseOver(e) {
             setVoidChargeCount(0);
             showToast('voidToast', '', { hide: true }); // トーストを非表示にする
         }
-        gameDataSetIsDragging(false); // gameDataIsDragging を使用
+        gameDataSetIsDragging(false); // mouseup でドラッグ状態をリセット
+        setIsMultiSelectingCores(false); // mouseup で複数選択モードをリセット
     });
 }
 
