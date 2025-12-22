@@ -96,7 +96,8 @@ export function setupEventListeners() {
             return; // コアの選択解除処理をスキップ
         }
 
-        if (!e.target.closest('.core')) {
+        // コアが選択されている状態で、コア以外の場所をクリックしたら選択解除
+        if (selectedCores.length > 0 && !e.target.closest('.core')) {
             clearSelectedCores();
         }
         // ボイドアイコン以外の場所をクリックしたらチャージ数をリセット
