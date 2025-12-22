@@ -388,7 +388,11 @@ export function handleDragStart(e) {
         
         setDraggedCoreData(coresToMove); // 念のため保持
 
-        e.dataTransfer.setData("type", "core");
+        if (e.target.id === 'voidCore') {
+            e.dataTransfer.setData("type", "voidCore");
+        } else {
+            e.dataTransfer.setData("type", "core");
+        }
         e.dataTransfer.setData("cores", JSON.stringify(coresToMove));
 
         // オフセット情報を設定
