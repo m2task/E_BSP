@@ -239,6 +239,9 @@ export function handleCoreInternalMoveOnCard(e, targetCardElement) {
 
 export function handleCoreDropOnZone(e, targetElement) {
     const targetZoneName = getZoneName(targetElement);
+    if (targetZoneName === 'burst') {
+        return; // バーストエリアへのドロップを禁止
+    }
     const type = e.dataTransfer.getData("type");
 
     if (type === 'voidCore') {
