@@ -370,7 +370,14 @@ export function handleDragStart(e) {
             setOffsetY(e.clientY - rect.top);
         }
     } else if (e.target.classList.contains('core') || e.target.id === 'voidCore') {
-        const coresToMove = getDraggedCoresInfo(e.target);
+        let coresToMove;
+        // selectedCoresに何か入っていれば、それを優先してドラッグ対象とする
+        if (selectedCores.length > 0) {
+            coresToMove = selectedCores.map(c => ({ ...c })); // コピーを作成
+        } else {
+            coresToMove = getDraggedCoresInfo(e.target);
+        }
+        
         setDraggedCoreData(coresToMove); // 念のため保持
 
         e.dataTransfer.setData("type", "core");
