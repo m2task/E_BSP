@@ -105,6 +105,7 @@ async function initializeGame() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOMContentLoaded event fired in battle.js');
     initializeGame();
     setupEventListeners();
     initializeMagnifyButton(); // 拡大表示のON/OFFボタンを初期化
