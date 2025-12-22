@@ -203,7 +203,7 @@ function handleMouseDown(e) {
 
 function handleMouseUp(e) {
     // マウスボタンが離されたら複数選択モードを終了
-    // setIsMultiSelectingCores(false); // この行を削除
+    setIsMultiSelectingCores(false); // 再度追加
 }
 
 function handleMouseOver(e) {
@@ -491,6 +491,7 @@ export function handleDrop(e) {
     }
     clearSelectedCores();
     setDraggedElement(null); // ドロップ直後にドラッグ状態を強制的にクリア
+    gameDataSetIsDragging(false); // ★ここに追加
 }
 
 function handleCardDrop(e) {
