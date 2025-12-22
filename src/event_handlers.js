@@ -6,12 +6,6 @@ import { hideMagnifier } from './magnify_logic.js';
 import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField, discardAllOpenCards, startPaymentProcess } from './card_logic.js';
 import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, payCost, payCostFromField, cancelPayment, moveCoreFromField, cancelCoreMove, placeCoreOnSummonedCard } from './core_logic.js';
 
-// 新しい状態変数
-let isDragging = false; // ドラッグ中かどうかを判定するフラグ
-let mouseDownStartX = 0;
-let mouseDownStartY = 0;
-const DRAG_THRESHOLD = 5; // ピクセル
-
 export function setupEventListeners() {
     // デッキボタンのドラッグイベントリスナーを追加
     const deckButton = document.querySelector('.deck-button');
@@ -306,7 +300,7 @@ function handleMouseOver(e) {
 
         mouseDownStartX = e.clientX;
         mouseDownStartY = e.clientY;
-        isDragging = false; // mousedown 時点ではドラッグではないと仮定
+        gameDataSetIsDragging(false); // gameDataIsDragging を使用
     });
 
     document.addEventListener('mousemove', (e) => {
@@ -318,7 +312,7 @@ function handleMouseOver(e) {
 
         // 一定距離以上移動したらドラッグと判定
         if (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD) {
-            isDragging = true; // ドラッグ中とマーク
+            gameDataSetIsDragging(true); // gameDataIsDragging を使用
         }
     });
 
@@ -327,7 +321,7 @@ function handleMouseOver(e) {
         if (e.button !== 0) return;
 
         // ドラッグ操作でなかった場合のみ、選択解除を試みる
-        if (!isDragging) {
+        if (!gameDataIsDragging) { // gameDataIsDragging を使用
             // コア以外の場所をクリックした場合のみ選択解除
             if (!e.target.closest('.core')) {
                 clearSelectedCores();
@@ -339,7 +333,7 @@ function handleMouseOver(e) {
             setVoidChargeCount(0);
             showToast('voidToast', '', { hide: true }); // トーストを非表示にする
         }
-        isDragging = false; // mouseup でドラッグ状態をリセット
+        gameDataSetIsDragging(false); // gameDataIsDragging を使用
     });
 }
 
@@ -389,7 +383,10 @@ export function handleDragStart(e) {
     }
 
     setDraggedElement(target);
-    setTimeout(() => target.classList.add('dragging'), 0);
+    setTimeout(() => {
+        target.classList.add('dragging');
+        gameDataSetIsDragging(true); // ドラッグ開始時にフラグを立てる
+    }, 0);
 
     if (target.classList.contains('card')) {
         // If it's a special card from the modal (it won't have a cardId yet)
@@ -454,6 +451,7 @@ export function handleDragEnd(e) {
     }
     setDraggedCoreData(null);
     clearSelectedCores();
+    gameDataSetIsDragging(false); // ドラッグ終了時にフラグをリセット
 }
 
 export function handleDeckDragEnter(e) {
