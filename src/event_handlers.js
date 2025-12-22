@@ -203,12 +203,7 @@ function handleMouseDown(e) {
 
 function handleMouseUp(e) {
     // マウスボタンが離されたら複数選択モードを終了
-    setIsMultiSelectingCores(false);
-
-    // 選択されたコアがある場合、次のクリックイベントでのクリアをスキップ
-    if (selectedCores.length > 0) {
-        setSkipNextClickClear(true);
-    }
+    // setIsMultiSelectingCores(false); // この行を削除
 }
 
 function handleMouseOver(e) {
