@@ -52,7 +52,7 @@ export function getArrayByZoneName(zoneName) {
 const toastHandlers = {}; // クリックハンドラとタイマーを管理するためのオブジェクト
 
 export function showToast(toastId, message, options = {}) {
-    const { hide = false, duration = null } = options;
+    const { hide = false, duration = null, onHideCallback = null } = options;
 
     const toastElement = document.getElementById(toastId);
     if (!toastElement) {
@@ -71,8 +71,11 @@ export function showToast(toastId, message, options = {}) {
     const hideToast = () => {
         toastElement.classList.remove('show');
         toastElement.textContent = '';
-        toastElement.removeEventListener('click', hideToast);
+        toastElement.removeEventListener('click', toastHandlers[toastId].clickListener);
         delete toastHandlers[toastId]; // 完全に削除
+        if (onHideCallback) {
+            onHideCallback();
+        }
     };
 
     if (hide || message === '') {
@@ -81,10 +84,14 @@ export function showToast(toastId, message, options = {}) {
         toastElement.textContent = message;
         toastElement.classList.add('show');
 
-        // 新しいハンドラとタイマーを設定
+        const newClickListener = (e) => {
+            e.stopPropagation();
+            hideToast();
+        };
+
         toastHandlers[toastId] = {
-            clickListener: hideToast,
-            timer: null // タイマーは後で設定
+            clickListener: newClickListener,
+            timer: null
         };
         toastElement.addEventListener('click', toastHandlers[toastId].clickListener);
 

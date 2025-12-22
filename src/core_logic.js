@@ -246,10 +246,14 @@ export function handleCoreDropOnZone(e, targetElement) {
 
     if (type === 'voidCore') {
         const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
-        setVoidChargeCount(0);
-        showToast('voidToast', '', { hide: true });
-
-        const movedCount = coresToMove.length;
+        const toastMessage = `${movedCount}個増やしました`;
+        showToast('voidToast', toastMessage, {
+            duration: 1000,
+            onHideCallback: () => {
+                setVoidChargeCount(0);
+            }
+        });
+        renderAll();
         for (const coreInfo of coresToMove) { // ループを変更
             // voidCoreであっても、ドラッグされたコアのタイプを尊重する
             // ただし、voidCore本来のドラッグ元にはtypeがないので、'blue'をデフォルトにする
