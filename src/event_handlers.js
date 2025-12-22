@@ -90,7 +90,6 @@ export function setupEventListeners() {
 
     // 画面のどこかをクリックしたらコアの選択を解除
     document.addEventListener('click', (e) => {
-        console.log('document click', e.target, 'classList:', e.target.classList ? Array.from(e.target.classList) : '');
         // 次のクリックでのクリアをスキップするフラグが立っている場合
         if (skipNextClickClear) {
             setSkipNextClickClear(false); // フラグをリセット
@@ -98,10 +97,7 @@ export function setupEventListeners() {
         }
 
         if (!e.target.closest('.core')) {
-            console.log('→ clearSelectedCores() 実行');
             clearSelectedCores();
-        } else {
-            console.log('→ .coreクリックのためclearSelectedCores()は実行しない');
         }
         // ボイドアイコン以外の場所をクリックしたらチャージ数をリセット
         if (e.target.id !== 'voidCore') {
