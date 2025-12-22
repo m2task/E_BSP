@@ -90,20 +90,19 @@ export function setupEventListeners() {
 
     // 画面のどこかをクリックしたらコアの選択を解除
     document.addEventListener('click', (e) => {
-        // クリックされた要素がコアではない場合
-        if (!e.target.closest('.core')) {
-            // skipNextClickClear が true の場合でも、コア以外の場所をクリックしたら選択解除
-            if (selectedCores.length > 0) {
+        // skipNextClickClear が true の場合、このクリックイベントでは選択解除をスキップ
+        if (skipNextClickClear) {
+            setSkipNextClickClear(false); // フラグをリセット
+            // ここで return せずに、ボイドアイコンの処理に進む
+            // ただし、選択解除のロジックはスキップする
+        } else {
+            // skipNextClickClear が false の場合のみ、選択解除のロジックを実行
+            // クリックされた要素がコアではない、かつ選択されたコアがある場合に解除
+            if (!e.target.closest('.core') && selectedCores.length > 0) {
                 clearSelectedCores();
             }
         }
 
-        // skipNextClickClear は、コア要素がクリックされた場合にのみスキップを考慮する
-        // コア以外の場所がクリックされた場合は、常に選択解除を試みる
-        if (skipNextClickClear) {
-            setSkipNextClickClear(false); // フラグをリセット
-            // ここで return せずに、下のボイドアイコンの処理に進む
-        }
         // ボイドアイコン以外の場所をクリックしたらチャージ数をリセット
         if (e.target.id !== 'voidCore') {
             setVoidChargeCount(0);
