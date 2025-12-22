@@ -1,5 +1,5 @@
 // src/event_handlers.js
-import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, hand, trash, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging as gameDataIsDragging, setIsDragging as gameDataSetIsDragging, paymentState, moveState, isMultiSelectingCores, setIsMultiSelectingCores, skipNextClickClear, setSkipNextClickClear } from './game_data.js';
+import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, hand, trash, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging, paymentState, moveState, isMultiSelectingCores, setIsMultiSelectingCores, skipNextClickClear, setSkipNextClickClear } from './game_data.js';
 import { renderAll, renderTrashModalContent, showSummonActionChoice, showCostModal } from './ui_render.js';
 import { showToast, getZoneName, isMobileDevice, getArrayByZoneName } from './utils.js';
 import { hideMagnifier } from './magnify_logic.js';
@@ -89,7 +89,22 @@ export function setupEventListeners() {
     });
 
     // 画面のどこかをクリックしたらコアの選択を解除
-    
+    document.addEventListener('click', (e) => {
+        // 次のクリックでのクリアをスキップするフラグが立っている場合
+        if (skipNextClickClear) {
+            setSkipNextClickClear(false); // フラグをリセット
+            return; // コアの選択解除処理をスキップ
+        }
+
+        if (!e.target.closest('.core')) {
+            clearSelectedCores();
+        }
+        // ボイドアイコン以外の場所をクリックしたらチャージ数をリセット
+        if (e.target.id !== 'voidCore') {
+            setVoidChargeCount(0);
+            showToast('voidToast', '', { hide: true }); // トーストを非表示にする
+        }
+    });
 
     document.querySelector('.deck-button').addEventListener('click', (e) => {
         e.stopPropagation(); // イベントの伝播を停止
@@ -191,7 +206,9 @@ function handleMouseUp(e) {
     setIsMultiSelectingCores(false);
 
     // 選択されたコアがある場合、次のクリックイベントでのクリアをスキップ
-    // setSkipNextClickClear(true); // この行を削除
+    if (selectedCores.length > 0) {
+        setSkipNextClickClear(true);
+    }
 }
 
 function handleMouseOver(e) {
@@ -293,54 +310,6 @@ function handleMouseOver(e) {
 
     // オープンエリアの全破棄ボタン
     document.getElementById('discardAllOpenBtn').addEventListener('click', discardAllOpenCards);
-
-    document.addEventListener('mousedown', (e) => {
-        // 左クリックのみを対象
-        if (e.button !== 0) return;
-
-        mouseDownStartX = e.clientX;
-        mouseDownStartY = e.clientY;
-        setIsMultiSelectingCores(false); // 複数選択モードを初期化
-        gameDataSetIsDragging(false); // ドラッグ状態を初期化
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        // 左クリック中のみを対象
-        if (e.buttons !== 1) return;
-
-        const deltaX = Math.abs(e.clientX - mouseDownStartX);
-        const deltaY = Math.abs(e.clientY - mouseDownStartY);
-
-        // 一定距離以上移動したらドラッグと判定
-        if (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD) {
-            gameDataSetIsDragging(true); // ドラッグ中とマーク
-            // 複数選択モードがまだ開始されていない場合のみ、開始
-            if (!isMultiSelectingCores) {
-                setIsMultiSelectingCores(true);
-            }
-        }
-    });
-
-    document.addEventListener('mouseup', (e) => {
-        // 左クリックのみを対象
-        if (e.button !== 0) return;
-
-        // ドラッグ操作でなかった、かつ複数選択モードでなかった場合のみ、選択解除を試みる
-        if (!gameDataIsDragging && !isMultiSelectingCores) {
-            // コア以外の場所をクリックした場合のみ選択解除
-            if (!e.target.closest('.core')) {
-                clearSelectedCores();
-            }
-        }
-
-        // ボイドアイコン以外の場所をクリックしたらチャージ数をリセット
-        if (e.target.id !== 'voidCore') {
-            setVoidChargeCount(0);
-            showToast('voidToast', '', { hide: true }); // トーストを非表示にする
-        }
-        gameDataSetIsDragging(false); // mouseup でドラッグ状態をリセット
-        setIsMultiSelectingCores(false); // mouseup で複数選択モードをリセット
-    });
 }
 
 // --- 共通コア情報取得関数 ---
@@ -389,10 +358,7 @@ export function handleDragStart(e) {
     }
 
     setDraggedElement(target);
-    setTimeout(() => {
-        target.classList.add('dragging');
-        gameDataSetIsDragging(true); // ドラッグ開始時にフラグを立てる
-    }, 0);
+    setTimeout(() => target.classList.add('dragging'), 0);
 
     if (target.classList.contains('card')) {
         // If it's a special card from the modal (it won't have a cardId yet)
@@ -457,7 +423,6 @@ export function handleDragEnd(e) {
     }
     setDraggedCoreData(null);
     clearSelectedCores();
-    gameDataSetIsDragging(false); // ドラッグ終了時にフラグをリセット
 }
 
 export function handleDeckDragEnter(e) {
