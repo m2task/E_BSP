@@ -619,13 +619,14 @@ function handleTouchStart(e) {
     if (!target) return;
 
     touchedElement = target;
-    // e.preventDefault(); // クリックイベントを発火させるために一旦コメントアウト
+    e.preventDefault(); // デフォルトのスクロールやズームを抑制
 
     setInitialTouchX(e.touches[0].clientX);
     setInitialTouchY(e.touches[0].clientY);
     setCurrentTouchX(e.touches[0].clientX);
     setCurrentTouchY(e.touches[0].clientY);
     setIsDragging(false);
+    setDraggedCoreData(null); // ドラッグ開始時にデータを初期化
 
     // 長押しタイマーを開始
     longPressTimer = setTimeout(() => {
@@ -697,22 +698,7 @@ function handleTouchMove(e) {
     }
 
     // ドラッグ開始判定
-    if (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD) {
-        // 閾値を超えて動いたら、長押しタイマーをクリア（ドラッグではない）
-        if (longPressTimer) {
-            clearTimeout(longPressTimer);
-            longPressTimer = null;
-        }
-
-        // 長押しが完了した後（タイマーがnull）に動き始めたらドラッグ開始
-        // ただし、現状の実装では長押しタイマー完了＝即ドラッグ開始ではないため、
-        // ここでドラッグを開始するロジックが必要。
-        // しかし、今回は「長押ししないとドラッグできない」ようにするため、
-        // タイマーがあるうちはドラッグを開始しない、というロジックに変更する。
-    }
-
-    // 長押しタイマーが完了し、かつ、指が閾値以上動いた場合にドラッグを開始する
-    if (!longPressTimer && !isDragging && (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD)) {
+    if (!isDragging && !longPressTimer && (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD)) {
         startTouchDrag(e);
     }
 }
