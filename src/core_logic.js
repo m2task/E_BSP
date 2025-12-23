@@ -173,6 +173,10 @@ export function handleCoreDropOnCard(e, targetCardElement) {
     };
 
     if (type === 'voidCore') {
+        // Ensure coresOnCard exists
+        if (!targetCard.coresOnCard) {
+            targetCard.coresOnCard = [];
+        }
         const coresToAddCount = coresToMove.length;
         const newCores = Array(coresToAddCount).fill("blue");
         addCoresWithOverlapAvoidance(newCores);
@@ -182,9 +186,15 @@ export function handleCoreDropOnCard(e, targetCardElement) {
         showToast('voidToast', toastMessage, { duration: 1000 });
     } else {
         removeCoresFromSource(coresToMove);
+        // Ensure coresOnCard exists
+        if (!targetCard.coresOnCard) {
+            targetCard.coresOnCard = [];
+        }
         addCoresWithOverlapAvoidance(coresToMove);
     }
     clearSelectedCores();
+    // Add a toast message to confirm core count on card
+    showToast('infoToast', `${targetCard.name}にコアが${targetCard.coresOnCard.length}個あります。`, { duration: 2000 });
 }
 
 export function handleCoreInternalMoveOnCard(e, targetCardElement) {
