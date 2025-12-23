@@ -543,6 +543,8 @@ function handleCardDrop(e) {
         }
         moveCardData(cardId, sourceZoneName, targetZoneName);
         hideMagnifier();
+        updateMagnifierEventListeners();
+        updateMagnifierEventListeners();
     }
 }
 
@@ -751,6 +753,8 @@ function handleTouchEnd(e) {
                     }
                     moveCardData(cardId, sourceZoneName, targetZoneName);
                     hideMagnifier();
+                    updateMagnifierEventListeners();
+                    updateMagnifierEventListeners();
                 }
             } else if (touchedElement.classList.contains('core') || touchedElement.id === 'voidCore') {
                 // コアのタッチドロップ処理
