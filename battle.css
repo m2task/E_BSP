@@ -206,11 +206,11 @@ body {
       top: 0; left: 0; right: 0; bottom: 0;
       /* 立体感を出すためのグラデーション */
       background: radial-gradient(circle at 50% 50%, #ff7d7d, #c82333);
-      /* ひし形に形状変更 */
       clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
       z-index: 1;
     }
     .void-core {
+      background: radial-gradient(circle at 50% 50%, #5dade2, #007bff);
       clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); /* 六角形 */
       width: 26px;
       height: 26px;
@@ -222,7 +222,7 @@ body {
         position: absolute;
         top: 50%;
         left: 50%;
-        transform: translate(-50%, -60%);
+        transform: translate(-50%, -55%);
         color: white;
         font-size: 18px;
         font-weight: bold;
