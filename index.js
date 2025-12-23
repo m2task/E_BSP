@@ -279,7 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             // 座標でソート (左上から右下へ)
                             cardRects.sort((a, b) => {
-                                const yDiff = a.y - b.y;
+                                const yDiff = a.y - b.y;#
                                 if (Math.abs(yDiff) > a.height / 2) { // Y座標が大きく違う場合は行が違うと判断
                                     return yDiff;
                                 }
