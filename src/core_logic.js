@@ -184,6 +184,8 @@ export function handleCoreDropOnCard(e, targetCardElement) {
         removeCoresFromSource(coresToMove);
         addCoresWithOverlapAvoidance(coresToMove);
     }
+
+    clearSelectedCores();
 }
 
 export function handleCoreInternalMoveOnCard(e, targetCardElement) {
