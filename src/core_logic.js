@@ -173,18 +173,17 @@ export function handleCoreDropOnCard(e, targetCardElement) {
     };
 
     if (type === 'voidCore') {
-        const coresToAddCount = coresToMove.length;
-        const newCores = Array(coresToAddCount).fill("blue");
-        addCoresWithOverlapAvoidance(newCores);
+        // For debugging: just add one blue core at a fixed position
+        targetCard.coresOnCard.push({ type: "blue", x: 10, y: 10 });
         setVoidChargeCount(0);
-        showToast('voidToast', '', { hide: true });
-        const toastMessage = `${coresToAddCount}個増やしました`;
-        showToast('voidToast', toastMessage, { duration: 1000 });
+        showToast('voidToast', 'デバッグ用: ボイドコアを固定位置に追加', { duration: 1000 });
     } else {
         removeCoresFromSource(coresToMove);
-        addCoresWithOverlapAvoidance(coresToMove);
+        // For debugging: just add one core at a fixed position
+        const coreType = coresToMove[0].type; // Assuming only one core is moved for simplicity
+        targetCard.coresOnCard.push({ type: coreType, x: 10, y: 10 });
+        showToast('voidToast', 'デバッグ用: コアを固定位置に追加', { duration: 1000 });
     }
-
     clearSelectedCores();
 }
 
