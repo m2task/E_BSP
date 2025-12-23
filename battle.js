@@ -110,3 +110,13 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeMagnifyButton(); // 拡大表示のON/OFFボタンを初期化
     document.getElementById('cancelPaymentButton').addEventListener('click', cancelPayment);
 });
+
+// 意図しないページ遷移やリロードを防ぐための確認メッセージ
+window.addEventListener('beforeunload', (event) => {
+    // デフォルトの動作をキャンセル
+    event.preventDefault();
+    // Chrome では returnValue を設定する必要がある
+    event.returnValue = '';
+    // 古いブラウザでは、カスタムメッセージを設定できる
+    return 'ページを離れようとしています。変更が保存されない可能性があります。';
+});
