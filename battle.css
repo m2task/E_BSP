@@ -857,11 +857,11 @@ body {
 }
 
 /* スマートフォン環境で常に横画面表示をシミュレート */
-@media screen and (max-width: 768px) { /* スマートフォンと想定される画面幅 */
+@media screen and (max-width: 1024px) { /* スマートフォンと想定される画面幅 */
   body {
     width: 100vh; /* ビューポートの高さが新しい幅になる */
     height: 100vw; /* ビューポートの幅が新しい高さになる */
-    transform: rotate(90deg);
+    transform: rotate(90deg) !important; /* 一時的に!importantを追加 */
     transform-origin: top left; /* 左上を基準に回転 */
     position: absolute;
     top: 0;
