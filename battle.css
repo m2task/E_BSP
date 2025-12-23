@@ -226,7 +226,7 @@ body {
         color: white;
         font-size: 18px;
         font-weight: bold;
-        text-shadow: 0 0 3px white;
+        text-shadow: 0 0 3px rgb(128, 128, 128);
         pointer-events: none; /* クリックを背後のコアに透過させる */
     }
 
