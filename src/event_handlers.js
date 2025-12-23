@@ -734,8 +734,12 @@ function handleTouchEnd(e) {
     if (isDragging) {
         let dropTarget = null;
         if (touchDraggedElement) {
+            // ドラッグ中の要素を一時的に非表示にして、ドロップ先の要素を正確に取得する
             touchDraggedElement.style.pointerEvents = 'none';
+            touchDraggedElement.style.display = 'none';
             dropTarget = document.elementFromPoint(currentTouchX, currentTouchY);
+            touchDraggedElement.style.pointerEvents = 'auto';
+            touchDraggedElement.style.display = 'block'; // 元に戻す
             touchDraggedElement.remove();
             setTouchDraggedElement(null);
         }
