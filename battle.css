@@ -855,20 +855,3 @@ body {
 .cancel-cost-confirm-button:hover {
     background-color: #5a6268; /* ホバー時は少し濃くする */
 }
-
-/* スマートフォン環境で常に横画面表示をシミュレート */
-@media screen and (max-width: 1024px) { /* スマートフォンと想定される画面幅 */
-  body {
-    width: 100vh; /* ビューポートの高さが新しい幅になる */
-    height: 100vw; /* ビューポートの幅が新しい高さになる */
-    transform: rotate(90deg) !important; /* 一時的に!importantを追加 */
-    transform-origin: top left; /* 左上を基準に回転 */
-    position: absolute;
-    top: 0;
-    left: 100vw; /* 回転後に左端に移動 */
-    overflow: hidden; /* スクロールを無効にする */
-    margin: 0; /* 明示的にマージンを0に */
-    padding: 0; /* パディングを0に */
-    /* flexboxの挙動を考慮して、必要であればflex-directionなどを調整 */
-  }
-}
