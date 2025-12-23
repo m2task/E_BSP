@@ -7,9 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const showDeckListBtn = document.getElementById('show-deck-list-btn');
     const imageLoader = document.getElementById('imageLoader');
     const cropButton = document.getElementById('crop-button');
-    const cropperContainer = document.getElementById('cropper-container');
-    const imageContainer = document.getElementById('image-container');
-    const sourceImage = document.getElementById('sourceImage');
+    const sourceImage = document.getElementById('sourceImage'); // 処理用の非表示画像
+    const previewImage = document.getElementById('previewImage'); // 表示用のプレビュー画像
     const deckList = document.getElementById('deck-list');
     const totalCardCountSpan = document.getElementById('total-card-count');
     const deckEditorContainer = document.getElementById('deck-editor-container');
@@ -19,6 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveDeckAsButton = document.getElementById('saveDeckAsButton');
     const overwriteSaveButton = document.getElementById('overwriteSaveButton');
     const newDeckButton = document.getElementById('newDeckButton');
+
+    const debugArea = document.getElementById('debug-area'); // デバッグエリア
 
     // --- State ---
     const imageState = { isLoaded: false };
@@ -215,102 +216,63 @@ document.addEventListener('DOMContentLoaded', () => {
         deck = [];
         currentEditingDeckName = null;
         renderEditedDeck();
+        debugArea.style.display = 'none'; // デバッグエリアを一旦隠す
 
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = (event) => {
-                sourceImage.src = event.target.result;
+                const imageUrl = event.target.result;
+                // 表示用と処理用の両方の画像にソースを設定
+                previewImage.src = imageUrl;
+                sourceImage.src = imageUrl;
+
                 sourceImage.onload = () => {
                     imageState.isLoaded = true;
-                    sourceImage.style.transform = 'translate(0, 0) scale(1)';
                     // ファイル選択後に自動でカード切り出し処理を実行
                     if (typeof cv !== 'undefined' && cv.imread) {
                         try {
                             const src = cv.imread(sourceImage);
                             const gray = new cv.Mat();
                             cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+
+                            // 1. 適応的しきい値処理
                             const thresh = new cv.Mat();
-                            // 背景が白(255)に近いので、240を閾値にして反転二値化
-                            cv.threshold(gray, thresh, 240, 255, cv.THRESH_BINARY_INV);
+                            cv.adaptiveThreshold(gray, thresh, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 21, 2);
 
-                            // ノイズ除去のためにモルフォロジー演算（オープニング）
-                            const kernel = cv.Mat.ones(3, 3, cv.CV_8U);
-                            const opening = new cv.Mat();
-                            cv.morphologyEx(thresh, opening, cv.MORPH_OPEN, kernel, new cv.Point(-1, -1), 1);
+                            // 2. 弱めのモルフォロジー演算（クロージングのみ）で内部の穴を埋める
+                            const kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3, 3));
+                            const morph = new cv.Mat();
+                            cv.morphologyEx(thresh, morph, cv.MORPH_CLOSE, kernel, new cv.Point(-1, -1), 1);
 
+                            // --- デバッグここから ---
+                            // モルフォロジー処理後の結果を表示
+                            cv.imshow('edges-canvas', morph);
+                            debugArea.style.display = 'block';
+                            // --- デバッグここまで ---
+
+                            // 3. 輪郭を検出
                             const contours = new cv.MatVector();
                             const hierarchy = new cv.Mat();
-                            cv.findContours(opening, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+                            cv.findContours(morph, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
                             let croppedCardCount = 0;
                             const cardRects = [];
 
                             for (let i = 0; i < contours.size(); ++i) {
                                 const cnt = contours.get(i);
-                                const area = cv.contourArea(cnt);
                                 const rect = cv.boundingRect(cnt);
                                 const aspectRatio = rect.width / rect.height;
+                                const area = cv.contourArea(cnt);
 
-                                // --- カード選別（フィルタリング）---
-                                // これらの値は、実際の画像に合わせて調整が必要な場合があります。
-                                const minCardArea = 5000; // 最小のカード面積（小さすぎるノイズを除外）
-                                const maxCardArea = 500000; // 最大のカード面積（大きすぎる領域を除外）
-                                const minAspectRatio = 0.6; // 最小のアスペクト比（細すぎるものを除外）
-                                const maxAspectRatio = 0.9; // 最大のアスペクト比（太すぎるものを除外）
+                                // 4. フィルタリング条件を大胆に緩める
+                                const minCardArea = 3000;    // 5000から引き下げ
+                                const maxCardArea = 500000;  // 変更なし
+                                const minAspectRatio = 0.5;  // 0.6から引き下げ
+                                const maxAspectRatio = 1.0;  // 0.9から引き上げ
 
                                 if (area > minCardArea && area < maxCardArea && aspectRatio > minAspectRatio && aspectRatio < maxAspectRatio) {
-                                    
-                                    // --- 「平均的な黒さ」によるノイズフィルタリング ---
-                                    let hasBlackCircle = false;
-                                    const roiRatio = 0.35; // 右上の35%の領域をチェック
-                                    const roiX = rect.x + rect.width * (1 - roiRatio);
-                                    const roiY = rect.y;
-                                    const roiWidth = rect.width * roiRatio;
-                                    const roiHeight = rect.height * roiRatio;
-
-                                    // ROIが画像範囲内にあるか確認
-                                    if (roiX >= 0 && roiY >= 0 && roiWidth > 10 && roiHeight > 10 && (roiX + roiWidth) <= src.cols && (roiY + roiHeight) <= src.rows) {
-                                        const roiRect = new cv.Rect(roiX, roiY, roiWidth, roiHeight);
-                                        const roi = src.roi(roiRect);
-                                        const grayRoi = new cv.Mat();
-                                        cv.cvtColor(roi, grayRoi, cv.COLOR_RGBA2GRAY, 0);
-                                        
-                                        // ROIの平均ピクセル値（明るさ）を計算
-                                        const meanBrightness = cv.mean(grayRoi)[0];
-                                        
-                                        const blacknessThreshold = 195; // この値より平均が暗ければ「黒」とみなす (要調整)
-
-                                        if (meanBrightness < blacknessThreshold) {
-                                            hasBlackCircle = true;
-                                        }
-
-                                        roi.delete();
-                                        grayRoi.delete();
-                                    }
-
-                                    // 黒い部分が見つかった候補のみ、次の処理へ進む
-                                    if (hasBlackCircle) {
-                                        // --- 矩形の補正ロジック (余白の切り詰め) ---
-                                        const topPaddingRatio = 0.020;
-                                        const rightPaddingRatio = 0.025;
-
-                                        const topPadding = rect.height * topPaddingRatio;
-                                        const rightPadding = rect.width * rightPaddingRatio;
-
-                                        const newX = rect.x;
-                                        const newY = rect.y + topPadding;
-                                        const newWidth = rect.width - rightPadding;
-                                        const newHeight = rect.height - topPadding;
-
-                                        // 補正後の矩形がマイナスのサイズにならないようにチェック
-                                        if (newWidth > 0 && newHeight > 0) {
-                                            const correctedRect = new cv.Rect(newX, newY, newWidth, newHeight);
-                                            cardRects.push(correctedRect);
-                                        } else {
-                                            cardRects.push(rect); // 補正に失敗した場合は元の矩形を使う
-                                        }
-                                    }
+                                    cardRects.push(rect);
                                 }
                                 cnt.delete();
                             }
@@ -350,7 +312,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             src.delete();
                             gray.delete();
                             thresh.delete();
-                            opening.delete();
+                            morph.delete();
+                            kernel.delete();
                             contours.delete();
                             hierarchy.delete();
 
