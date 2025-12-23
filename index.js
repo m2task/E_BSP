@@ -250,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             // --- デバッグここから ---
                             // モルフォロジー処理後の結果を表示
                             cv.imshow('edges-canvas', morph);
-                            debugArea.style.display = 'block';
+                            // debugArea.style.display = 'block'; // デバッグ情報を非表示化
                             // --- デバッグここまで ---
 
                             // 3. 輪郭を検出
