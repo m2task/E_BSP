@@ -560,26 +560,9 @@ function handleCardDrop(e) {
 }
 
 function handleCoreDrop(e) {
-    let targetCardElement = e.target.closest('.card');
+    const targetCardElement = e.target.closest('.card');
 
-    // もし直接カード要素にドロップされなかった場合、フィールド上のカードを検索
-    if (!targetCardElement) {
-        const fieldCardsContainer = document.getElementById('fieldCards');
-        if (fieldCardsContainer) {
-            const cardsInField = fieldCardsContainer.querySelectorAll('.card');
-            for (const cardEl of cardsInField) {
-                const rect = cardEl.getBoundingClientRect();
-                // ドロップ座標がカードの範囲内にあるかチェック
-                if (e.clientX >= rect.left && e.clientX <= rect.right &&
-                    e.clientY >= rect.top && e.clientY <= rect.bottom) {
-                    targetCardElement = cardEl; // このカードをドロップターゲットとする
-                    break; // 見つかったらループを終了
-                }
-            }
-        }
-    }
-
-    // ここから既存のロジック
+    // ★ カードへのドロップを最優先で処理
     if (targetCardElement) {
         const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
 
@@ -593,7 +576,7 @@ function handleCoreDrop(e) {
         return; // カードにドロップしたら、ここで処理を終了する
     }
 
-    // カード以外の場合、ゾーンへのドロップを試みる
+    // ★ カード以外の場合、ゾーンへのドロップを試みる
     const targetZoneElement = e.target.closest('.zone, .special-zone');
     if (targetZoneElement) {
         handleCoreDropOnZone(e, targetZoneElement);
