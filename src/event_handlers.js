@@ -603,7 +603,7 @@ function handleSpecialCardDrop(e) {
 
 // --- タッチイベントハンドラ ---
 let touchedElement = null;
-const DRAG_THRESHOLD = 20;
+const DRAG_THRESHOLD = 10;
 
 let longPressTimer = null;
 const LONG_PRESS_DURATION = 300; // 300ms
@@ -686,8 +686,8 @@ function handleTouchMove(e) {
     const deltaX = Math.abs(currentTouchX - initialTouchX);
     const deltaY = Math.abs(currentTouchY - initialTouchY);
 
+    // ドラッグ中であれば常にデフォルト動作を抑制
     if (isDragging) {
-        // すでにドラッグ中なら、要素を追従させる
         e.preventDefault();
         if (touchDraggedElement) {
             touchDraggedElement.style.left = `${currentTouchX - touchOffsetX}px`;
@@ -704,16 +704,12 @@ function handleTouchMove(e) {
             longPressTimer = null;
         }
 
-        // 長押しが完了した後（タイマーがnull）に動き始めたらドラッグ開始
-        // ただし、現状の実装では長押しタイマー完了＝即ドラッグ開始ではないため、
-        // ここでドラッグを開始するロジックが必要。
-        // しかし、今回は「長押ししないとドラッグできない」ようにするため、
-        // タイマーがあるうちはドラッグを開始しない、というロジックに変更する。
-    }
-
-    // 長押しタイマーが完了し、かつ、指が閾値以上動いた場合にドラッグを開始する
-    if (!longPressTimer && !isDragging && (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD)) {
-        startTouchDrag(e);
+        // 長押しタイマーがクリアされている（つまり長押しが不要、または長押しが完了した）
+        // かつ、まだドラッグが開始されていない場合にドラッグを開始
+        if (!isDragging) {
+            startTouchDrag(e);
+            e.preventDefault(); // ドラッグ開始時にもデフォルト動作を抑制
+        }
     }
 }
 
@@ -726,7 +722,7 @@ function handleTouchEnd(e) {
         clearTimeout(longPressTimer);
         longPressTimer = null;
         // ドラッグが開始されていなければ、これはタップと見なす
-        if (!isDragging && touchedElement) {
+        if (!isDragging && touchedElement) { // isDragging のチェックを追加
             touchedElement.click();
             // タップ処理後は、後続のドロップ処理や状態リセットを行わないようにする
             setIsDragging(false);

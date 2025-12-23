@@ -859,3 +859,7 @@ body {
 .cancel-cost-confirm-button:hover {
     background-color: #5a6268; /* ホバー時は少し濃くする */
 }
+
+.card, .core, #voidCore {
+  touch-action: none;
+}
