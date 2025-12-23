@@ -229,6 +229,12 @@ body {
         text-shadow: 0 0 3px black;
         pointer-events: none; /* クリックを背後のコアに透過させる */
     }
+
+    /* ボイドコアのサイズを大きくする */
+    #voidCore {
+        width: 26px;
+        height: 26px;
+    }
     /* 選択されたコアのスタイル */
     .core.selected {
       transform: scale(1.2);
