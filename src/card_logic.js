@@ -51,8 +51,7 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
     sourceArray.splice(cardIndex, 1);
     hideMagnifier();
 
-    let sourceZoneLogicalName = getZoneName(document.getElementById(sourceZoneId)); // Get logical name
-    let shouldTransferCoresToReserve = (sourceZoneLogicalName === 'field' && targetZoneName !== 'field' && movedCardData.coresOnCard && movedCardData.coresOnCard.length > 0);
+    let shouldTransferCoresToReserve = (sourceZoneId === 'field' && targetZoneName !== 'field' && movedCardData.coresOnCard && movedCardData.coresOnCard.length > 0);
 
     if (targetZoneName === 'deck') {
         shouldTransferCoresToReserve = true;
