@@ -61,7 +61,7 @@ export function setupEventListeners() {
         renderAll(); // 状態変更を反映するために再描画
     });
 
-    // 画面のどこかをクリックしたらコアの選択を解除
+    // 画面のどこかをクリックした際の処理
     document.addEventListener('click', (e) => {
         // 次のクリックでのクリアをスキップするフラグが立っている場合
         if (skipNextClickClear) {
@@ -69,13 +69,19 @@ export function setupEventListeners() {
             return; // コアの選択解除処理をスキップ
         }
 
-        if (!e.target.closest('.core')) {
-            clearSelectedCores();
-        }
         // ボイドアイコン以外の場所をクリックしたらチャージ数をリセット
         if (e.target.id !== 'voidCore') {
             setVoidChargeCount(0);
             showToast('voidToast', '', { hide: true }); // トーストを非表示にする
+        }
+    });
+
+    // コアのダブルクリックで選択を全解除
+    document.addEventListener('dblclick', (e) => {
+        // ダブルクリックされた要素がコア、またはコアの一部であるかを確認
+        if (e.target.closest('.core')) {
+            // 選択されているコアをすべてクリア
+            clearSelectedCores();
         }
     });
 
