@@ -698,3 +698,5 @@ export function cancelCoreMove() {
     showToast('infoToast', 'コアの移動をキャンセルしました。', { duration: 1500 });
     renderAll();
 }
+
+window.handleCoreDropOnCard = handleCoreDropOnCard;
