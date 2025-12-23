@@ -6,7 +6,6 @@
     <title>デッキ一覧</title>
     <link rel="stylesheet" href="card_cropper.css"> <!-- スタイルを共有 -->
     <link rel="stylesheet" href="navbar.css">
-    <link rel="stylesheet" href="battle.css"> <!-- トーストメッセージのスタイルを含む -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -170,11 +169,8 @@
     <!-- 処理用の非表示画像 -->
     <img id="sourceImage" src="" alt="" style="display: none;">
 
-    <!-- Toast Message -->
-    <div id="deckSaveToast" class="toast-message"></div>
-
     <script src="src/indexedDB.js"></script>
     <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
-    <script type="module" src="index.js"></script>
+    <script src="index.js"></script>
 </body>
 </html>

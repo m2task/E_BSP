@@ -1,5 +1,3 @@
-import { showToast } from './src/utils.js';
-
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
     const cropperSection = document.getElementById('cropper-section');
@@ -374,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         try {
             await window.cardGameDB.saveDeck(deckName, deck);
-            showToast('deckSaveToast', `デッキ「${deckName}」を保存しました。`, { duration: 2000 });
+            alert(`デッキ「${deckName}」を保存しました。`);
             deckNameInput.value = ''; // 入力欄はクリアする
             renderDeckList();
             currentEditingDeckName = deckName;
@@ -391,7 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         try {
             await window.cardGameDB.saveDeck(currentEditingDeckName, deck);
-            showToast('deckSaveToast', `デッキ「${currentEditingDeckName}」を上書き保存しました。`, { duration: 2000 });
+            alert(`デッキ「${currentEditingDeckName}」を上書き保存しました。`);
             renderDeckList();
         } catch (error) {
             console.error('デッキの上書き保存に失敗しました:', error);
