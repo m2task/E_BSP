@@ -185,7 +185,8 @@ body {
       z-index: 10; /* コアを重疲労ボタンより前面に表示 */
     }
     .core.blue {
-      background: #007bff;
+      /* 立体感を出すためのグラデーション */
+      background: radial-gradient(circle at 50% 50%, #5dade2, #007bff);
       clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); /* 六角形 */
       width: 21px;
       height: 21px;
