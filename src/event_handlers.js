@@ -661,6 +661,7 @@ function startTouchDrag(e) {
     clone.style.left = `${e.touches[0].clientX - touchOffsetX}px`;
     clone.style.top = `${e.touches[0].clientY - touchOffsetY}px`;
 
+    touchedElement.style.opacity = '0'; // 元の要素を非表示にする
     setIsDragging(true);
 }
 
