@@ -190,7 +190,6 @@ body {
       clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); /* 六角形 */
       width: 21px;
       height: 21px;
-      filter: drop-shadow(0px 0px 1px #999); /* 縁取りの色を濃く変更 */
     }
     .core.soul {
       position: relative;
@@ -210,7 +209,6 @@ body {
       /* ひし形に形状変更 */
       clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
       z-index: 1;
-      filter: drop-shadow(0px 0px 1px #999); /* 縁取りの色を濃く変更 */
     }
     .void-core {
       clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); /* 六角形 */
