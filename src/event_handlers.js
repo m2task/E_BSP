@@ -342,6 +342,7 @@ export function handleDragStart(e) {
 
     setDraggedElement(target);
     setTimeout(() => target.classList.add('dragging'), 0);
+    setIsDragging(true); // ドラッグ開始時に true に設定
 
     if (target.classList.contains('card')) {
         // If it's a special card from the modal (it won't have a cardId yet)
@@ -406,6 +407,7 @@ export function handleDragEnd(e) {
     }
     setDraggedCoreData(null);
     clearSelectedCores();
+    setIsDragging(false); // ドラッグ終了時に false に設定
 }
 
 export function handleDeckDragEnter(e) {
