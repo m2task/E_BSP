@@ -867,6 +867,8 @@ body {
     top: 0;
     left: 100vw; /* 回転後に左端に移動 */
     overflow: hidden; /* スクロールを無効にする */
+    margin: 0; /* 明示的にマージンを0に */
+    padding: 0; /* パディングを0に */
     /* flexboxの挙動を考慮して、必要であればflex-directionなどを調整 */
   }
 }
