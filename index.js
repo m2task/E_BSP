@@ -375,6 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await window.cardGameDB.saveDeck(deckName, deck);
             showToast('deckSaveToast', `デッキ「${deckName}」を保存しました。`, { duration: 2000 });
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // ページ上部にスクロール
             deckNameInput.value = ''; // 入力欄はクリアする
             renderDeckList();
             currentEditingDeckName = deckName;
@@ -392,6 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await window.cardGameDB.saveDeck(currentEditingDeckName, deck);
             showToast('deckSaveToast', `デッキ「${currentEditingDeckName}」を上書き保存しました。`, { duration: 2000 });
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // ページ上部にスクロール
             renderDeckList();
         } catch (error) {
             console.error('デッキの上書き保存に失敗しました:', error);
