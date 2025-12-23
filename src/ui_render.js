@@ -15,18 +15,6 @@ export function createCardElement(cardData) {
     div.draggable = true;
     div.dataset.id = cardData.id;
 
-    // --- コアドロップ対応 ---
-    div.addEventListener('dragover', (e) => {
-        e.preventDefault();
-    });
-    div.addEventListener('drop', (e) => {
-        // event_handlers.jsのhandleCoreDropOnCardを呼び出す
-        // 依存関係の都合でwindow経由で呼び出し
-        if (window.handleCoreDropOnCard) {
-            window.handleCoreDropOnCard(e, div);
-        }
-    });
-
     if (cardData.isSpecial) {
         // Only add the special-card class for tensei, not for tokens
         if (cardData.specialType === 'tensei') {
