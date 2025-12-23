@@ -215,6 +215,20 @@ body {
       width: 26px;
       height: 26px;
     }
+
+    /* 無限コアに「∞」マークを追加 */
+    #voidCore::after {
+        content: '∞';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 18px;
+        font-weight: bold;
+        text-shadow: 0 0 3px black;
+        pointer-events: none; /* クリックを背後のコアに透過させる */
+    }
     /* 選択されたコアのスタイル */
     .core.selected {
       transform: scale(1.2);
