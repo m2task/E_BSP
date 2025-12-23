@@ -401,13 +401,16 @@ export function handleDragStart(e) {
 }
 
 export function handleDragEnd(e) {
+    console.log("handleDragEnd called.");
     if (draggedElement) {
+        console.log("draggedElement before reset:", draggedElement.dataset.id);
         draggedElement.classList.remove('dragging');
         setDraggedElement(null);
     }
+    console.log("draggedElement after reset:", draggedElement); // null になっているはず
     setDraggedCoreData(null);
     clearSelectedCores();
-    setIsDragging(false); // ドラッグ終了時に false に設定
+    console.log("isDragging after reset:", isDragging); // false になっているはず
 }
 
 export function handleDeckDragEnter(e) {
@@ -480,6 +483,14 @@ export function handleDrop(e) {
         handleSpecialCardDrop(mockEvent);
     }
     clearSelectedCores();
+
+    // ドラッグ操作の終了処理をここでも実行
+    if (draggedElement) {
+        draggedElement.classList.remove('dragging');
+        setDraggedElement(null);
+    }
+    setDraggedCoreData(null);
+    setIsDragging(false); // PC版のドラッグ終了時にも確実に false にする
 }
 
 function handleCardDrop(e) {
