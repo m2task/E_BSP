@@ -76,11 +76,15 @@ export function setupEventListeners() {
         }
     });
 
-    // コアのダブルクリックで選択を全解除
+    // ダブルクリックでコアの選択を解除する処理
     document.addEventListener('dblclick', (e) => {
-        // ダブルクリックされた要素がコア、またはコアの一部であるかを確認
+        // コアの上をダブルクリックした場合は何もしない
         if (e.target.closest('.core')) {
-            // 選択されているコアをすべてクリア
+            return;
+        }
+
+        // フィールドや他のゾーンの上をダブルクリックした場合に選択を解除
+        if (e.target.closest('.zone, #fieldZone')) {
             clearSelectedCores();
         }
     });
