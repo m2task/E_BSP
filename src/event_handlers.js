@@ -823,6 +823,8 @@ export function openModal(modalId, contentId, renderContent) {
         }
     };
     document.addEventListener('mousedown', closeModalOnClick);
+
+    renderAll(); // モーダルが開かれた時にも renderAll を呼び出す
 }
 
 export function addDeckCore() {
