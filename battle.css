@@ -866,6 +866,7 @@ body {
     position: absolute;
     top: 0;
     left: 100vw; /* 回転後に左端に移動 */
+    overflow: hidden; /* スクロールを無効にする */
     /* flexboxの挙動を考慮して、必要であればflex-directionなどを調整 */
   }
 }
