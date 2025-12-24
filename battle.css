@@ -10,8 +10,6 @@ body {
       -ms-user-select: none; /* IE/Edge */
       overflow: hidden; /* サイト全体のスクロールを無効にする */
       touch-action: manipulation; /* 追加: ダブルタップズームを無効にする */
-      padding-top: env(safe-area-inset-top, 10px);
-      padding-bottom: env(safe-area-inset-bottom, 10px);
     }
 
     .column {
@@ -860,4 +858,27 @@ body {
 
 .cancel-cost-confirm-button:hover {
     background-color: #5a6268; /* ホバー時は少し濃くする */
+}
+
+@media screen and (max-width: 900px) {
+  .operation-btn {
+    display: block !important;
+    position: fixed;
+    left: 8px;
+    bottom: 80px;
+    z-index: 1000;
+    font-size: 18px;
+    padding: 10px 20px;
+    background: #007bff;
+    color: #fff;
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    opacity: 0.95;
+    pointer-events: auto;
+  }
+
+  #refreshButton {
+    display: none !important;
+  }
 }

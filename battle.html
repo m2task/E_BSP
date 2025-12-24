@@ -102,7 +102,10 @@
   <div class="hand-zone" id="handZone"></div>
 </div>
 <div id="openHandButton" class="open-hand-toggle hidden">▲ 手札を開く（<span id="handCount">0</span>枚）</div>
-<div id="deckGaiButton" class="open-deckgai-toggle">デッキ外</div>
+<div id="deckGaiButtonWrapper" style="display: flex; align-items: center;">
+  <button id="operationButton" class="operation-btn" style="display: none; position: fixed; left: 8px; bottom: 80px; z-index: 1000;">操作</button>
+  <div id="deckGaiButton" class="open-deckgai-toggle">デッキ外</div>
+</div>
 
 <!-- トラッシュモーダル -->
 <div id="trashModal">
@@ -162,5 +165,27 @@
 
 <script src="src/indexedDB.js"></script>
 <script type="module" src="./battle.js"></script>
+<script>
+function isMobile() {
+  return window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
+}
+if (isMobile()) {
+  const operationBtn = document.getElementById('operationButton');
+  const refreshBtn = document.getElementById('refreshButton');
+  if (operationBtn && refreshBtn) {
+    operationBtn.addEventListener('click', function() {
+      refreshBtn.style.display = '';
+      operationBtn.style.display = 'none';
+    });
+    refreshBtn.addEventListener('click', function() {
+      refreshBtn.style.display = 'none';
+      operationBtn.style.display = '';
+    });
+    // 初期状態でリフレッシュボタンを非表示
+    refreshBtn.style.display = 'none';
+    operationBtn.style.display = '';
+  }
+}
+</script>
 </body>
 </html>
