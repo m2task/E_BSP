@@ -196,6 +196,7 @@ html {
       position: relative; /* 擬似要素の基準位置 */
       transition: transform 0.2s ease;
       z-index: 10; /* コアを重疲労ボタンより前面に表示 */
+      touch-action: none; /* ドラッグ中のスクロールを無効化 */
     }
     .core.blue {
       /* 立体感を出すためのグラデーション */
