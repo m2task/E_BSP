@@ -738,7 +738,7 @@ function handleTouchEnd(e) {
     if (isDragging) {
         let dropTarget = null;
         if (touchDraggedElement) {
-            touchDraggedElement.style.pointerEvents = 'none';
+            touchDraggedElement.style.display = 'none'; // 'pointerEvents' から 'display' に変更して確実性を高める
             dropTarget = document.elementFromPoint(currentTouchX, currentTouchY);
             touchDraggedElement.remove();
             setTouchDraggedElement(null);
