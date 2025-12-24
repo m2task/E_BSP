@@ -454,6 +454,7 @@ html {
       }
       #voidCore::after {
         font-size: 22px; /* ∞マークのサイズ調整 */
+        transform: translate(-50%, -50%); /* 位置を少し下に調整 */
       }
       /* --- ここまで --- */
     }
