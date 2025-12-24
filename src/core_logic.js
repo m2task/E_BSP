@@ -140,13 +140,8 @@ export function handleCoreDropOnCard(e, targetCardElement) {
     e.preventDefault();
 
     const cardRect = targetCardElement.getBoundingClientRect();
-    
-    // スマホとPCでオフセットの取得方法を切り替える
-    const offsetX = e.dataTransfer.getData("offsetX") ? parseFloat(e.dataTransfer.getData("offsetX")) : 0;
-    const offsetY = e.dataTransfer.getData("offsetY") ? parseFloat(e.dataTransfer.getData("offsetY")) : 0;
-
-    let initialDropX = e.clientX - cardRect.left - offsetX;
-    let initialDropY = e.clientY - cardRect.top - offsetY;
+    let initialDropX = e.clientX - cardRect.left;
+    let initialDropY = e.clientY - cardRect.top;
     const type = e.dataTransfer.getData("type");
 
     // カードの回転に対応
