@@ -132,6 +132,8 @@ export function clearSelectedCores() {
 }
 
 export function handleCoreDropOnCard(e, targetCardElement) {
+    alert("Core drop on card START"); // ★★★ alert START ★★★
+
     const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
     const targetCardId = targetCardElement.dataset.id;
     const targetCard = field.find(card => card.id === targetCardId);
@@ -184,6 +186,8 @@ export function handleCoreDropOnCard(e, targetCardElement) {
         removeCoresFromSource(coresToMove);
         addCoresWithOverlapAvoidance(coresToMove);
     }
+
+    alert("Core drop on card END"); // ★★★ alert END ★★★
 }
 
 export function handleCoreInternalMoveOnCard(e, targetCardElement) {
