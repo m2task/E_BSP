@@ -151,5 +151,20 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('magnify-toggle-button').click();
         closeOperationModal();
     });
+    document.getElementById('modalDeckGaiBtn').addEventListener('click', () => {
+        const deckGaiModal = document.getElementById('deckGaiModal');
+        deckGaiModal.style.display = 'flex';
+        deckGaiModal.classList.add('cost-modal-overlay');
+        closeOperationModal();
+    });
+
+    // デッキ外モーダルを閉じる（背景クリック）
+    const deckGaiModal = document.getElementById('deckGaiModal');
+    deckGaiModal.addEventListener('click', (event) => {
+        if (event.target === deckGaiModal) {
+            deckGaiModal.style.display = 'none';
+            deckGaiModal.classList.remove('cost-modal-overlay');
+        }
+    });
     // --- ここまで ---
 });
