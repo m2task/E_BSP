@@ -64,7 +64,7 @@
 <div class="column">
   <div style="display: flex; flex-direction: column; align-items: center;">
     <div style="display: flex; align-items: center; gap: 0; position: relative; justify-content: center;">
-      <div class="zone special-zone" id="deckCoreArea" style="position: absolute; left: -178px; top: -5px; min-width: 120px; min-height: 80px; z-index: 2;">
+      <div class="zone special-zone" id="deckCoreArea" style="position: absolute; left: -148px; top: -5px; min-width: 120px; min-height: 80px; z-index: 2;">
         <div style="display: flex; align-items: center; justify-content: space-between;">
           <div>
             <button id="addDeckCoreBtn" style="margin-right: 4px;">＋</button>
@@ -74,6 +74,7 @@
         <div id="countZone" class="core-list"></div>
         <div id="countCoreSummary" class="summary" style="font-size:12px; padding:4px; text-align:center;"></div>
       </div>
+      <div class="zone-title" id="goToDeckRegisterButton" style="font-size: 15px;">デッキ登録画面へ</div>
     </div>
     <div class="deck-button" id="deckButton">
       デッキ
@@ -101,6 +102,7 @@
   <div class="hand-zone" id="handZone"></div>
 </div>
 <div id="openHandButton" class="open-hand-toggle hidden">▲ 手札を開く（<span id="handCount">0</span>枚）</div>
+<button id="operationMenuButton" class="open-deckgai-toggle">操作</button>
 <button id="openDeckgaiButton" class="open-deckgai-toggle">デッキ外</button>
 
 <!-- トラッシュモーダル -->
@@ -158,6 +160,19 @@
 
 <!-- 支払いキャンセルボタン -->
 <button id="cancelPaymentButton" class="hidden">支払いをキャンセル</button>
+
+<!-- 操作ボタン用モーダル -->
+<div id="operationModal" class="modal-background" style="display: none;">
+  <div class="modal-content">
+    <div id="operationModalContent" class="summon-action-container-vertical">
+      <button id="modalDeckOpenBtn" class="modal-button">オープン</button>
+      <button id="modalDeckDiscardBtn" class="modal-button">破棄</button>
+      <button id="modalDeckgaiBtn" class="modal-button">デッキ外</button>
+      <button id="modalRefreshBtn" class="modal-button">リフレッシュ</button>
+      <button id="modalMagnifyToggleBtn" class="modal-button">拡大ON/OFF</button>
+    </div>
+  </div>
+</div>
 
 <script src="src/indexedDB.js"></script>
 <script type="module" src="./battle.js"></script>
