@@ -284,7 +284,6 @@ function handleMouseOver(e) {
 
     document.getElementById('deckDiscardBtn').addEventListener('click', discardDeck);
     document.getElementById('deckOpenBtn').addEventListener('click', openDeck);
-    document.getElementById('deckGaiButton').addEventListener('click', openDeckGaiModal);
 
     // 支払いキャンセルボタンのイベントリスナー
     document.getElementById('cancelPaymentButton').addEventListener('click', () => {
