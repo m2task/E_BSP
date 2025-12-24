@@ -113,16 +113,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- スマホ用操作モーダルのロジック ---
     const operationMenuButton = document.getElementById('operationMenuButton');
     const operationModal = document.getElementById('operationModal');
-    const modalCloseBtn = document.getElementById('modalCloseBtn');
 
     // モーダルを開く
     operationMenuButton.addEventListener('click', () => {
         operationModal.style.display = 'flex';
-    });
-
-    // モーダルを閉じる（閉じるボタン）
-    modalCloseBtn.addEventListener('click', () => {
-        operationModal.style.display = 'none';
     });
 
     // モーダルを閉じる（背景クリック）
