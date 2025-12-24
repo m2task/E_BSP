@@ -789,12 +789,18 @@ function handleTouchEnd(e) {
                 }
             } else if (touchedElement.classList.contains('core') || touchedElement.id === 'voidCore') {
                 // コアのタッチドロップ処理
+
+                // ドロップ先がカード、またはカードの子要素であるかを確認
+                const targetCardElement = dropTarget.closest('.card');
+                // mockEventのターゲットを、もしカード上ならそのカード要素に、そうでなければ元のdropTargetに設定
+                const eventTarget = targetCardElement || dropTarget;
+
                 // draggedCoreData を使用する
                 const coresToMove = draggedCoreData; 
                 const mockEvent = {
                     clientX: currentTouchX,
                     clientY: currentTouchY,
-                    target: dropTarget,
+                    target: eventTarget, // 修正後のターゲットを使用
                     dataTransfer: {
                         getData: (key) => {
                             if (key === "cores") return JSON.stringify(coresToMove);
