@@ -929,3 +929,8 @@ html {
 .cancel-cost-confirm-button:hover {
     background-color: #5a6268; /* ホバー時は少し濃くする */
 }
+
+/* 操作モーダル表示時の背景を透明にする */
+#operationModal.cost-modal-overlay {
+  background: transparent;
+}
