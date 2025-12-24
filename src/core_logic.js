@@ -132,22 +132,6 @@ export function clearSelectedCores() {
 }
 
 export function handleCoreDropOnCard(e, targetCardElement) {
-    // ★★★ 新しいデバッグコード START ★★★
-    const cardRect = targetCardElement.getBoundingClientRect();
-    const initialDropX = e.clientX - cardRect.left;
-    const initialDropY = e.clientY - cardRect.top;
-
-    const rectInfo = `R: ${Math.round(cardRect.left)},${Math.round(cardRect.top)}`;
-    const clientXY = `C: ${Math.round(e.clientX)},${Math.round(e.clientY)}`;
-    const dropXY = `D: ${Math.round(initialDropX)},${Math.round(initialDropY)}`;
-
-    const debugMessage = `${rectInfo} | ${clientXY} | ${dropXY}`;
-    // isMobileDevice() でスマホの場合のみ表示する
-    if (typeof isMobileDevice === 'function' && isMobileDevice()) {
-        showToast('infoToast', debugMessage, { duration: 7000, position: 'bottom-left' });
-    }
-    // ★★★ 新しいデバッグコード END ★★★
-
     const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
     const targetCardId = targetCardElement.dataset.id;
     const targetCard = field.find(card => card.id === targetCardId);
@@ -155,21 +139,25 @@ export function handleCoreDropOnCard(e, targetCardElement) {
     if (!targetCard) return;
     e.preventDefault();
 
-    // const cardRect = targetCardElement.getBoundingClientRect(); // 上で定義済み
-    let calculatedInitialDropX = e.clientX - cardRect.left;
-    let calculatedInitialDropY = e.clientY - cardRect.top;
+    // ★★★ 最終デバッグコード START ★★★
+    const beforeCount = targetCard.coresOnCard.length;
+    // ★★★ 最終デバッグコード END ★★★
+
+    const cardRect = targetCardElement.getBoundingClientRect();
+    let initialDropX = e.clientX - cardRect.left;
+    let initialDropY = e.clientY - cardRect.top;
     const type = e.dataTransfer.getData("type");
 
     // カードの回転に対応
     if (targetCard.isRotated) {
         const originalWidth = 104;
         const originalHeight = 156;
-        const xFromCenter = calculatedInitialDropX - (cardRect.width / 2);
-        const yFromCenter = calculatedInitialDropY - (cardRect.height / 2);
+        const xFromCenter = initialDropX - (cardRect.width / 2);
+        const yFromCenter = initialDropY - (cardRect.height / 2);
         const rotatedXFromCenter = yFromCenter;
         const rotatedYFromCenter = -xFromCenter;
-        calculatedInitialDropX = rotatedXFromCenter + (originalWidth / 2);
-        calculatedInitialDropY = rotatedYFromCenter + (originalHeight / 2);
+        initialDropX = rotatedXFromCenter + (originalWidth / 2);
+        initialDropY = rotatedYFromCenter + (originalHeight / 2);
     }
 
     const clampWidth = 104;
@@ -181,7 +169,7 @@ export function handleCoreDropOnCard(e, targetCardElement) {
 
         cores.forEach(coreInfo => {
             const coreType = (typeof coreInfo === 'string') ? coreInfo : coreInfo.type;
-            const { x, y } = findEmptySlot(calculatedInitialDropX, calculatedInitialDropY, currentCoresOnCard, clampWidth, clampHeight);
+            const { x, y } = findEmptySlot(initialDropX, initialDropY, currentCoresOnCard, clampWidth, clampHeight);
             const newCore = { type: coreType, x, y };
             targetCard.coresOnCard.push(newCore);
             currentCoresOnCard.push(newCore);
@@ -200,6 +188,17 @@ export function handleCoreDropOnCard(e, targetCardElement) {
         removeCoresFromSource(coresToMove);
         addCoresWithOverlapAvoidance(coresToMove);
     }
+
+    // ★★★ 最終デバッグコード START ★★★
+    const afterCount = targetCard.coresOnCard.length;
+    const movedCount = coresToMove.length;
+
+    const debugMessage = `Before: ${beforeCount} | After: ${afterCount} | Moved: ${movedCount}`;
+    // isMobileDevice() でスマホの場合のみ表示する
+    if (typeof isMobileDevice === 'function' && isMobileDevice()) {
+        showToast('infoToast', debugMessage, { duration: 7000, position: 'bottom-left' });
+    }
+    // ★★★ 最終デバッグコード END ★★★
 }
 
 export function handleCoreInternalMoveOnCard(e, targetCardElement) {
