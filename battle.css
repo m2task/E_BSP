@@ -384,13 +384,13 @@ html {
       }
 
       .open-hand-toggle, .open-trash-toggle {
-        padding: 10px 20px; /* タップしやすいようにパディングを増やす */
-        /* 中央配置を解除し、左寄せにする */
-        left: 20px; /* 左端から20pxの位置に配置 */
-        right: auto; /* right プロパティを解除 */
-        transform: none; /* translateX(-50%) を解除 */
-        display: block; /* 常に表示 */
-      }
+    padding: 10px 20px; /* タップしやすいようにパディングを増やす */
+    /* 中央配置を解除し、左寄せにする */
+    left: 40px; /* 位置を右に調整 */
+    right: auto; /* right プロパティを解除 */
+    transform: none; /* translateX(-50%) を解除 */
+    display: block; /* 常に表示 */
+  }
 
       /* --- スマホ表示用のボタン表示切り替え --- */
       /* 元のボタンを非表示に */
