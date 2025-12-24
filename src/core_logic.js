@@ -139,10 +139,6 @@ export function handleCoreDropOnCard(e, targetCardElement) {
     if (!targetCard) return;
     e.preventDefault();
 
-    // ★★★ 最終デバッグコード START ★★★
-    const beforeCount = targetCard.coresOnCard.length;
-    // ★★★ 最終デバッグコード END ★★★
-
     const cardRect = targetCardElement.getBoundingClientRect();
     let initialDropX = e.clientX - cardRect.left;
     let initialDropY = e.clientY - cardRect.top;
@@ -188,17 +184,6 @@ export function handleCoreDropOnCard(e, targetCardElement) {
         removeCoresFromSource(coresToMove);
         addCoresWithOverlapAvoidance(coresToMove);
     }
-
-    // ★★★ 最終デバッグコード START ★★★
-    const afterCount = targetCard.coresOnCard.length;
-    const movedCount = coresToMove.length;
-
-    const debugMessage = `Before: ${beforeCount} | After: ${afterCount} | Moved: ${movedCount}`;
-    // isMobileDevice() でスマホの場合のみ表示する
-    if (typeof isMobileDevice === 'function' && isMobileDevice()) {
-        showToast('infoToast', debugMessage, { duration: 7000, position: 'bottom-left' });
-    }
-    // ★★★ 最終デバッグコード END ★★★
 }
 
 export function handleCoreInternalMoveOnCard(e, targetCardElement) {

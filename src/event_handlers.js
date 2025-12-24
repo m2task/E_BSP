@@ -744,6 +744,12 @@ function handleTouchEnd(e) {
             setTouchDraggedElement(null);
         }
 
+        // ★★★ 新しいデバッグコード START ★★★
+        const targetName = dropTarget ? `${dropTarget.tagName}#${dropTarget.id || ''}.${[...dropTarget.classList].join('.')}` : 'null';
+        const debugMessage = `DragEnd! Target: ${targetName}`;
+        showToast('infoToast', debugMessage, { duration: 7000, position: 'top-left' });
+        // ★★★ 新しいデバッグコード END ★★★
+
         if (dropTarget) {
             if (touchedElement.classList.contains('card')) {
                 // 特殊カード（トークンなど）か、既存のカードかを判定
