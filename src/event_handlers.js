@@ -284,6 +284,7 @@ function handleMouseOver(e) {
 
     document.getElementById('deckDiscardBtn').addEventListener('click', discardDeck);
     document.getElementById('deckOpenBtn').addEventListener('click', openDeck);
+    document.getElementById('deckGaiButton').addEventListener('click', openDeckGaiModal);
 
     // 支払いキャンセルボタンのイベントリスナー
     document.getElementById('cancelPaymentButton').addEventListener('click', () => {
@@ -352,6 +353,13 @@ export function handleDragStart(e) {
             const rect = e.target.getBoundingClientRect();
             setOffsetX(e.clientX - rect.left);
             setOffsetY(e.clientY - rect.top);
+
+            // モーダルを非表示にする
+            const deckGaiModal = document.getElementById('deckGaiModal');
+            if (deckGaiModal) {
+                deckGaiModal.style.display = 'none';
+                deckGaiModal.classList.remove('cost-modal-overlay');
+            }
         } else { // It's a normal card or a special card already on the field
             e.dataTransfer.setData("type", "card");
             e.dataTransfer.setData("cardId", e.target.dataset.id);
@@ -640,6 +648,15 @@ function handleTouchStart(e) {
 }
 
 function startTouchDrag(e) {
+    // ドラッグ対象が特殊カードならモーダルを非表示にする
+    if (touchedElement.classList.contains('special-card') && !touchedElement.dataset.id) {
+        const deckGaiModal = document.getElementById('deckGaiModal');
+        if (deckGaiModal) {
+            deckGaiModal.style.display = 'none';
+            deckGaiModal.classList.remove('cost-modal-overlay');
+        }
+    }
+
     let displayElement = touchedElement;
     let customDragElement = null;
 

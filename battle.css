@@ -392,7 +392,8 @@ html {
       /* 元のボタンを非表示に */
       .deck-actions,
       #refreshButton,
-      #magnify-toggle-button {
+      #magnify-toggle-button,
+      #deckGaiButton {
         display: none;
       }
 
@@ -915,7 +916,8 @@ html {
     background-color: #5a6268; /* ホバー時は少し濃くする */
 }
 
-/* 操作モーダル表示時の背景を透明にする */
-#operationModal.cost-modal-overlay {
+/* 操作モーダル・デッキ外モーダル表示時の背景を透明にする */
+#operationModal.cost-modal-overlay,
+#deckGaiModal.cost-modal-overlay {
   background: transparent;
 }
