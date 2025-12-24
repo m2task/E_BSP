@@ -881,4 +881,9 @@ body {
   #refreshButton {
     display: none !important;
   }
+
+  #deckOpenBtn,
+  #deckDiscardBtn {
+    display: none !important;
+  }
 }
