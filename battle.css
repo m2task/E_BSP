@@ -362,6 +362,54 @@ body {
       }
     }
 
+    @media screen and (max-width: 900px) and (orientation: landscape) {
+  body {
+    flex-direction: column;
+    padding: 2vw;
+  }
+  .main-field {
+    width: 98vw;
+    min-width: 0;
+    margin: 0 auto 10px auto;
+    padding: 2vw;
+    font-size: 2vw;
+  }
+  .column {
+    flex-direction: row;
+    width: 100vw;
+    min-width: 0;
+    gap: 2vw;
+    margin: 0 0 10px 0;
+  }
+  .zone, .special-zone {
+    min-width: 60px;
+    min-height: 60px;
+    font-size: 2vw;
+    padding: 1vw;
+  }
+  .deck-button {
+    width: 18vw;
+    height: 25vw;
+    font-size: 2vw;
+  }
+  .card {
+    width: 14vw !important;
+    height: 21vw !important;
+    font-size: 2vw;
+  }
+  .core {
+    width: 3vw;
+    height: 3vw;
+  }
+  .core-list, .core-container {
+    gap: 1vw;
+  }
+  #handZoneContainer {
+    width: 98vw;
+    font-size: 2vw;
+  }
+}
+
     .hidden { display: none; }
 
     /* 手札が閉じたときに hand-toggle を非表示にする */
@@ -858,8 +906,4 @@ body {
 
 .cancel-cost-confirm-button:hover {
     background-color: #5a6268; /* ホバー時は少し濃くする */
-}
-
-.card, .core, #voidCore {
-  touch-action: none;
 }
