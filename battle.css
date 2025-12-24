@@ -1,4 +1,7 @@
-html, body {
+html {
+      overflow: hidden; /* サイト全体のスクロールを無効にする */
+    }
+    body {
       margin: 0;
       padding: 10px;
       font-family: sans-serif;
