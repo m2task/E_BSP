@@ -143,6 +143,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('deckDiscardBtn').click();
         closeOperationModal();
     });
+    document.getElementById('modalDeckgaiBtn').addEventListener('click', () => {
+        document.getElementById('openDeckgaiButton').click();
+        closeOperationModal();
+    });
     document.getElementById('modalRefreshBtn').addEventListener('click', () => {
         document.getElementById('refreshButton').click();
         closeOperationModal();

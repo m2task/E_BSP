@@ -412,6 +412,10 @@ html {
         z-index: 101;
       }
 
+      #openDeckgaiButton {
+        display: none;
+      }
+
       /* ボタンを右側に配置 & 大きさを統一 */
       .open-deckgai-toggle {
         right: 20px;
