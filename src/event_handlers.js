@@ -353,13 +353,6 @@ export function handleDragStart(e) {
             const rect = e.target.getBoundingClientRect();
             setOffsetX(e.clientX - rect.left);
             setOffsetY(e.clientY - rect.top);
-
-            // モーダルを非表示にする
-            const deckGaiModal = document.getElementById('deckGaiModal');
-            if (deckGaiModal) {
-                deckGaiModal.style.display = 'none';
-                deckGaiModal.classList.remove('cost-modal-overlay');
-            }
         } else { // It's a normal card or a special card already on the field
             e.dataTransfer.setData("type", "card");
             e.dataTransfer.setData("cardId", e.target.dataset.id);
@@ -648,15 +641,6 @@ function handleTouchStart(e) {
 }
 
 function startTouchDrag(e) {
-    // ドラッグ対象が特殊カードならモーダルを非表示にする
-    if (touchedElement.classList.contains('special-card') && !touchedElement.dataset.id) {
-        const deckGaiModal = document.getElementById('deckGaiModal');
-        if (deckGaiModal) {
-            deckGaiModal.style.display = 'none';
-            deckGaiModal.classList.remove('cost-modal-overlay');
-        }
-    }
-
     let displayElement = touchedElement;
     let customDragElement = null;
 
@@ -763,43 +747,23 @@ function handleTouchEnd(e) {
         if (dropTarget) {
             if (touchedElement.classList.contains('card')) {
                 // カードのタッチドロップ処理
-                const isSpecialCard = touchedElement.classList.contains('special-card') && !touchedElement.dataset.id;
+                const cardId = touchedElement.dataset.id;
+                const sourceZoneName = getZoneName(touchedElement.parentElement);
+                const targetZoneElement = dropTarget.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea');
 
-                if (isSpecialCard) {
-                    // 新しい特殊カードのドロップ処理
-                    const cardType = touchedElement.dataset.cardType;
-                    const targetElement = dropTarget.closest('#fieldZone');
-                    if (targetElement) {
-                        const targetZoneName = getZoneName(targetElement);
-                        if (targetZoneName === 'field') {
-                            const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
-                            const position = {
-                                left: currentTouchX - fieldRect.left - touchOffsetX,
-                                top: currentTouchY - fieldRect.top - touchOffsetY
-                            };
-                            createSpecialCardOnField(cardType, position);
-                        }
+                if (targetZoneElement) {
+                    const targetZoneName = getZoneName(targetZoneElement);
+                    if (targetZoneName === 'field') {
+                        const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
+                        cardPositions[cardId] = {
+                            left: currentTouchX - fieldRect.left - touchOffsetX,
+                            top: currentTouchY - fieldRect.top - touchOffsetY
+                        };
+                    } else {
+                        delete cardPositions[cardId];
                     }
-                } else {
-                    // 既存のカード移動処理
-                    const cardId = touchedElement.dataset.id;
-                    const sourceZoneName = getZoneName(touchedElement.parentElement);
-                    const targetZoneElement = dropTarget.closest('#fieldZone, #handZone, #trashZoneFrame, #burstZone, .deck-button, #voidZone, #openArea');
-
-                    if (targetZoneElement) {
-                        const targetZoneName = getZoneName(targetZoneElement);
-                        if (targetZoneName === 'field') {
-                            const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
-                            cardPositions[cardId] = {
-                                left: currentTouchX - fieldRect.left - touchOffsetX,
-                                top: currentTouchY - fieldRect.top - touchOffsetY
-                            };
-                        } else {
-                            delete cardPositions[cardId];
-                        }
-                        moveCardData(cardId, sourceZoneName, targetZoneName);
-                        hideMagnifier();
-                    }
+                    moveCardData(cardId, sourceZoneName, targetZoneName);
+                    hideMagnifier();
                 }
             } else if (touchedElement.classList.contains('core') || touchedElement.id === 'voidCore') {
                 // コアのタッチドロップ処理

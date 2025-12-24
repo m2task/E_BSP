@@ -392,8 +392,7 @@ html {
       /* 元のボタンを非表示に */
       .deck-actions,
       #refreshButton,
-      #magnify-toggle-button,
-      #deckGaiButton {
+      #magnify-toggle-button {
         display: none;
       }
 
@@ -411,9 +410,24 @@ html {
         border-radius: 5px 5px 0 0;
         cursor: pointer;
         z-index: 101;
-        right: 20px; /* 画面右端に配置 */
+      }
+
+      /* ボタンを右側に配置 & 大きさを統一 */
+      .open-deckgai-toggle {
+        right: 20px;
         left: auto;
         transform: none;
+        width: 90px;
+        text-align: center;
+        padding: 10px 5px;
+      }
+      #operationMenuButton {
+        right: 120px; /* 20px(画面端) + 90px(デッキ外ボタン幅) + 10px(隙間) */
+        left: auto;
+        transform: none;
+        width: 90px;
+        text-align: center;
+        padding: 10px 5px;
       }
       /* --- ここまで --- */
     }
@@ -916,8 +930,7 @@ html {
     background-color: #5a6268; /* ホバー時は少し濃くする */
 }
 
-/* 操作モーダル・デッキ外モーダル表示時の背景を透明にする */
-#operationModal.cost-modal-overlay,
-#deckGaiModal.cost-modal-overlay {
+/* 操作モーダル表示時の背景を透明にする */
+#operationModal.cost-modal-overlay {
   background: transparent;
 }

@@ -151,9 +151,5 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('magnify-toggle-button').click();
         closeOperationModal();
     });
-    document.getElementById('modalDeckGaiBtn').addEventListener('click', () => {
-        document.getElementById('deckGaiButton').click();
-        closeOperationModal();
-    });
     // --- ここまで ---
 });
