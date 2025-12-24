@@ -275,13 +275,6 @@ function handleMouseOver(e) {
         showToast('voidToast', ` ${voidChargeCount}個増やせます`, { duration: 1000 });
     });
 
-    // 「デッキ登録画面へ」ボタンのクリックイベント
-    document.getElementById('goToDeckRegisterButton').addEventListener('click', () => {
-        if (confirm("デッキ登録画面に移動しますか？\n現在のゲーム状態は保存されません。")) {
-            window.location.href = "index.html";
-        }
-    });
-
     document.getElementById('deckDiscardBtn').addEventListener('click', discardDeck);
     document.getElementById('deckOpenBtn').addEventListener('click', openDeck);
     document.getElementById('openDeckgaiButton').addEventListener('click', openDeckGaiModal);
