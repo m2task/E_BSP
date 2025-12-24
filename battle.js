@@ -114,35 +114,42 @@ document.addEventListener('DOMContentLoaded', () => {
     const operationMenuButton = document.getElementById('operationMenuButton');
     const operationModal = document.getElementById('operationModal');
 
-    // モーダルを開く
-    operationMenuButton.addEventListener('click', () => {
+    const openOperationModal = () => {
         operationModal.style.display = 'flex';
-    });
+        operationModal.classList.add('cost-modal-overlay');
+    };
+
+    const closeOperationModal = () => {
+        operationModal.style.display = 'none';
+        operationModal.classList.remove('cost-modal-overlay');
+    };
+
+    // モーダルを開く
+    operationMenuButton.addEventListener('click', openOperationModal);
 
     // モーダルを閉じる（背景クリック）
     operationModal.addEventListener('click', (event) => {
         if (event.target === operationModal) {
-            operationModal.style.display = 'none';
+            closeOperationModal();
         }
     });
 
     // モーダル内ボタンのイベントを設定
-    // 元のボタンのクリックイベントを発火させる
     document.getElementById('modalDeckOpenBtn').addEventListener('click', () => {
         document.getElementById('deckOpenBtn').click();
-        operationModal.style.display = 'none';
+        closeOperationModal();
     });
     document.getElementById('modalDeckDiscardBtn').addEventListener('click', () => {
         document.getElementById('deckDiscardBtn').click();
-        operationModal.style.display = 'none';
+        closeOperationModal();
     });
     document.getElementById('modalRefreshBtn').addEventListener('click', () => {
         document.getElementById('refreshButton').click();
-        operationModal.style.display = 'none';
+        closeOperationModal();
     });
     document.getElementById('modalMagnifyToggleBtn').addEventListener('click', () => {
         document.getElementById('magnify-toggle-button').click();
-        operationModal.style.display = 'none';
+        closeOperationModal();
     });
     // --- ここまで ---
 });
