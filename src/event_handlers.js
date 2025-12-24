@@ -801,6 +801,7 @@ function handleTouchEnd(e) {
                     clientX: currentTouchX,
                     clientY: currentTouchY,
                     target: eventTarget, // 修正後のターゲットを使用
+                    preventDefault: function() {}, // ★★★ 空の関数を追加 ★★★
                     dataTransfer: {
                         getData: (key) => {
                             if (key === "cores") return JSON.stringify(coresToMove);
