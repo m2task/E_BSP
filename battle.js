@@ -109,4 +109,46 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     initializeMagnifyButton(); // 拡大表示のON/OFFボタンを初期化
     document.getElementById('cancelPaymentButton').addEventListener('click', cancelPayment);
+
+    // --- スマホ用操作モーダルのロジック ---
+    const operationMenuButton = document.getElementById('operationMenuButton');
+    const operationModal = document.getElementById('operationModal');
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+    // モーダルを開く
+    operationMenuButton.addEventListener('click', () => {
+        operationModal.style.display = 'flex';
+    });
+
+    // モーダルを閉じる（閉じるボタン）
+    modalCloseBtn.addEventListener('click', () => {
+        operationModal.style.display = 'none';
+    });
+
+    // モーダルを閉じる（背景クリック）
+    operationModal.addEventListener('click', (event) => {
+        if (event.target === operationModal) {
+            operationModal.style.display = 'none';
+        }
+    });
+
+    // モーダル内ボタンのイベントを設定
+    // 元のボタンのクリックイベントを発火させる
+    document.getElementById('modalDeckOpenBtn').addEventListener('click', () => {
+        document.getElementById('deckOpenBtn').click();
+        operationModal.style.display = 'none';
+    });
+    document.getElementById('modalDeckDiscardBtn').addEventListener('click', () => {
+        document.getElementById('deckDiscardBtn').click();
+        operationModal.style.display = 'none';
+    });
+    document.getElementById('modalRefreshBtn').addEventListener('click', () => {
+        document.getElementById('refreshButton').click();
+        operationModal.style.display = 'none';
+    });
+    document.getElementById('modalMagnifyToggleBtn').addEventListener('click', () => {
+        document.getElementById('magnify-toggle-button').click();
+        operationModal.style.display = 'none';
+    });
+    // --- ここまで ---
 });

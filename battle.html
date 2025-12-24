@@ -102,10 +102,8 @@
   <div class="hand-zone" id="handZone"></div>
 </div>
 <div id="openHandButton" class="open-hand-toggle hidden">▲ 手札を開く（<span id="handCount">0</span>枚）</div>
-<div id="deckGaiButtonWrapper" style="display: flex; align-items: center;">
-  <button id="operationButton" class="operation-btn" style="display: none; position: fixed; left: 8px; bottom: 80px; z-index: 1000;">操作</button>
-  <div id="deckGaiButton" class="open-deckgai-toggle">デッキ外</div>
-</div>
+<div id="operationMenuButton" class="open-deckgai-toggle">操作</div>
+<div id="deckGaiButton" class="open-deckgai-toggle">デッキ外</div>
 
 <!-- トラッシュモーダル -->
 <div id="trashModal">
@@ -163,45 +161,20 @@
 <!-- 支払いキャンセルボタン -->
 <button id="cancelPaymentButton" class="hidden">支払いをキャンセル</button>
 
+<!-- 操作ボタン用モーダル -->
+<div id="operationModal" class="modal-background" style="display: none;">
+  <div class="modal-content">
+    <div id="operationModalContent" class="summon-action-container-vertical">
+      <button id="modalDeckOpenBtn" class="modal-button">オープン</button>
+      <button id="modalDeckDiscardBtn" class="modal-button">破棄</button>
+      <button id="modalRefreshBtn" class="modal-button">リフレッシュ</button>
+      <button id="modalMagnifyToggleBtn" class="modal-button">拡大ON/OFF</button>
+      <button id="modalCloseBtn" class="modal-button" style="margin-top: 10px; background-color: #6c757d; color: white;">閉じる</button>
+    </div>
+  </div>
+</div>
+
 <script src="src/indexedDB.js"></script>
 <script type="module" src="./battle.js"></script>
-<script>
-function isMobile() {
-  return window.matchMedia && window.matchMedia('(max-width: 900px)').matches;
-}
-if (isMobile()) {
-  const operationBtn = document.getElementById('operationButton');
-  const refreshBtn = document.getElementById('refreshButton');
-  const openBtn = document.getElementById('deckOpenBtn');
-  const discardBtn = document.getElementById('deckDiscardBtn');
-  if (operationBtn && refreshBtn && openBtn && discardBtn) {
-    operationBtn.addEventListener('click', function() {
-      refreshBtn.style.display = '';
-      openBtn.style.display = '';
-      discardBtn.style.display = '';
-      operationBtn.style.display = 'none';
-    });
-    refreshBtn.addEventListener('click', function() {
-      refreshBtn.style.display = 'none';
-      operationBtn.style.display = '';
-    });
-    openBtn.addEventListener('click', function() {
-      openBtn.style.display = 'none';
-      discardBtn.style.display = 'none';
-      operationBtn.style.display = '';
-    });
-    discardBtn.addEventListener('click', function() {
-      openBtn.style.display = 'none';
-      discardBtn.style.display = 'none';
-      operationBtn.style.display = '';
-    });
-    // 初期状態でリフレッシュボタンとオープン・破棄ボタンを非表示
-    refreshBtn.style.display = 'none';
-    openBtn.style.display = 'none';
-    discardBtn.style.display = 'none';
-    operationBtn.style.display = '';
-  }
-}
-</script>
 </body>
 </html>

@@ -338,6 +338,23 @@ body {
       z-index: 101;
     }
 
+    /* --- スマホ用操作ボタンとモーダルのスタイル --- */
+    #operationMenuButton {
+      /* PCでは非表示、スマホではメディアクエリで表示 */
+      display: none;
+    }
+
+    #operationModal .modal-content {
+      max-width: 250px;
+      width: 80%;
+    }
+
+    #operationModal .modal-button {
+      width: 100%;
+      text-align: center;
+    }
+    /* --- ここまで --- */
+
     .special-card {
       background: #f0c8f0; /* A light purple color */
     }
@@ -360,6 +377,43 @@ body {
         transform: none; /* translateX(-50%) を解除 */
         display: block; /* 常に表示 */
       }
+
+      /* --- スマホ表示用のボタン表示切り替え --- */
+      /* 元のボタンを非表示に */
+      .deck-actions,
+      #refreshButton,
+      #magnify-toggle-button {
+        display: none;
+      }
+
+      /* 新しい操作ボタンを表示 */
+      #operationMenuButton {
+        display: block;
+        position: fixed;
+        bottom: 0;
+        background: #ddd;
+        font-weight: bold;
+        padding: 10px 20px;
+        border-top: 1px solid #999;
+        border-left: 1px solid #999;
+        border-right: 1px solid #999;
+        border-radius: 5px 5px 0 0;
+        cursor: pointer;
+        z-index: 101;
+      }
+
+      /* ボタンを右側に配置 */
+      .open-deckgai-toggle {
+        right: 20px;
+        left: auto;
+        transform: none;
+      }
+      #operationMenuButton {
+        right: 130px; /* デッキ外ボタンの左隣 */
+        left: auto;
+        transform: none;
+      }
+      /* --- ここまで --- */
     }
 
     .hidden { display: none; }
@@ -858,32 +912,4 @@ body {
 
 .cancel-cost-confirm-button:hover {
     background-color: #5a6268; /* ホバー時は少し濃くする */
-}
-
-@media screen and (max-width: 900px) {
-  .operation-btn {
-    display: block !important;
-    position: fixed;
-    left: 8px;
-    bottom: 80px;
-    z-index: 1000;
-    font-size: 18px;
-    padding: 10px 20px;
-    background: #007bff;
-    color: #fff;
-    border-radius: 8px;
-    border: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    opacity: 0.95;
-    pointer-events: auto;
-  }
-
-  #refreshButton {
-    display: none !important;
-  }
-
-  #deckOpenBtn,
-  #deckDiscardBtn {
-    display: none !important;
-  }
 }
