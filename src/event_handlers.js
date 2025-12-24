@@ -790,16 +790,8 @@ function handleTouchEnd(e) {
             } else if (touchedElement.classList.contains('core') || touchedElement.id === 'voidCore') {
                 // コアのタッチドロップ処理
 
-                // ★★★ デバッグコード START ★★★
-                const targetInfo = `T: ${dropTarget.tagName}#${dropTarget.id || ''}.${[...dropTarget.classList].join('.')}`;
+                // ドロップ先がカード、またはカードの子要素であるかを確認
                 const targetCardElement = dropTarget.closest('.card');
-                const cardInfo = `Card: ${targetCardElement ? targetCardElement.dataset.id : 'null'}`;
-                const coordsInfo = `XY: ${Math.round(currentTouchX)}, ${Math.round(currentTouchY)}`;
-
-                const debugMessage = `${targetInfo} | ${cardInfo} | ${coordsInfo}`;
-                showToast('infoToast', debugMessage, { duration: 7000, position: 'top-left' }); // 長めに表示
-                // ★★★ デバッグコード END ★★★
-
                 // mockEventのターゲットを、もしカード上ならそのカード要素に、そうでなければ元のdropTargetに設定
                 const eventTarget = targetCardElement || dropTarget;
 
