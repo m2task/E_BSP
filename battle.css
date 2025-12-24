@@ -441,19 +441,19 @@ html {
 
       /* --- スマホ用コアサイズ調整 --- */
       .core.blue {
-        width: 24px;
-        height: 24px;
+        width: 26px;
+        height: 26px;
       }
       .core.soul {
-        width: 27px;
-        height: 27px;
-      }
-      #voidCore {
         width: 29px;
         height: 29px;
       }
+      #voidCore {
+        width: 31px;
+        height: 31px;
+      }
       #voidCore::after {
-        font-size: 20px; /* ∞マークのサイズ調整 */
+        font-size: 22px; /* ∞マークのサイズ調整 */
       }
       /* --- ここまで --- */
     }
