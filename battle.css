@@ -438,6 +438,24 @@ html {
         padding: 10px 5px;
       }
       /* --- ここまで --- */
+
+      /* --- スマホ用コアサイズ調整 --- */
+      .core.blue {
+        width: 24px;
+        height: 24px;
+      }
+      .core.soul {
+        width: 27px;
+        height: 27px;
+      }
+      #voidCore {
+        width: 29px;
+        height: 29px;
+      }
+      #voidCore::after {
+        font-size: 20px; /* ∞マークのサイズ調整 */
+      }
+      /* --- ここまで --- */
     }
 
     .hidden { display: none; }
