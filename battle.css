@@ -346,6 +346,8 @@ html {
       border-radius: 5px 5px 0 0;
       cursor: pointer;
       z-index: 101;
+      border-bottom: none; /* button要素のデフォルトborderを消す */
+      font-family: sans-serif; /* button要素のデフォルトfontを上書き */
     }
 
     /* --- スマホ用操作ボタンとモーダルのスタイル --- */
