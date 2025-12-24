@@ -132,63 +132,73 @@ export function clearSelectedCores() {
 }
 
 export function handleCoreDropOnCard(e, targetCardElement) {
-    const coresDataString = e.dataTransfer.getData("cores");
-    if (!coresDataString) {
-        console.error("Failed to get core data on drop.");
-        return;
-    }
+    try { // ★★★ try...catch START ★★★
+        const coresDataString = e.dataTransfer.getData("cores");
+        if (!coresDataString) {
+            alert("Error: Core data string is empty."); // 空の場合も通知
+            return;
+        }
 
-    const coresToMove = JSON.parse(coresDataString);
-    const targetCardId = targetCardElement.dataset.id;
-    const targetCard = field.find(card => card.id === targetCardId);
+        const coresToMove = JSON.parse(coresDataString);
+        const targetCardId = targetCardElement.dataset.id;
+        const targetCard = field.find(card => card.id === targetCardId);
 
-    if (!targetCard) return;
-    e.preventDefault();
+        if (!targetCard) return;
+        e.preventDefault();
 
-    const cardRect = targetCardElement.getBoundingClientRect();
-    let initialDropX = e.clientX - cardRect.left;
-    let initialDropY = e.clientY - cardRect.top;
-    const type = e.dataTransfer.getData("type");
+        const cardRect = targetCardElement.getBoundingClientRect();
+        let initialDropX = e.clientX - cardRect.left;
+        let initialDropY = e.clientY - cardRect.top;
+        const type = e.dataTransfer.getData("type");
 
-    // カードの回転に対応
-    if (targetCard.isRotated) {
-        const originalWidth = 104;
-        const originalHeight = 156;
-        const xFromCenter = initialDropX - (cardRect.width / 2);
-        const yFromCenter = initialDropY - (cardRect.height / 2);
-        const rotatedXFromCenter = yFromCenter;
-        const rotatedYFromCenter = -xFromCenter;
-        initialDropX = rotatedXFromCenter + (originalWidth / 2);
-        initialDropY = rotatedYFromCenter + (originalHeight / 2);
-    }
+        // カードの回転に対応
+        if (targetCard.isRotated) {
+            const originalWidth = 104;
+            const originalHeight = 156;
+            const xFromCenter = initialDropX - (cardRect.width / 2);
+            const yFromCenter = initialDropY - (cardRect.height / 2);
+            const rotatedXFromCenter = yFromCenter;
+            const rotatedYFromCenter = -xFromCenter;
+            initialDropX = rotatedXFromCenter + (originalWidth / 2);
+            initialDropY = rotatedYFromCenter + (originalHeight / 2);
+        }
 
-    const clampWidth = 104;
-    const clampHeight = 156;
+        const clampWidth = 104;
+        const clampHeight = 156;
 
-    // --- 重なり解消ロジック ---
-    const addCoresWithOverlapAvoidance = (cores) => {
-        let currentCoresOnCard = [...targetCard.coresOnCard];
+        // --- 重なり解消ロジック ---
+        const addCoresWithOverlapAvoidance = (cores) => {
+            let currentCoresOnCard = [...targetCard.coresOnCard];
 
-        cores.forEach(coreInfo => {
-            const coreType = (typeof coreInfo === 'string') ? coreInfo : coreInfo.type;
-            const { x, y } = findEmptySlot(initialDropX, initialDropY, currentCoresOnCard, clampWidth, clampHeight);
-            const newCore = { type: coreType, x, y };
-            targetCard.coresOnCard.push(newCore);
-            currentCoresOnCard.push(newCore);
-        });
-    };
+            cores.forEach(coreInfo => {
+                const coreType = (typeof coreInfo === 'string') ? coreInfo : coreInfo.type;
+                const { x, y } = findEmptySlot(initialDropX, initialDropY, currentCoresOnCard, clampWidth, clampHeight);
+                const newCore = { type: coreType, x, y };
+                targetCard.coresOnCard.push(newCore);
+                currentCoresOnCard.push(newCore);
+            });
+        };
 
-    if (type === 'voidCore') {
-        const coresToAddCount = coresToMove.length;
-        const newCores = Array(coresToAddCount).fill("blue");
-        addCoresWithOverlapAvoidance(newCores);
-        setVoidChargeCount(0);
-        showToast('voidToast', '', { hide: true });
-        const toastMessage = `${coresToAddCount}個増やしました`;
-        showToast('voidToast', toastMessage, { duration: 1000 });
-    } else {
-        removeCoresFromSource(coresToMove);
-        addCoresWithOverlapAvoidance(coresToMove);
+        if (type === 'voidCore') {
+            const coresToAddCount = coresToMove.length;
+            const newCores = Array(coresToAddCount).fill("blue");
+            addCoresWithOverlapAvoidance(newCores);
+            setVoidChargeCount(0);
+            showToast('voidToast', '', { hide: true });
+            const toastMessage = `${coresToAddCount}個増やしました`;
+            showToast('voidToast', toastMessage, { duration: 1000 });
+        } else {
+            removeCoresFromSource(coresToMove);
+            addCoresWithOverlapAvoidance(coresToMove);
+        }
+    } catch (error) { // ★★★ catchブロック ★★★
+        const coresDataStringForError = e.dataTransfer.getData("cores");
+        alert(
+            `An error occurred in handleCoreDropOnCard:\n` +
+            `Message: ${error.message}\n\n` +
+            `Core Data String: '${coresDataStringForError}'\n\n` +
+            `Stack: ${error.stack}`
+        );
     }
 }
 
