@@ -738,8 +738,11 @@ function handleTouchEnd(e) {
     if (isDragging) {
         let dropTarget = null;
         if (touchDraggedElement) {
-            touchDraggedElement.style.display = 'none'; // 'pointerEvents' から 'display' に変更して確実性を高める
-            dropTarget = document.elementFromPoint(currentTouchX, currentTouchY);
+            // 'elementsFromPoint' を使って、ドラッグ中の要素の直下にある要素を取得する
+            const elements = document.elementsFromPoint(currentTouchX, currentTouchY);
+            // 最初の要素は touchDraggedElement 自身である可能性が高いので、2番目の要素をターゲットとする
+            dropTarget = elements.length > 1 ? elements[1] : elements[0];
+
             touchDraggedElement.remove();
             setTouchDraggedElement(null);
         }
