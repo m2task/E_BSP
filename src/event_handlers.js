@@ -264,15 +264,6 @@ function handleMouseOver(e) {
     });
 
     document.getElementById('trashZoneTitle').addEventListener('click', openTrashModal);
-
-    // トラッシュゾーンのカードをクリックしてもモーダルを開く
-    const trashCardElement = document.getElementById('trashCard');
-    trashCardElement.addEventListener('click', (e) => {
-        const card = e.target.closest('.card');
-        if (card && trashCardElement.contains(card)) {
-            openTrashModal();
-        }
-    });
     document.getElementById('addDeckCoreBtn').addEventListener('click', addDeckCore);
     document.getElementById('toggleDeckCoreBtn').addEventListener('click', toggleDeckCoreCount);
     document.getElementById('refreshButton').addEventListener('click', refreshAll);
@@ -569,17 +560,9 @@ function handleCardDrop(e) {
 }
 
 function handleCoreDrop(e) {
-    const trashZone = e.target.closest('#trashZoneFrame');
-
-    // ★ トラッシュゾーンへのドロップを最優先で処理
-    if (trashZone) {
-        handleCoreDropOnZone(e, trashZone);
-        return; // トラッシュゾーンにドロップしたら、ここで処理を終了
-    }
-
     const targetCardElement = e.target.closest('.card');
 
-    // ★ カードへのドロップを次に処理
+    // ★ カードへのドロップを最優先で処理
     if (targetCardElement) {
         const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
 
