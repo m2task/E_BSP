@@ -291,9 +291,10 @@ function handleMouseOver(e) {
         }
     });
 
-    document.getElementById('deckDiscardBtn').addEventListener('click', discardDeck);
-    document.getElementById('deckOpenBtn').addEventListener('click', openDeck);
-    document.getElementById('openDeckgaiButton').addEventListener('click', openDeckGaiModal);
+    const problematicButtonsEventType = isMobileDevice() ? 'touchstart' : 'click';
+    document.getElementById('deckDiscardBtn').addEventListener(problematicButtonsEventType, discardDeck);
+    document.getElementById('deckOpenBtn').addEventListener(problematicButtonsEventType, openDeck);
+    document.getElementById('openDeckgaiButton').addEventListener(problematicButtonsEventType, openDeckGaiModal);
 
     // 支払いキャンセルボタンのイベントリスナー
     document.getElementById('cancelPaymentButton').addEventListener('click', () => {
