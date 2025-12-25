@@ -202,13 +202,13 @@ html {
       /* 立体感を出すためのグラデーション */
       background: radial-gradient(circle at 50% 50%, #5dade2, #007bff);
       clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); /* 六角形 */
-      width: 28px;
-      height: 28px;
+      width: 21px;
+      height: 21px;
     }
     .core.soul {
       position: relative;
-      width: 32px;
-      height: 32px;
+      width: 24px;
+      height: 24px;
       cursor: grab;
     }
 
@@ -226,8 +226,8 @@ html {
     .void-core {
       background: radial-gradient(circle at 50% 50%, #5dade2, #007bff);
       clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); /* 六角形 */
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
     }
 
     /* 無限コアに「∞」マークを追加 */
@@ -236,9 +236,9 @@ html {
         position: absolute;
         top: 50%;
         left: 50%;
-        transform: translate(-50%, -50%);
+        transform: translate(-50%, -55%);
         color: white;
-        font-size: 22px;
+        font-size: 18px;
         font-weight: bold;
         text-shadow: 0 0 3px rgb(128, 128, 128);
         pointer-events: none; /* クリックを背後のコアに透過させる */
@@ -246,8 +246,8 @@ html {
 
     /* ボイドコアのサイズを大きくする */
     #voidCore {
-        width: 33px;
-        height: 33px;
+        width: 26px;
+        height: 26px;
     }
     /* 選択されたコアのスタイル */
     .core.selected {
@@ -439,6 +439,23 @@ html {
       }
       /* --- ここまで --- */
 
+      /* --- スマホ用コアサイズ調整 --- */
+      .core.blue {
+        width: 26px;
+        height: 26px;
+      }
+      .core.soul {
+        width: 29px;
+        height: 29px;
+      }
+      #voidCore {
+        width: 31px;
+        height: 31px;
+      }
+      #voidCore::after {
+        font-size: 22px; /* ∞マークのサイズ調整 */
+        transform: translate(-50%, -50%); /* 位置を少し下に調整 */
+      }
       /* --- ここまで --- */
     }
 
