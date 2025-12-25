@@ -264,6 +264,15 @@ function handleMouseOver(e) {
     });
 
     document.getElementById('trashZoneTitle').addEventListener('click', openTrashModal);
+
+    // トラッシュゾーンのカードをクリックしてもモーダルを開く
+    const trashCardElement = document.getElementById('trashCard');
+    trashCardElement.addEventListener('click', (e) => {
+        const card = e.target.closest('.card');
+        if (card && trashCardElement.contains(card)) {
+            openTrashModal();
+        }
+    });
     document.getElementById('addDeckCoreBtn').addEventListener('click', addDeckCore);
     document.getElementById('toggleDeckCoreBtn').addEventListener('click', toggleDeckCoreCount);
     document.getElementById('refreshButton').addEventListener('click', refreshAll);
