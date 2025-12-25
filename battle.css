@@ -439,23 +439,6 @@ html {
       }
       /* --- ここまで --- */
 
-      /* --- スマホ用コアサイズ調整 --- */
-      .core.blue {
-        width: 26px;
-        height: 26px;
-      }
-      .core.soul {
-        width: 31px;
-        height: 31px;
-      }
-      #voidCore {
-        width: 33px;
-        height: 33px;
-      }
-      #voidCore::after {
-        font-size: 22px; /* ∞マークのサイズ調整 */
-        transform: translate(-50%, -50%); /* 位置を少し下に調整 */
-      }
       /* --- ここまで --- */
     }
 
