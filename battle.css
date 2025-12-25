@@ -42,7 +42,10 @@ html {
       border-radius: 8px;
       padding: 5px;
       min-height: 80px;
-      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
     .special-zone {
       background-color: #f9f9f9;
