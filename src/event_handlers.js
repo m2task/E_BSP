@@ -264,6 +264,17 @@ function handleMouseOver(e) {
     });
 
     document.getElementById('trashZoneTitle').addEventListener('click', openTrashModal);
+
+    // トラッシュゾーンのカードをクリックしてもモーダルを開く
+    const trashCardElement = document.getElementById('trashCard');
+    trashCardElement.addEventListener('click', (e) => {
+        // .card クラスを持つ要素、またはその子孫がクリックされたかを確認
+        const card = e.target.closest('.card');
+        // #trashCard の中にカードが存在し、かつそのカードがクリックされた場合
+        if (card && trashCardElement.contains(card)) {
+            openTrashModal();
+        }
+    });
     document.getElementById('addDeckCoreBtn').addEventListener('click', addDeckCore);
     document.getElementById('toggleDeckCoreBtn').addEventListener('click', toggleDeckCoreCount);
     document.getElementById('refreshButton').addEventListener('click', refreshAll);
@@ -562,10 +573,19 @@ function handleCardDrop(e) {
 function handleCoreDrop(e) {
     const targetCardElement = e.target.closest('.card');
 
-    // ★ カードへのドロップを最優先で処理
+    // ★ ドロップ先がカード（またはその子要素）の場合
     if (targetCardElement) {
-        const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
+        const isTrashCard = targetCardElement.closest('#trashZoneFrame');
 
+        // そのカードがトラッシュゾーンにある場合は、ゾーンへのドロップとして扱う
+        if (isTrashCard) {
+            handleCoreDropOnZone(e, isTrashCard);
+            return;
+        }
+
+        // それ以外のカード（フィールドなど）へのドロップの場合
+        const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
+        // 同じカード内での移動か判定
         const isInternalMove = (coresToMove.length === 1 && coresToMove[0].sourceCardId === targetCardElement.dataset.id);
 
         if (isInternalMove) {
@@ -573,10 +593,10 @@ function handleCoreDrop(e) {
         } else {
             handleCoreDropOnCard(e, targetCardElement);
         }
-        return; // カードにドロップしたら、ここで処理を終了する
+        return;
     }
 
-    // ★ カード以外の場合、ゾーンへのドロップを試みる
+    // ★ ドロップ先がカードではない場合、ゾーンへのドロップを試みる
     const targetZoneElement = e.target.closest('.zone, .special-zone');
     if (targetZoneElement) {
         handleCoreDropOnZone(e, targetZoneElement);
