@@ -560,9 +560,17 @@ function handleCardDrop(e) {
 }
 
 function handleCoreDrop(e) {
+    const trashZone = e.target.closest('#trashZoneFrame');
+
+    // ★ トラッシュゾーンへのドロップを最優先で処理
+    if (trashZone) {
+        handleCoreDropOnZone(e, trashZone);
+        return; // トラッシュゾーンにドロップしたら、ここで処理を終了
+    }
+
     const targetCardElement = e.target.closest('.card');
 
-    // ★ カードへのドロップを最優先で処理
+    // ★ カードへのドロップを次に処理
     if (targetCardElement) {
         const coresToMove = JSON.parse(e.dataTransfer.getData("cores"));
 
