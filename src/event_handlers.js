@@ -627,6 +627,11 @@ let longPressTimer = null;
 const LONG_PRESS_DURATION = 300; // 300ms
 
 function handleTouchStart(e) {
+    // クリックされた要素がボタンの場合は、ドラッグ処理を開始しない
+    if (e.target.closest('button') || e.target.closest('.deck-button')) {
+        return;
+    }
+
     // 重疲労ボタンが押された場合は、ドラッグ処理を開始せずに通常のクリックイベントに任せる
     if (e.target.classList.contains('exhaust-button')) {
         return;
