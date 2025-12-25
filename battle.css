@@ -59,6 +59,7 @@ html {
     .zone-title {
       font-weight: bold;
       margin-bottom: 5px;
+      display: none; /* ゾーンタイトルを非表示にする */
     }
 
     .deck-button {
