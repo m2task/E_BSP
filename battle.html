@@ -101,7 +101,6 @@
   <div class="hand-zone" id="handZone"></div>
 </div>
 <div id="openHandButton" class="open-hand-toggle hidden">▲ 手札を開く（<span id="handCount">0</span>枚）</div>
-<button id="operationMenuButton" class="open-deckgai-toggle">操作</button>
 <button id="openDeckgaiButton" class="open-deckgai-toggle">デッキ外</button>
 
 <!-- トラッシュモーダル -->
@@ -159,19 +158,6 @@
 
 <!-- 支払いキャンセルボタン -->
 <button id="cancelPaymentButton" class="hidden">支払いをキャンセル</button>
-
-<!-- 操作ボタン用モーダル -->
-<div id="operationModal" class="modal-background" style="display: none;">
-  <div class="modal-content">
-    <div id="operationModalContent" class="summon-action-container-vertical">
-      <button id="modalDeckOpenBtn" class="modal-button">オープン</button>
-      <button id="modalDeckDiscardBtn" class="modal-button">破棄</button>
-      <button id="modalDeckgaiBtn" class="modal-button">デッキ外</button>
-      <button id="modalRefreshBtn" class="modal-button">リフレッシュ</button>
-      <button id="modalMagnifyToggleBtn" class="modal-button">拡大ON/OFF</button>
-    </div>
-  </div>
-</div>
 
 <script src="src/indexedDB.js"></script>
 <script type="module" src="./battle.js"></script>
