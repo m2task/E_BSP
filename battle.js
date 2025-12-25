@@ -113,6 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- スマホ用操作モーダルのロジック ---
     const operationMenuButton = document.getElementById('operationMenuButton');
     const operationModal = document.getElementById('operationModal');
+    const isSP = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const eventType = isSP ? 'touchstart' : 'click';
 
     const openOperationModal = () => {
         operationModal.style.display = 'flex';
@@ -125,33 +127,33 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // モーダルを開く
-    operationMenuButton.addEventListener('click', openOperationModal);
+    operationMenuButton.addEventListener(eventType, openOperationModal);
 
     // モーダルを閉じる（背景クリック）
-    operationModal.addEventListener('click', (event) => {
+    operationModal.addEventListener(eventType, (event) => {
         if (event.target === operationModal) {
             closeOperationModal();
         }
     });
 
     // モーダル内ボタンのイベントを設定
-    document.getElementById('modalDeckOpenBtn').addEventListener('click', () => {
+    document.getElementById('modalDeckOpenBtn').addEventListener(eventType, () => {
         document.getElementById('deckOpenBtn').click();
         closeOperationModal();
     });
-    document.getElementById('modalDeckDiscardBtn').addEventListener('click', () => {
+    document.getElementById('modalDeckDiscardBtn').addEventListener(eventType, () => {
         document.getElementById('deckDiscardBtn').click();
         closeOperationModal();
     });
-    document.getElementById('modalDeckgaiBtn').addEventListener('click', () => {
+    document.getElementById('modalDeckgaiBtn').addEventListener(eventType, () => {
         document.getElementById('openDeckgaiButton').click();
         closeOperationModal();
     });
-    document.getElementById('modalRefreshBtn').addEventListener('click', () => {
+    document.getElementById('modalRefreshBtn').addEventListener(eventType, () => {
         document.getElementById('refreshButton').click();
         closeOperationModal();
     });
-    document.getElementById('modalMagnifyToggleBtn').addEventListener('click', () => {
+    document.getElementById('modalMagnifyToggleBtn').addEventListener(eventType, () => {
         document.getElementById('magnify-toggle-button').click();
         closeOperationModal();
     });
