@@ -262,57 +262,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const maxAspectRatio = 0.9; // 最大のアスペクト比（太すぎるものを除外）
 
                                 if (area > minCardArea && area < maxCardArea && aspectRatio > minAspectRatio && aspectRatio < maxAspectRatio) {
-                                    
-                                    // --- 「平均的な黒さ」によるノイズフィルタリング ---
-                                    let hasBlackCircle = false;
-                                    const roiRatio = 0.35; // 右上の35%の領域をチェック
-                                    const roiX = rect.x + rect.width * (1 - roiRatio);
-                                    const roiY = rect.y;
-                                    const roiWidth = rect.width * roiRatio;
-                                    const roiHeight = rect.height * roiRatio;
-
-                                    // ROIが画像範囲内にあるか確認
-                                    if (roiX >= 0 && roiY >= 0 && roiWidth > 10 && roiHeight > 10 && (roiX + roiWidth) <= src.cols && (roiY + roiHeight) <= src.rows) {
-                                        const roiRect = new cv.Rect(roiX, roiY, roiWidth, roiHeight);
-                                        const roi = src.roi(roiRect);
-                                        const grayRoi = new cv.Mat();
-                                        cv.cvtColor(roi, grayRoi, cv.COLOR_RGBA2GRAY, 0);
-                                        
-                                        // ROIの平均ピクセル値（明るさ）を計算
-                                        const meanBrightness = cv.mean(grayRoi)[0];
-                                        
-                                        const blacknessThreshold = 195; // この値より平均が暗ければ「黒」とみなす (要調整)
-
-                                        if (meanBrightness < blacknessThreshold) {
-                                            hasBlackCircle = true;
-                                        }
-
-                                        roi.delete();
-                                        grayRoi.delete();
-                                    }
-
-                                    // 黒い部分が見つかった候補のみ、次の処理へ進む
-                                    if (hasBlackCircle) {
-                                        // --- 矩形の補正ロジック (余白の切り詰め) ---
-                                        const topPaddingRatio = 0.020;
-                                        const rightPaddingRatio = 0.025;
-
-                                        const topPadding = rect.height * topPaddingRatio;
-                                        const rightPadding = rect.width * rightPaddingRatio;
-
-                                        const newX = rect.x;
-                                        const newY = rect.y + topPadding;
-                                        const newWidth = rect.width - rightPadding;
-                                        const newHeight = rect.height - topPadding;
-
-                                        // 補正後の矩形がマイナスのサイズにならないようにチェック
-                                        if (newWidth > 0 && newHeight > 0) {
-                                            const correctedRect = new cv.Rect(newX, newY, newWidth, newHeight);
-                                            cardRects.push(correctedRect);
-                                        } else {
-                                            cardRects.push(rect); // 補正に失敗した場合は元の矩形を使う
-                                        }
-                                    }
+                                    // 矩形補正ロジックを削除し、検出した矩形をそのまま使用する
+                                    cardRects.push(rect);
                                 }
                                 cnt.delete();
                             }
