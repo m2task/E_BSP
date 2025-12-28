@@ -49,98 +49,39 @@ h1, h2, h3 {
     background-color: #c0c0c0; /* ホバー時の少し濃い灰色 */
 }
 
-#cropper-container {
-    position: relative;
-    width: 100%;
-    height: 500px; /* 固定の高さ */
-    border: 1px solid #ccc;
-    overflow: hidden; /* 画像のパン・ズーム用 */
-    background-color: #e0e0e0; /* 背景色 */
+/* 画像プレビューセクションのスタイル */
+#cropper-section {
+    background-color: #fff;
+    padding: 15px;
     margin-bottom: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-#image-container {
-    position: absolute;
-    top: 0;
-    left: 0;
+#cropper-section h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+/* プレビュー画像コンテナ */
+#preview-container {
     width: 100%;
-    height: 100%;
-    overflow: hidden;
-    cursor: grab;
+    min-height: 200px; /* 画像が読み込まれるまでの最低の高さ */
+    border: 1px solid #ccc;
+    overflow: auto;
+    background-color: #e0e0e0;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-#image-container.grabbing {
-    cursor: grabbing;
-}
-
-#sourceImage {
+/* プレビュー画像 */
+#previewImage {
     display: block;
-    max-width: none; /* 画像の拡大を許可 */
-    max-height: none; /* 画像の拡大を許可 */
-    position: absolute;
-    transform-origin: 0 0; /* 左上を原点に */
-}
-
-#grid-handles-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none; /* デフォルトではイベントを透過 */
-}
-
-.grid-cell-visual {
-    position: absolute;
-    border: 1px solid rgba(255, 0, 0, 0.5); /* 赤い枠 */
-    box-sizing: border-box;
-    pointer-events: none;
-}
-
-.gap-visual {
-    position: absolute;
-    background-color: rgba(0, 0, 0, 0.5); /* グレーのギャップ */
-    pointer-events: none;
-}
-
-.handle {
-    position: absolute;
-    background-color: transparent; /* 背景を透明に */
-    border: none; /* 枠線をなくす */
-    cursor: grab;
-    pointer-events: all;
-    z-index: 10;
-}
-
-.move-handle {
-    cursor: grab;
-}
-
-.resize-handle-v {
-    cursor: ew-resize; /* 左右リサイズカーソル */
-    width: 10px;
-}
-
-.resize-handle-h {
-    cursor: ns-resize; /* 上下リサイズカーソル */
-    height: 10px;
-}
-
-#overlay-mask {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none; /* マスクはイベントを透過 */
-    z-index: 5; /* グリッドより奥、画像より手前 */
-}
-
-.mask-pane {
-    position: absolute;
-    background-color: rgba(0, 0, 0, 0.7); /* 暗いオーバーレイ */
+    max-width: 100%;
+    max-height: 80vh; /* 画像の高さが画面の80%を超えないようにする */
+    height: auto;
 }
 
 #deck-editor-container {

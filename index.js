@@ -7,9 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const showDeckListBtn = document.getElementById('show-deck-list-btn');
     const imageLoader = document.getElementById('imageLoader');
     const cropButton = document.getElementById('crop-button');
-    const cropperContainer = document.getElementById('cropper-container');
-    const imageContainer = document.getElementById('image-container');
-    const sourceImage = document.getElementById('sourceImage');
+    const sourceImage = document.getElementById('sourceImage'); // 処理用の非表示画像
+    const previewImage = document.getElementById('previewImage'); // 表示用のプレビュー画像
     const deckList = document.getElementById('deck-list');
     const totalCardCountSpan = document.getElementById('total-card-count');
     const deckEditorContainer = document.getElementById('deck-editor-container');
@@ -220,10 +219,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (file) {
             const reader = new FileReader();
             reader.onload = (event) => {
-                sourceImage.src = event.target.result;
+                const imageUrl = event.target.result;
+                // 表示用と処理用の両方の画像にソースを設定
+                previewImage.src = imageUrl;
+                sourceImage.src = imageUrl;
+
                 sourceImage.onload = () => {
                     imageState.isLoaded = true;
-                    sourceImage.style.transform = 'translate(0, 0) scale(1)';
                     // ファイル選択後に自動でカード切り出し処理を実行
                     if (typeof cv !== 'undefined' && cv.imread) {
                         try {

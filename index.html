@@ -135,18 +135,16 @@
         <div id="deck-editor-container"></div>
     </div>
 
-    <!-- カード切り取りセクション -->
+    <!-- 画像プレビューセクション -->
     <div id="cropper-section">
-        
-        <div id="cropper-container">
-            <div id="image-container">
-                <img id="sourceImage" src="" alt="アップロードされた画像">
-            </div>
-            <!-- The grid and handles are now managed by JS and will be simpler -->
-            <div id="grid-handles-container"></div>
-            <div id="overlay-mask"></div>
+        <h3>画像プレビュー</h3>
+        <div id="preview-container">
+            <img id="previewImage" src="" alt="画像プレビュー">
         </div>
     </div>
+
+    <!-- 処理用の非表示画像 -->
+    <img id="sourceImage" src="" alt="" style="display: none;">
 
     <script src="src/indexedDB.js"></script>
     <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
