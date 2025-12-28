@@ -1,5 +1,5 @@
 // src/event_handlers.js
-import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, hand, trash, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging, paymentState, moveState } from './game_data.js';
+import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, hand, trash, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging, paymentState, moveState, isMultiSelectingCores, setIsMultiSelectingCores, skipNextClickClear, setSkipNextClickClear } from './game_data.js';
 import { renderAll, renderTrashModalContent, showSummonActionChoice, showCostModal } from './ui_render.js';
 import { showToast, getZoneName, isMobileDevice, getArrayByZoneName } from './utils.js';
 import { hideMagnifier } from './magnify_logic.js';
@@ -90,6 +90,12 @@ export function setupEventListeners() {
 
     // 画面のどこかをクリックしたらコアの選択を解除
     document.addEventListener('click', (e) => {
+        // 次のクリックでのクリアをスキップするフラグが立っている場合
+        if (skipNextClickClear) {
+            setSkipNextClickClear(false); // フラグをリセット
+            return; // コアの選択解除処理をスキップ
+        }
+
         if (!e.target.closest('.core')) {
             clearSelectedCores();
         }
@@ -178,7 +184,75 @@ export function setupEventListeners() {
         document.addEventListener('dragend', handleDragEnd);
         document.addEventListener('dragover', (e) => e.preventDefault());
         document.addEventListener('drop', handleDrop);
+
+        // 新しい複数コア選択のためのイベントリスナー
+        document.addEventListener('mousedown', handleMouseDown);
+        document.addEventListener('mouseup', handleMouseUp);
+        document.addEventListener('mouseover', handleMouseOver); // コア要素に直接ではなく、documentに設定
     }
+
+    // ... (既存のコード) ...
+
+// --- 新しい複数コア選択のためのイベントハンドラ ---
+function handleMouseDown(e) {
+    // 左クリック (ボタン0) の場合のみ複数選択モードを開始
+    if (e.button === 0) {
+        setIsMultiSelectingCores(true);
+    }
+}
+
+function handleMouseUp(e) {
+    // マウスボタンが離されたら複数選択モードを終了
+    setIsMultiSelectingCores(false);
+
+    // 選択されたコアがある場合、次のクリックイベントでのクリアをスキップ
+    if (selectedCores.length > 0) {
+        setSkipNextClickClear(true);
+    }
+}
+
+function handleMouseOver(e) {
+    // 複数選択モードがアクティブでない、または左クリック中でない場合は何もしない
+    if (!isMultiSelectingCores || e.buttons !== 1) { // e.buttons === 1 は左クリックが押されている状態
+        return;
+    }
+
+    const coreElement = e.target.closest('.core');
+    if (!coreElement) {
+        return;
+    }
+
+    const coreType = coreElement.dataset.coreType;
+    const index = parseInt(coreElement.dataset.index);
+    const sourceCardId = coreElement.dataset.sourceCardId;
+
+    let coreIdentifier = {
+        type: coreType,
+        index: index
+    };
+
+    if (sourceCardId) {
+        coreIdentifier.sourceCardId = sourceCardId;
+    } else {
+        coreIdentifier.sourceArrayName = coreElement.parentElement.id;
+    }
+
+    // 既に選択されているコアかどうかを確認
+    const existingIndex = selectedCores.findIndex(c => {
+        if (c.sourceCardId && coreIdentifier.sourceCardId) {
+            return c.sourceCardId === coreIdentifier.sourceCardId && c.index === coreIdentifier.index;
+        } else if (c.sourceArrayName && coreIdentifier.sourceArrayName) {
+            return c.sourceArrayName === coreIdentifier.sourceArrayName && c.index === coreIdentifier.index;
+        }
+        return false;
+    });
+
+    // 選択されていない場合のみ追加
+    if (existingIndex === -1) {
+        selectedCores.push(coreIdentifier);
+        renderAll(); // UIを更新して選択状態を反映
+    }
+}
 
     // ドラッグ中のカードが「手札を開く」ボタンの上に来たら手札を開く (これはデバイス共通で維持)
     openHandButton.addEventListener('dragover', (e) => {
@@ -304,10 +378,21 @@ export function handleDragStart(e) {
             setOffsetY(e.clientY - rect.top);
         }
     } else if (e.target.classList.contains('core') || e.target.id === 'voidCore') {
-        const coresToMove = getDraggedCoresInfo(e.target);
+        let coresToMove;
+        // selectedCoresに何か入っていれば、それを優先してドラッグ対象とする
+        if (selectedCores.length > 0) {
+            coresToMove = selectedCores.map(c => ({ ...c })); // コピーを作成
+        } else {
+            coresToMove = getDraggedCoresInfo(e.target);
+        }
+        
         setDraggedCoreData(coresToMove); // 念のため保持
 
-        e.dataTransfer.setData("type", "core");
+        if (e.target.id === 'voidCore') {
+            e.dataTransfer.setData("type", "voidCore");
+        } else {
+            e.dataTransfer.setData("type", "core");
+        }
         e.dataTransfer.setData("cores", JSON.stringify(coresToMove));
 
         // オフセット情報を設定

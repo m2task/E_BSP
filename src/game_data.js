@@ -40,6 +40,7 @@ export let currentTouchY = 0;
 export let touchOffsetX = 0;
 export let touchOffsetY = 0;
 export let isDragging = false; // ドラッグ中かどうかを示すフラグ
+export let isMultiSelectingCores = false; // 複数コア選択中かどうかを示すフラグ
 
 export const discardState = { counter: 0, names: [], timer: null };
 
@@ -106,3 +107,6 @@ export function setCurrentTouchY(y) { currentTouchY = y; }
 export function setTouchOffsetX(x) { touchOffsetX = x; }
 export function setTouchOffsetY(y) { touchOffsetY = y; }
 export function setIsDragging(dragging) { isDragging = dragging; }
+export function setIsMultiSelectingCores(selecting) { isMultiSelectingCores = selecting; }
+export let skipNextClickClear = false;
+export function setSkipNextClickClear(skip) { skipNextClickClear = skip; }
