@@ -91,6 +91,23 @@
             font-weight: bold;
             color: black;
         }
+        /* --- デバッグ用スタイル --- */
+        #debug-area {
+            margin-top: 20px;
+            background-color: #fdf5e6; /* 少し目立つ背景色 */
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #f0e68c;
+        }
+        #debug-area h3 {
+            margin-top: 0;
+            color: #a0522d;
+        }
+        #edges-canvas {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -141,6 +158,12 @@
         <div id="preview-container">
             <img id="previewImage" src="" alt="画像プレビュー">
         </div>
+    </div>
+
+    <!-- デバッグ表示エリア -->
+    <div id="debug-area" style="display: none;">
+        <h3>デバッグ情報: Cannyエッジ検出の結果</h3>
+        <canvas id="edges-canvas"></canvas>
     </div>
 
     <!-- 処理用の非表示画像 -->
