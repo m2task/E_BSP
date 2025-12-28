@@ -314,3 +314,12 @@ h1, h2, h3 {
     }
 }
 
+/* ボタンを青色にするスタイル */
+#newDeckButton, #crop-button {
+    background-color: #007bff; /* 青色 */
+    color: white; /* 文字色を白に */
+}
+
+#newDeckButton:hover, #crop-button:hover {
+    background-color: #0056b3; /* マウスを乗せた時用の少し濃い青色 */
+}

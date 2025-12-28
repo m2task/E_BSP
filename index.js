@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const deckNameInput = document.getElementById('deckNameInput');
     const saveDeckAsButton = document.getElementById('saveDeckAsButton');
     const overwriteSaveButton = document.getElementById('overwriteSaveButton');
+    const newDeckButton = document.getElementById('newDeckButton');
 
     // --- State ---
     const imageState = { isLoaded: false };
@@ -202,23 +203,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Event Listeners ---
 
-    // Section visibility
-    showCropperBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        cropperSection.style.display = 'block';
-        deckListSection.style.display = 'none';
-        deckEditingArea.style.display = 'block';
-    });
-    showDeckListBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        cropperSection.style.display = 'none';
-        deckListSection.style.display = 'block';
-        deckEditingArea.style.display = 'block';
-    });
+    // Section visibility has been removed as all sections are now always visible.
 
     imageLoader.addEventListener('change', (e) => {
+        // 新しい画像が選択されたら、現在の編集デッキをクリアする
+        deck = [];
+        currentEditingDeckName = null;
+        renderEditedDeck();
+
         const file = e.target.files[0];
         if (file) {
+            // ファイルが選択されたら切り取りボタンを表示する
+            cropButton.classList.remove('hidden');
+
             const reader = new FileReader();
             reader.onload = (event) => {
                 sourceImage.src = event.target.result;
@@ -371,6 +368,11 @@ document.addEventListener('DOMContentLoaded', () => {
             contours.delete();
             hierarchy.delete();
 
+            // UIの状態をリセット
+            imageLoader.classList.add('hidden');
+            cropButton.classList.add('hidden');
+            newDeckButton.classList.remove('hidden');
+
         } catch (error) {
             console.error("カードの自動切り取り中にエラーが発生しました:", error);
             alert("カードの自動切り取り中にエラーが発生しました。コンソールを確認してください。");
@@ -396,11 +398,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     saveDeckAsButton.addEventListener('click', async () => {
-        const deckName = deckNameInput.value.trim();
+        let deckName = deckNameInput.value.trim();
+
+        // デッキ名が空の場合、自動で名前を生成する
         if (deckName === '') {
-            alert('デッキ名を入力してください。');
-            return;
+            const savedDecks = await window.cardGameDB.getAllDecks();
+            const existingDeckNames = savedDecks.map(d => d.name);
+            let newDeckIndex = 1;
+            while (existingDeckNames.includes(`デッキ${newDeckIndex}`)) {
+                newDeckIndex++;
+            }
+            deckName = `デッキ${newDeckIndex}`;
         }
+
         if (deck.length === 0) {
             alert('デッキにカードがありません。');
             return;
@@ -408,7 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await window.cardGameDB.saveDeck(deckName, deck);
             alert(`デッキ「${deckName}」を保存しました。`);
-            deckNameInput.value = '';
+            deckNameInput.value = ''; // 入力欄はクリアする
             renderDeckList();
             currentEditingDeckName = deckName;
         } catch (error) {
@@ -432,9 +442,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    newDeckButton.addEventListener('click', () => {
+        newDeckButton.classList.add('hidden'); // 自分自身を隠す
+        imageLoader.classList.remove('hidden'); // ファイル選択を表示する
+    });
+
     // --- Initial Setup ---
     function initialize() {
-        cropperSection.style.display = 'none';
+        cropperSection.style.display = 'block';
         deckListSection.style.display = 'block';
         deckEditingArea.style.display = 'block';
         renderDeckList();

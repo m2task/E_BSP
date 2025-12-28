@@ -96,31 +96,11 @@
 <body>
     <nav>
         <ul>
-            <li><a href="#" id="show-cropper-btn">カード切り取り</a></li>
+            <li><a href="#" id="show-cropper-btn">ナビゲーションバー</a></li>
             <li><a href="#" id="show-deck-list-btn">デッキ一覧</a></li>
             <li><a href="use.html">使い方</a></li>
         </ul>
     </nav>
-
-    <!-- カード切り取りセクション -->
-    <div id="cropper-section">
-        <h1>カード一括自動切り取りツール</h1>
-        <div class="controls">
-            <label for="imageLoader">画像ファイルを選択:</label>
-            <input type="file" id="imageLoader" accept="image/*">
-        </div>
-        <div class="actions" id="action-buttons">
-            <button id="crop-button">自動切り取り実行</button>
-        </div>
-        <div id="cropper-container">
-            <div id="image-container">
-                <img id="sourceImage" src="" alt="アップロードされた画像">
-            </div>
-            <!-- The grid and handles are now managed by JS and will be simpler -->
-            <div id="grid-handles-container"></div>
-            <div id="overlay-mask"></div>
-        </div>
-    </div>
 
     <!-- デッキ一覧セクション -->
     <div id="deck-list-section">
@@ -136,10 +116,13 @@
     <!-- デッキ編集エリア -->
     <div class="deck-editing-area">
         <div class="save-load-deck-controls">
-            <h3>デッキの保存・読み込み</h3>
+            <h3>デッキ作成・編集</h3>
             <input type="text" id="deckNameInput" placeholder="デッキ名を入力">
             <button id="saveDeckAsButton">名前を付けて保存</button>
             <button id="overwriteSaveButton">上書き保存</button>
+            <button id="newDeckButton">新規デッキ作成</button>
+            <input type="file" id="imageLoader" accept="image/*" class="hidden">
+            <button id="crop-button" class="hidden">デッキ作成</button>
         </div>
         <div class="deck-header-controls">
             <h2>現在の編集デッキ (<span id="total-card-count">0</span>枚)</h2>
@@ -150,6 +133,19 @@
             </div>
         </div>
         <div id="deck-editor-container"></div>
+    </div>
+
+    <!-- カード切り取りセクション -->
+    <div id="cropper-section">
+        
+        <div id="cropper-container">
+            <div id="image-container">
+                <img id="sourceImage" src="" alt="アップロードされた画像">
+            </div>
+            <!-- The grid and handles are now managed by JS and will be simpler -->
+            <div id="grid-handles-container"></div>
+            <div id="overlay-mask"></div>
+        </div>
     </div>
 
     <script src="src/indexedDB.js"></script>
