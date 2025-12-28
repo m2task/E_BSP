@@ -577,19 +577,25 @@ export function cancelPayment(updateUI = true) {
 
 export function placeCoreOnSummonedCard(summonedCard) {
   if (reserveCores.length > 0) {
-    // 1. リザーブからコアを乗せる (ソウルコア優先)
-    let coreToMove;
-    const soulCoreIndex = reserveCores.findIndex(c => c === 'soul');
+    // 1. リザーブからすべてのコアを乗せる
+    const coresToMove = [...reserveCores]; // すべてのコアをコピー
+    reserveCores.length = 0; // リザーブを空にする
 
-    if (soulCoreIndex !== -1) {
-        // ソウルコアがあれば優先的に移動
-        coreToMove = reserveCores.splice(soulCoreIndex, 1)[0];
-    } else {
-        // なければ最初のコアを移動
-        coreToMove = reserveCores.shift();
-    }
-    summonedCard.coresOnCard.push({ type: coreToMove, sourceArrayName: 'reserveCores' });
-    showToast('infoToast', `${summonedCard.name}にリザーブからコアを1個置きました。`, { duration: 1500 });
+    const cardWidth = 104;
+    const cardHeight = 156;
+    let preferredX = cardWidth / 2 - 10;
+    let preferredY = cardHeight / 2 - 10;
+
+    // 各コアを重ならないように配置
+    coresToMove.forEach(coreType => {
+        const { x, y } = findEmptySlot(preferredX, preferredY, summonedCard.coresOnCard, cardWidth, cardHeight);
+        summonedCard.coresOnCard.push({ type: coreType, sourceArrayName: 'reserveCores', x, y });
+        // 次のコアの配置場所を少しずらす
+        preferredX += 5;
+        preferredY += 5;
+    });
+
+    showToast('infoToast', `リザーブから ${coresToMove.length}個のコアを置きました。`, { duration: 1500 });
     renderAll();
   } else {
     // 2. リザーブにコアがない場合、フィールドの他のカードから移動
@@ -614,7 +620,7 @@ export function startCoreMoveFromField(targetCard) {
         targetCard: targetCard,
         callback: () => {
             // 移動成功時のコールバック（もしあれば）
-            showToast('infoToast', `${targetCard.name}にコアを移動しました。`, { duration: 1500 });
+            showToast('infoToast', `フィールドからコアを移動しました。`, { duration: 1500 });
         },
     });
     showToast('infoToast', `移動元のカードをクリックしてください。`, { duration: 2000 });
@@ -654,6 +660,13 @@ export function moveCoreFromField(sourceCard, targetCard, priority = 'normal') {
         }
     }
 
+    const cardWidth = 104;
+    const cardHeight = 156;
+    const preferredX = cardWidth / 2 - 10;
+    const preferredY = cardHeight / 2 - 10;
+    const { x, y } = findEmptySlot(preferredX, preferredY, targetCard.coresOnCard, cardWidth, cardHeight);
+    coreToMove.x = x;
+    coreToMove.y = y;
     targetCard.coresOnCard.push(coreToMove);
 
     // 移動モードを終了

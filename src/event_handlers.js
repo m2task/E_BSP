@@ -3,7 +3,7 @@ import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selec
 import { renderAll, renderTrashModalContent } from './ui_render.js';
 import { showToast, getZoneName, isMobileDevice } from './utils.js';
 import { hideMagnifier } from './magnify_logic.js';
-import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField } from './card_logic.js';
+import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField, discardAllOpenCards } from './card_logic.js';
 import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, payCostFromField, cancelPayment, moveCoreFromField, cancelCoreMove } from './core_logic.js';
 
 export function setupEventListeners() {
@@ -45,7 +45,7 @@ export function setupEventListeners() {
             }
 
             // コアを移動
-            moveCoreFromField(sourceCard, targetCard, 'soul');
+            moveCoreFromField(sourceCard, targetCard);
             return; // 移動処理の後は回転処理を行わない
         }
 
@@ -233,6 +233,9 @@ export function setupEventListeners() {
     document.getElementById('cancelPaymentButton').addEventListener('click', () => {
         cancelPayment();
     });
+
+    // オープンエリアの全破棄ボタン
+    document.getElementById('discardAllOpenBtn').addEventListener('click', discardAllOpenCards);
 }
 
 // --- 共通コア情報取得関数 ---

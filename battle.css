@@ -28,6 +28,7 @@ body {
       display: flex;
       flex-direction: column;
       align-items: center;
+      position: relative; /* 子要素のabsoluteの基準点にする */
     }
 
     .zone {
@@ -616,11 +617,11 @@ body {
 .open-area-zone {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  padding: 10px;
+  gap: 10px; /* カード間の隙間は維持 */
+  padding: 0; /* 内側のパディングをなくす */
   min-height: 150px;
-  background-color: #f0f0f0;
-  border: 2px dashed #ccc;
+  background-color: transparent; /* 背景色を透明に */
+  border: none; /* ボーダーをなくす */
   border-radius: 5px;
 }
 
@@ -745,3 +746,46 @@ body {
   background-color: #e0e0e0;
 }
 
+/* 維持コアボタンのスタイル */
+.maintain-core-container {
+    position: absolute;
+    top: 20px; /* 上からの位置 */
+    right: 150px; /* 右からの位置を増やしてさらに左に寄せる */
+    z-index: 100;
+}
+
+.maintain-core-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white; /* 白文字 */
+    background-color: rgba(0, 0, 0, 0.5); /* 黒背景・透過度を上げる */
+    border: 1px solid white; /* 視認性向上のための白枠 */
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: background-color 0.3s;
+}
+
+.maintain-core-button:hover {
+    background-color: rgba(0, 0, 0, 0.7); /* ホバー時は少し濃くする */
+}
+
+/* 維持コアキャンセルボタンのスタイル */
+.cancel-maintain-core-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    background-color: #6c757d; /* グレー系 */
+    border: 1px solid white;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: background-color 0.3s;
+    margin-left: 10px; /* 隣のボタンとの間隔 */
+}
+
+.cancel-maintain-core-button:hover {
+    background-color: #5a6268; /* ホバー時は少し濃くする */
+}

@@ -4,6 +4,11 @@ import { handleCoreClick } from './core_logic.js';
 import { updateMagnifierEventListeners } from './magnify_logic.js';
 import { showToast } from './utils.js';
 
+let maintainCoreTimeoutTimer = null; // setTimeout用のタイマーID
+let maintainCoreIntervalTimer = null; // setInterval用のタイマーID
+let maintainCoreButtonHandler = null; // イベントハンドラを保持する変数
+let maintainCoreCancelHandler = null; // キャンセルボタンのイベントハンドラ
+
 export function createCardElement(cardData) {
     const div = document.createElement('div');
     div.className = 'card';
@@ -359,26 +364,114 @@ export function showConfirmationModal(message, onConfirm, onCancel) {
 
   messageElement.textContent = message;
 
-  // 古いイベントリスナーを削除して多重登録を防ぐ
+  // --- イベントリスナーのクリーンアップと再設定 ---
   const newConfirmButton = confirmButton.cloneNode(true);
   confirmButton.parentNode.replaceChild(newConfirmButton, confirmButton);
 
   const newCancelButton = cancelButton.cloneNode(true);
   cancelButton.parentNode.replaceChild(newCancelButton, cancelButton);
 
-  const closeModal = () => {
-    modal.style.display = 'none';
-  };
-
-  newConfirmButton.onclick = () => {
+  // --- リスナーの定義 ---
+  const handleConfirm = () => {
     closeModal();
     if (onConfirm) onConfirm();
   };
 
-  newCancelButton.onclick = () => {
+  const handleCancel = () => {
     closeModal();
     if (onCancel) onCancel();
   };
 
+  const handleClickOutside = (e) => {
+    if (e.target === modal) { // 背景部分がクリックされた場合のみ
+      handleCancel();
+    }
+  };
+
+  const closeModal = () => {
+    modal.style.display = 'none';
+    // イベントリスナーを削除
+    modal.removeEventListener('click', handleClickOutside);
+    newConfirmButton.removeEventListener('click', handleConfirm);
+    newCancelButton.removeEventListener('click', handleCancel);
+  };
+
+  // --- リスナーの設定 ---
+  newConfirmButton.addEventListener('click', handleConfirm);
+  newCancelButton.addEventListener('click', handleCancel);
+  modal.addEventListener('click', handleClickOutside);
+
+  // --- モーダルの表示 ---
   modal.style.display = 'flex';
 }
+
+export function showMaintainCoreButton(onYes, onNo) {
+    const container = document.getElementById('maintainCoreContainer');
+    const button = document.getElementById('maintainCoreButton');
+    const cancelButton = document.getElementById('cancelMaintainCoreButton');
+    const originalText = '維持コアを置く';
+    let remainingTime = 3;
+
+    // 既存のタイマーやリスナーがあればクリア
+    cancelMaintainCore();
+
+    container.style.display = 'block';
+    button.textContent = `${originalText} (${remainingTime})`;
+
+    // 1秒ごとにテキストを更新するインターバルを開始
+    maintainCoreIntervalTimer = setInterval(() => {
+        remainingTime--;
+        if (remainingTime >= 0) {
+            button.textContent = `${originalText} (${remainingTime})`;
+        }
+    }, 1000);
+
+    // イベントハンドラを定義
+    maintainCoreButtonHandler = () => {
+        cancelMaintainCore();
+        if (onYes) onYes();
+    };
+    maintainCoreCancelHandler = () => {
+        cancelMaintainCore();
+        if (onNo) onNo();
+    };
+
+    button.addEventListener('click', maintainCoreButtonHandler);
+    cancelButton.addEventListener('click', maintainCoreCancelHandler);
+
+    // 3秒後に実行されるタイムアウト
+    maintainCoreTimeoutTimer = setTimeout(() => {
+        cancelMaintainCore();
+        if (onNo) onNo();
+    }, 3000);
+}
+
+export function cancelMaintainCore() {
+    if (maintainCoreTimeoutTimer) {
+        clearTimeout(maintainCoreTimeoutTimer);
+        maintainCoreTimeoutTimer = null;
+    }
+    if (maintainCoreIntervalTimer) {
+        clearInterval(maintainCoreIntervalTimer);
+        maintainCoreIntervalTimer = null;
+    }
+
+    const container = document.getElementById('maintainCoreContainer');
+    if (container) {
+        container.style.display = 'none';
+    }
+
+    const button = document.getElementById('maintainCoreButton');
+    if (button && maintainCoreButtonHandler) {
+        button.removeEventListener('click', maintainCoreButtonHandler);
+        maintainCoreButtonHandler = null;
+        button.textContent = '維持コアを置く';
+    }
+
+    const cancelButton = document.getElementById('cancelMaintainCoreButton');
+    if (cancelButton && maintainCoreCancelHandler) {
+        cancelButton.removeEventListener('click', maintainCoreCancelHandler);
+        maintainCoreCancelHandler = null;
+    }
+}
+

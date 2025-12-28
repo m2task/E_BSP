@@ -34,6 +34,11 @@
     </div>
     <div id="reserveToast" class="toast-message local"></div>
   </div>
+
+  <!-- カード拡大ON/OFFボタン -->
+  <div id="magnify-toggle-button" class="zone" style="margin-top: 10px; padding: 8px 5px; text-align: center; cursor: pointer; user-select: none; font-weight: bold; min-height: auto;">
+    カード拡大OFF
+  </div>
 </div>
 
 <!-- 中央メインフィールド -->
@@ -41,6 +46,10 @@
   <div class="zone-title">フィールド</div>
   <div class="cores" id="fieldCores"></div>
   <div class="field-cards" id="fieldCards"></div>
+  <div id="maintainCoreContainer" class="maintain-core-container" style="display: none;">
+    <button id="maintainCoreButton" class="maintain-core-button">維持コアを置く</button>
+    <button id="cancelMaintainCoreButton" class="cancel-maintain-core-button">キャンセル</button>
+  </div>
 </div>
 
 <!-- 右カラム -->
@@ -116,11 +125,14 @@
 <div id="openAreaModal" class="modal-background" style="display: none;">
   <div class="modal-content" id="openAreaContent">
     <div id="openArea" class="open-area-zone"></div>
+    <div style="text-align: center; margin-top: 5px;">
+      <button id="discardAllOpenBtn" class="modal-button">すべて破棄</button>
+    </div>
   </div>
 </div>
 
 <!-- 確認モーダル -->
-<div id="confirmationModal" class="modal-background" style="display: none;">
+<div id="confirmationModal" class="modal-background cost-modal-overlay" style="display: none;">
   <div class="modal-content" style="max-width: 300px; text-align: center;">
     <p id="confirmationMessage" style="margin-bottom: 20px;"></p>
     <div style="display: flex; justify-content: center; gap: 20px;">

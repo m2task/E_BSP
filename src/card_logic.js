@@ -1,6 +1,6 @@
 // src/card_logic.js
 import { deck, hand, field, trash, burst, reserveCores, discardState, openArea, cardIdCounter, setCardIdCounter, setDeck, setHand, setField, setTrash, setBurst, setReserveCores, setDiscardCounter, setDiscardedCardNames, setDiscardToastTimer, setOpenArea, cardPositions } from './game_data.js';
-import { renderAll, showCostModal, renderOpenArea, showConfirmationModal } from './ui_render.js';
+import { renderAll, showCostModal, showMaintainCoreButton, cancelMaintainCore, renderOpenArea } from './ui_render.js';
 import { showToast, getArrayByZoneName, getZoneName } from './utils.js';
 import { payCost, canPayTotal, placeCoreOnSummonedCard } from './core_logic.js';
 import { openModal } from './event_handlers.js';
@@ -37,119 +37,99 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
 
     // Handle special card logic (if moved from field to non-field, it disappears)
     if (cardData.isSpecial && targetZoneName !== 'field') {
-        // Remove the card from the field
         sourceArray.splice(cardIndex, 1);
-        // Move its cores to the reserve
         if (cardData.coresOnCard && cardData.coresOnCard.length > 0) {
             reserveCores.push(...cardData.coresOnCard.map(core => core.type));
             cardData.coresOnCard = [];
         }
         delete cardPositions[cardId];
         renderAll();
-        return; // Stop further execution
+        return;
     }
 
-    // フィールド以外のゾーンからフィールドへの移動の場合のみコスト支払いモーダルを表示
-    if (targetZoneName === 'field' && sourceZoneId !== 'field' && sourceZoneId !== 'burst') {
-        const sourceArray = getArrayByZoneName(sourceZoneId);
-        const cardIndex = sourceArray.findIndex(c => c.id === cardId);
-        if (cardIndex === -1) return;
-        const cardData = sourceArray[cardIndex];
+    const isSummoning = targetZoneName === 'field' && sourceZoneId !== 'field';
 
-        // 支払い完了後の共通処理
-        const onPaymentSuccess = () => {
+    if (isSummoning) {
+        // --- Summoning Logic ---
+        const onSummonSuccess = () => {
+            cancelMaintainCore();
+
             const currentSourceArray = getArrayByZoneName(sourceZoneId);
             const currentCardIndex = currentSourceArray.findIndex(c => c.id === cardId);
-            if (currentCardIndex === -1) return; // Card is no longer in the source zone
+            if (currentCardIndex === -1) return;
 
             const [movedCard] = currentSourceArray.splice(currentCardIndex, 1);
             field.push(movedCard);
             renderAll();
 
-            // ★★★ ここからが追加部分 ★★★
-            // 特殊カード（トークンなど）でない場合のみ確認
             if (!movedCard.isSpecial) {
-                setTimeout(() => { // 描画が完了してからモーダルを表示
-                    showConfirmationModal(
-                        `維持コアを乗せますか？`,
-                        () => { // "はい" の処理
-                            placeCoreOnSummonedCard(movedCard);
-                        },
-                        () => { // "いいえ" の処理
-                            // 何もしない
-                        }
-                    );
-                }, 100);
+                showMaintainCoreButton(
+                    () => placeCoreOnSummonedCard(movedCard),
+                    () => {} // No action on "No"
+                );
             }
-            // ★★★ ここまでが追加部分 ★★★
         };
 
-        showCostModal(
-            cardData,
-            (cost) => {
-                if (canPayTotal(cost)) {
-                    payCost(cost, cardData, onPaymentSuccess);
-                } else {
-                    // コアが足りない場合は何もしない
-                    renderAll();
-                }
-            },
-            () => {
-                onPaymentSuccess(); // コスト0で召喚
-            }
-        );
+        // Burst summon doesn't require cost
+        if (sourceZoneId === 'burst') {
+            onSummonSuccess();
+        } else {
+            // Other summons (from hand, trash, etc.) go through cost payment
+            showCostModal(
+                cardData,
+                (cost) => {
+                    if (canPayTotal(cost)) {
+                        payCost(cost, cardData, onSummonSuccess);
+                    } else {
+                        renderAll();
+                    }
+                },
+                () => onSummonSuccess() // Cost 0 summon
+            );
+        }
     } else {
-        // 同期処理（フィールド以外への移動、またはフィールド内移動）
-        const sourceArray = getArrayByZoneName(sourceZoneId);
-        const cardIndex = sourceArray.findIndex(c => c.id === cardId);
-        if (cardIndex === -1) return;
+        // --- Non-Summoning Move Logic (e.g., field to hand, hand to trash) ---
+        const [movedCardData] = sourceArray.splice(cardIndex, 1);
+        hideMagnifier();
 
-        const [cardData] = sourceArray.splice(cardIndex, 1);
-
-        hideMagnifier(); // NEW: Hide magnifier immediately
-
-        let shouldTransferCoresToReserve = (sourceZoneId === 'field' && targetZoneName !== 'field' && cardData.coresOnCard && cardData.coresOnCard.length > 0);
+        let shouldTransferCoresToReserve = (sourceZoneId === 'field' && targetZoneName !== 'field' && movedCardData.coresOnCard && movedCardData.coresOnCard.length > 0);
 
         if (targetZoneName === 'deck') {
-            // デッキに移動する場合、コアをリザーブに送るフラグを立てる
             shouldTransferCoresToReserve = true;
             let putOnBottom = false;
             if (dropEvent && dropTargetElement) {
                 const rect = dropTargetElement.getBoundingClientRect();
                 const clickY = dropEvent.clientY - rect.top;
-                if (clickY > rect.height * (2 / 3)) {
-                    putOnBottom = true;
-                }
+                putOnBottom = clickY > rect.height * (2 / 3);
             } else {
-                putOnBottom = confirm(`${cardData.name}をデッキの下に戻しますか？`);
+                putOnBottom = confirm(`${movedCardData.name}をデッキの下に戻しますか？`);
             }
             if (putOnBottom) {
-                deck.push(cardData);
-                showToast('cardMoveToast', `${cardData.name}をデッキの下に戻しました`, { duration: 1000 });
+                deck.push(movedCardData);
+                showToast('cardMoveToast', `${movedCardData.name}をデッキの下に戻しました`, { duration: 1000 });
             } else {
-                deck.unshift(cardData);
-                showToast('cardMoveToast', `${cardData.name}をデッキの上に戻しました`, { duration: 1000 });
+                deck.unshift(movedCardData);
+                showToast('cardMoveToast', `${movedCardData.name}をデッキの上に戻しました`, { duration: 1000 });
             }
         } else if (targetZoneName === 'void') {
-            if (!confirm(`${cardData.name}をゲームから除外していいですか？`)) {
-                sourceArray.splice(cardIndex, 0, cardData); // Cancelled, so return the card
+            if (!confirm(`${movedCardData.name}をゲームから除外していいですか？`)) {
+                sourceArray.splice(cardIndex, 0, movedCardData);
                 return;
             }
-            // Card is already removed, so we just continue
         } else {
             if (targetZoneName === 'hand') {
-                cardData.isRotated = false;
-                cardData.isExhausted = false;
+                movedCardData.isRotated = false;
+                movedCardData.isExhausted = false;
             }
             const targetArray = getArrayByZoneName(targetZoneName);
             if (targetArray) {
-                targetArray.push(cardData);
+                targetArray.push(movedCardData);
             }
         }
 
         if (shouldTransferCoresToReserve) {
-            reserveCores.push(...cardData.coresOnCard.map(core => core.type));
-            cardData.coresOnCard = [];
+            reserveCores.push(...movedCardData.coresOnCard.map(core => core.type));
+            movedCardData.coresOnCard = [];
         }
 
         if (sourceZoneId === 'openArea' && openArea.length === 0) {
@@ -220,5 +200,20 @@ export function createSpecialCardOnField(cardType, position) {
     field.push(newCard);
     cardPositions[newCard.id] = position;
 
+    renderAll();
+}
+
+export function discardAllOpenCards() {
+    if (openArea.length === 0) {
+        return; // 対象のカードがない場合は何もしない
+    }
+
+    // openArea のカードを trash に移動
+    setTrash([...trash, ...openArea]);
+
+    // openArea を空にする
+    setOpenArea([]);
+
+    // UIを更新
     renderAll();
 }

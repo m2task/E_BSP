@@ -3,6 +3,7 @@ import { deck, hand, field, cardIdCounter, setDeck, setHand, setCardIdCounter, s
 import { setupEventListeners } from './src/event_handlers.js';
 import { renderAll } from './src/ui_render.js';
 import { shuffle } from './src/utils.js';
+import { initializeMagnifyButton } from './src/magnify_logic.js';
 import { cancelPayment } from './src/core_logic.js';
 
 function getURLParams() {
@@ -106,5 +107,6 @@ async function initializeGame() {
 document.addEventListener('DOMContentLoaded', () => {
     initializeGame();
     setupEventListeners();
+    initializeMagnifyButton(); // 拡大表示のON/OFFボタンを初期化
     document.getElementById('cancelPaymentButton').addEventListener('click', cancelPayment);
 });
