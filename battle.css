@@ -750,7 +750,7 @@ body {
 .maintain-core-container {
     position: absolute;
     top: 20px; /* 上からの位置 */
-    right: 150px; /* 右からの位置を増やしてさらに左に寄せる */
+    right: 300px; /* 右からの位置を増やしてさらに左に寄せる */
     z-index: 100;
 }
 
@@ -787,5 +787,55 @@ body {
 }
 
 .cancel-maintain-core-button:hover {
+    background-color: #5a6268; /* ホバー時は少し濃くする */
+}
+
+/* 召喚アクションボタンを縦並びにするためのスタイル */
+.summon-action-container-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* ボタンの間の隙間 */
+}
+
+/* コスト確認ボタンのスタイル */
+.cost-confirm-container {
+    position: absolute;
+    top: 20px;
+    right: 150px;
+    z-index: 1050;
+}
+
+.cost-confirm-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 1px solid white;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: background-color 0.3s;
+}
+
+.cost-confirm-button:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.cancel-cost-confirm-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    background-color: #6c757d; /* グレー系 */
+    border: 1px solid white;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: background-color 0.3s;
+    margin-left: 10px; /* 隣のボタンとの間隔 */
+}
+
+.cancel-cost-confirm-button:hover {
     background-color: #5a6268; /* ホバー時は少し濃くする */
 }

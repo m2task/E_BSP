@@ -408,7 +408,6 @@ export function showConfirmationModal(message, onConfirm, onCancel) {
 export function showMaintainCoreButton(onYes, onNo) {
     const container = document.getElementById('maintainCoreContainer');
     const button = document.getElementById('maintainCoreButton');
-    const cancelButton = document.getElementById('cancelMaintainCoreButton');
     const originalText = '維持コアを置く';
     let remainingTime = 3;
 
@@ -431,13 +430,8 @@ export function showMaintainCoreButton(onYes, onNo) {
         cancelMaintainCore();
         if (onYes) onYes();
     };
-    maintainCoreCancelHandler = () => {
-        cancelMaintainCore();
-        if (onNo) onNo();
-    };
 
     button.addEventListener('click', maintainCoreButtonHandler);
-    cancelButton.addEventListener('click', maintainCoreCancelHandler);
 
     // 3秒後に実行されるタイムアウト
     maintainCoreTimeoutTimer = setTimeout(() => {
@@ -467,11 +461,77 @@ export function cancelMaintainCore() {
         maintainCoreButtonHandler = null;
         button.textContent = '維持コアを置く';
     }
+}
 
-    const cancelButton = document.getElementById('cancelMaintainCoreButton');
-    if (cancelButton && maintainCoreCancelHandler) {
-        cancelButton.removeEventListener('click', maintainCoreCancelHandler);
-        maintainCoreCancelHandler = null;
+let summonActionTimeoutTimer = null;
+let summonButtonHandler = null;
+let placeCoreButtonHandler = null;
+
+export function showSummonActionChoice({ onSummon, onPlaceCore, onCancel }) {
+    hideSummonActionChoice(); // 既存のタイマーやリスナーをクリア
+
+    const container = document.getElementById('summonActionContainer');
+    const summonButton = document.getElementById('summonButton');
+    const placeCoreButton = document.getElementById('placeCoreButton');
+    if (!container || !summonButton || !placeCoreButton) return;
+
+    // 念のため、強制表示処理を維持
+    container.remove();
+    document.body.appendChild(container);
+
+    // 「コストを支払う」ボタンの設定
+    if (onSummon) {
+        summonButton.style.display = 'block';
+        summonButtonHandler = () => {
+            hideSummonActionChoice();
+            onSummon();
+        };
+        summonButton.addEventListener('click', summonButtonHandler);
+    } else {
+        summonButton.style.display = 'none';
+    }
+
+    // 「維持コアを置く」ボタンの設定
+    if (onPlaceCore) {
+        placeCoreButton.style.display = 'block';
+        placeCoreButtonHandler = () => {
+            hideSummonActionChoice();
+            onPlaceCore();
+        };
+        placeCoreButton.addEventListener('click', placeCoreButtonHandler);
+    } else {
+        placeCoreButton.style.display = 'none';
+    }
+
+    // コンテナを表示し、タイムアウトを設定
+    container.style.display = 'flex';
+    summonActionTimeoutTimer = setTimeout(() => {
+        hideSummonActionChoice();
+        if (onCancel) onCancel();
+    }, 3000);
+}
+
+export function hideSummonActionChoice() {
+    if (summonActionTimeoutTimer) {
+        clearTimeout(summonActionTimeoutTimer);
+        summonActionTimeoutTimer = null;
+    }
+
+    const container = document.getElementById('summonActionContainer');
+    if (container) {
+        container.style.display = 'none';
+    }
+
+    const summonButton = document.getElementById('summonButton');
+    if (summonButton && summonButtonHandler) {
+        summonButton.removeEventListener('click', summonButtonHandler);
+        summonButtonHandler = null;
+    }
+
+    const placeCoreButton = document.getElementById('placeCoreButton');
+    if (placeCoreButton && placeCoreButtonHandler) {
+        placeCoreButton.removeEventListener('click', placeCoreButtonHandler);
+        placeCoreButtonHandler = null;
     }
 }
 
