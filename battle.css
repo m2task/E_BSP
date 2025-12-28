@@ -185,33 +185,29 @@ body {
       z-index: 10; /* コアを重疲労ボタンより前面に表示 */
     }
     .core.blue {
-      background: #007bff;
+      /* 立体感を出すためのグラデーション */
+      background: radial-gradient(circle at 50% 50%, #5dade2, #007bff);
       clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); /* 六角形 */
       width: 21px;
       height: 21px;
     }
     .core.soul {
       position: relative;
-      width: 22px;
-      height: 22px;
+      width: 24px;
+      height: 24px;
       cursor: grab;
     }
 
-    .core.soul::before {
-      content: "";
-      position: absolute;
-      top: -2px; left: -2px; right: -2px; bottom: -2px;
-      background: silver;
-      clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
-      z-index: 0;
-    }
+    /* .core.soul::before was removed to delete the silver border */
 
     .core.soul::after {
       content: "";
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: red;
-      clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+      /* 立体感を出すためのグラデーション */
+      background: radial-gradient(circle at 50% 50%, #ff7d7d, #c82333);
+      /* ひし形に形状変更 */
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
       z-index: 1;
     }
     .void-core {

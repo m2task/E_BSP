@@ -49,34 +49,7 @@ export function setupEventListeners() {
             return; // 移動処理の後は回転処理を行わない
         }
 
-        // コスト支払い中の処理
-        if (paymentState.isPaying && paymentState.source === 'field') {
-            if (cardData.coresOnCard.length === 0) {
-                showToast('errorToast', 'このカードには支払えるコアがありません。', { duration: 1000 });
-                return;
-            }
-
-            const amountToPayStr = prompt(`このカードから支払うコアの数を入力してください (最大: ${cardData.coresOnCard.length})`, "1");
-
-            if (amountToPayStr === null) {
-                // プロンプトのキャンセルは何もしない（ユーザーが別のカードを選び直せるように）
-                return;
-            }
-
-            const amount = parseInt(amountToPayStr, 10);
-
-            if (isNaN(amount) || amount <= 0) {
-                showToast('errorToast', '無効な値です。', { duration: 1000 });
-                return;
-            }
-
-            if (amount <= cardData.coresOnCard.length) {
-                payCostFromField(cardId, amount);
-            } else {
-                showToast('errorToast', '指定された数のコアはありません。', { duration: 1000 });
-            }
-            return; // 支払い処理の後は回転処理を行わない
-        }
+        // コスト支払い中の処理は削除されました
 
         // 通常の回転処理
         if (cardData.isRotated) {
@@ -88,7 +61,7 @@ export function setupEventListeners() {
         renderAll(); // 状態変更を反映するために再描画
     });
 
-    // 画面のどこかをクリックしたらコアの選択を解除
+    // 画面のどこかをクリックした際の処理
     document.addEventListener('click', (e) => {
         // 次のクリックでのクリアをスキップするフラグが立っている場合
         if (skipNextClickClear) {
@@ -96,13 +69,23 @@ export function setupEventListeners() {
             return; // コアの選択解除処理をスキップ
         }
 
-        if (!e.target.closest('.core')) {
-            clearSelectedCores();
-        }
         // ボイドアイコン以外の場所をクリックしたらチャージ数をリセット
         if (e.target.id !== 'voidCore') {
             setVoidChargeCount(0);
             showToast('voidToast', '', { hide: true }); // トーストを非表示にする
+        }
+    });
+
+    // ダブルクリックでコアの選択を解除する処理
+    document.addEventListener('dblclick', (e) => {
+        // コアの上をダブルクリックした場合は何もしない
+        if (e.target.closest('.core')) {
+            return;
+        }
+
+        // フィールドや他のゾーンの上をダブルクリックした場合に選択を解除
+        if (e.target.closest('.zone, #fieldZone')) {
+            clearSelectedCores();
         }
     });
 
@@ -534,11 +517,8 @@ function handleCardDrop(e) {
         renderAll();
         hideMagnifier();
 
-        showSummonActionChoice({
-            onSummon: () => startPaymentProcess(movedCardData, sourceZoneName),
-            onPlaceCore: () => placeCoreOnSummonedCard(movedCardData),
-            onCancel: () => {}
-        });
+        // コスト支払いやコア配置の選択肢を表示せず、カードの移動のみを完了させる
+        // ユーザーが手動でコアを操作する
 
     } else if (targetZoneName === 'trash' && sourceZoneName === 'hand') {
         // --- マジック使用フロー ---
@@ -550,18 +530,7 @@ function handleCardDrop(e) {
         // 1. 共通関数を使ってカードをトラッシュに移動し、UIに反映
         moveCardData(cardId, sourceZoneName, targetZoneName);
 
-        // 2. コストを支払うかの選択肢を表示
-        showSummonActionChoice({
-            onSummon: () => { // 「コストを支払う」ボタンが押された場合
-                showCostModal(cardData, (cost) => {
-                    payCost(cost, null, () => {
-                        // メッセージを削除
-                    });
-                }, () => {}); // コストモーダルがキャンセルされた場合は何もしない
-            },
-            onPlaceCore: null, // 「維持コアを置く」ボタンは非表示
-            onCancel: () => {}  // タイムアウトした場合は何もしない
-        });
+        // 2. コスト支払い処理は自動で行わず、手動操作に委ねる
     } else {
         // --- その他の移動 ---
         const position = {

@@ -108,6 +108,31 @@
             border: 1px solid #ddd;
             margin-top: 10px;
         }
+
+        /* --- Toast Message Styles --- */
+        .toast-message {
+            visibility: hidden;
+            opacity: 0;
+            position: fixed;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 30px;
+            background-color: #333;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 16px;
+            min-width: 250px;
+            text-align: center;
+            white-space: nowrap;
+            z-index: 100;
+            pointer-events: auto;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .toast-message.show {
+            visibility: visible;
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -169,8 +194,11 @@
     <!-- 処理用の非表示画像 -->
     <img id="sourceImage" src="" alt="" style="display: none;">
 
+    <!-- Toast Message -->
+    <div id="deckSaveToast" class="toast-message"></div>
+
     <script src="src/indexedDB.js"></script>
     <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
-    <script src="index.js"></script>
+    <script type="module" src="index.js"></script>
 </body>
 </html>

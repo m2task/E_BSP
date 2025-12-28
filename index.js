@@ -1,3 +1,5 @@
+import { showToast } from './src/utils.js';
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
     const cropperSection = document.getElementById('cropper-section');
@@ -248,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             // --- デバッグここから ---
                             // モルフォロジー処理後の結果を表示
                             cv.imshow('edges-canvas', morph);
-                            debugArea.style.display = 'block';
+                            // debugArea.style.display = 'block'; // デバッグ情報を非表示化
                             // --- デバッグここまで ---
 
                             // 3. 輪郭を検出
@@ -372,7 +374,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         try {
             await window.cardGameDB.saveDeck(deckName, deck);
-            alert(`デッキ「${deckName}」を保存しました。`);
+            showToast('deckSaveToast', `デッキ「${deckName}」を保存しました。`, { duration: 2000 });
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // ページ上部にスクロール
             deckNameInput.value = ''; // 入力欄はクリアする
             renderDeckList();
             currentEditingDeckName = deckName;
@@ -389,7 +392,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         try {
             await window.cardGameDB.saveDeck(currentEditingDeckName, deck);
-            alert(`デッキ「${currentEditingDeckName}」を上書き保存しました。`);
+            showToast('deckSaveToast', `デッキ「${currentEditingDeckName}」を上書き保存しました。`, { duration: 2000 });
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // ページ上部にスクロール
             renderDeckList();
         } catch (error) {
             console.error('デッキの上書き保存に失敗しました:', error);
