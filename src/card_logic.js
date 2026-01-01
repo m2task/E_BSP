@@ -65,13 +65,13 @@ export function moveCardData(cardId, sourceZoneId, targetZoneName, dropEvent = n
         }
         if (putOnBottom) {
             deck.push(movedCardData);
-            showToast('cardMoveToast', `${movedCardData.name}をデッキの下に戻しました`, { duration: 1000 });
+            showToast('cardMoveToast', 'カードをデッキの下に戻しました', { duration: 1000 });
         } else {
             deck.unshift(movedCardData);
-            showToast('cardMoveToast', `${movedCardData.name}をデッキの上に戻しました`, { duration: 1000 });
+            showToast('cardMoveToast', 'カードをデッキの上に戻しました', { duration: 1000 });
         }
     } else if (targetZoneName === 'void') {
-        if (!confirm(`${movedCardData.name}をゲームから除外していいですか？`)) {
+        if (!confirm(`カードをゲームから除外していいですか？`)) {
             sourceArray.splice(cardIndex, 0, movedCardData);
             return;
         }

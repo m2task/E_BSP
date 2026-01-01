@@ -798,16 +798,24 @@ function handleTouchEnd(e) {
 
                     if (targetZoneElement) {
                         const targetZoneName = getZoneName(targetZoneElement);
-                        if (targetZoneName === 'field') {
-                            const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
-                            cardPositions[cardId] = {
-                                left: currentTouchX - fieldRect.left - touchOffsetX,
-                                top: currentTouchY - fieldRect.top - touchOffsetY
-                            };
+                        if (targetZoneName === 'deck') {
+                            // スマホのタッチイベント情報を使って擬似的な dropEvent を作成
+                            const mockDropEvent = { clientY: currentTouchY };
+                            // moveCardData に dropEvent と targetElement を渡す
+                            moveCardData(cardId, sourceZoneName, targetZoneName, mockDropEvent, targetZoneElement);
                         } else {
-                            delete cardPositions[cardId];
+                            // デッキ以外への移動は従来通りの処理
+                            if (targetZoneName === 'field') {
+                                const fieldRect = document.getElementById('fieldCards').getBoundingClientRect();
+                                cardPositions[cardId] = {
+                                    left: currentTouchX - fieldRect.left - touchOffsetX,
+                                    top: currentTouchY - fieldRect.top - touchOffsetY
+                                };
+                            } else {
+                                delete cardPositions[cardId];
+                            }
+                            moveCardData(cardId, sourceZoneName, targetZoneName);
                         }
-                        moveCardData(cardId, sourceZoneName, targetZoneName);
                         hideMagnifier();
                     }
                 }
