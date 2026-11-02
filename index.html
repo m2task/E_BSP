@@ -1,204 +1,215 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>デッキ一覧</title>
-    <link rel="stylesheet" href="card_cropper.css"> <!-- スタイルを共有 -->
-    <link rel="stylesheet" href="navbar.css">
+    <link rel="stylesheet" href="card_cropper.css" />
+    <!-- スタイルを共有 -->
+    <link rel="stylesheet" href="navbar.css" />
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-            color: #333;
-        }
-        h1, h2 {
-            color: black;
-        }
-        #deck-list-container {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        #deck-list ul {
-            list-style: none;
-            padding: 0;
-        }
-        #deck-list li {
-            background-color: #e9e9e9;
-            margin-bottom: 8px;
-            padding: 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            display: flex;
-            align-items: center; /* Keep items vertically centered */
-            gap: 10px; /* Space between items */
-        }
-        #deck-list li:hover {
-            background-color: #dcdcdc;
-        }
-        #deck-list li button {
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        #deck-list li .battle-button { /* Style for the new battle button */
-            background-color: #6c757d; /* A subdued gray/blue color */
-        }
-        #deck-list li .battle-button:hover {
-            background-color: #5a6268; /* Darker shade on hover */
-        }
-        #deck-list li button:last-child { /* This targets the delete button */
-            background-color: #dc3545; /* Red color for delete */
-            margin-left: auto; /* Pushes the delete button to the far right */
-        }
-        #deck-list li button:last-child:hover {
-            background-color: #c82333;
-        }
-        #selected-deck-display {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        #selected-deck-cards {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        .deck-card-item {
-            border: 1px solid #ddd;
-            padding: 5px;
-            border-radius: 4px;
-            text-align: center;
-            background-color: #f9f9f9;
-        }
-        .deck-card-item img {
-            width: 80px; /* card_cropper.js のデフォルトサイズに合わせる */
-            height: 110px; /* card_cropper.js のデフォルトサイズに合わせる */
-            display: block;
-            margin-bottom: 5px;
-        }
-        .deck-card-item .card-quantity {
-            font-weight: bold;
-            color: black;
-        }
-        /* --- デバッグ用スタイル --- */
-        #debug-area {
-            margin-top: 20px;
-            background-color: #fdf5e6; /* 少し目立つ背景色 */
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #f0e68c;
-        }
-        #debug-area h3 {
-            margin-top: 0;
-            color: #a0522d;
-        }
-        #edges-canvas {
-            max-width: 100%;
-            border: 1px solid #ddd;
-            margin-top: 10px;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f4f4f4;
+        color: #333;
+      }
+      h1,
+      h2 {
+        color: black;
+      }
+      #deck-list-container {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+      #deck-list ul {
+        list-style: none;
+        padding: 0;
+      }
+      #deck-list li {
+        background-color: #e9e9e9;
+        margin-bottom: 8px;
+        padding: 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        display: flex;
+        align-items: center; /* Keep items vertically centered */
+        gap: 10px; /* Space between items */
+      }
+      #deck-list li:hover {
+        background-color: #dcdcdc;
+      }
+      #deck-list li button {
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      #deck-list li .battle-button {
+        /* Style for the new battle button */
+        background-color: #6c757d; /* A subdued gray/blue color */
+      }
+      #deck-list li .battle-button:hover {
+        background-color: #5a6268; /* Darker shade on hover */
+      }
+      #deck-list li button:last-child {
+        /* This targets the delete button */
+        background-color: #dc3545; /* Red color for delete */
+        margin-left: auto; /* Pushes the delete button to the far right */
+      }
+      #deck-list li button:last-child:hover {
+        background-color: #c82333;
+      }
+      #selected-deck-display {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      #selected-deck-cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 15px;
+      }
+      .deck-card-item {
+        border: 1px solid #ddd;
+        padding: 5px;
+        border-radius: 4px;
+        text-align: center;
+        background-color: #f9f9f9;
+      }
+      .deck-card-item img {
+        width: 80px; /* card_cropper.js のデフォルトサイズに合わせる */
+        height: 110px; /* card_cropper.js のデフォルトサイズに合わせる */
+        display: block;
+        margin-bottom: 5px;
+      }
+      .deck-card-item .card-quantity {
+        font-weight: bold;
+        color: black;
+      }
+      /* --- デバッグ用スタイル --- */
+      #debug-area {
+        margin-top: 20px;
+        background-color: #fdf5e6; /* 少し目立つ背景色 */
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #f0e68c;
+      }
+      #debug-area h3 {
+        margin-top: 0;
+        color: #a0522d;
+      }
+      #edges-canvas {
+        max-width: 100%;
+        border: 1px solid #ddd;
+        margin-top: 10px;
+      }
 
-        /* --- Toast Message Styles --- */
-        .toast-message {
-            visibility: hidden;
-            opacity: 0;
-            position: fixed;
-            left: 50%;
-            transform: translateX(-50%);
-            bottom: 30px;
-            background-color: #333;
-            color: white;
-            padding: 10px 15px;
-            border-radius: 5px;
-            font-size: 16px;
-            min-width: 250px;
-            text-align: center;
-            white-space: nowrap;
-            z-index: 100;
-            pointer-events: auto;
-            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-        }
-        .toast-message.show {
-            visibility: visible;
-            opacity: 1;
-        }
+      /* --- Toast Message Styles --- */
+      .toast-message {
+        visibility: hidden;
+        opacity: 0;
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 30px;
+        background-color: #333;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 5px;
+        font-size: 16px;
+        min-width: 250px;
+        text-align: center;
+        white-space: nowrap;
+        z-index: 100;
+        pointer-events: auto;
+        transition:
+          opacity 0.3s ease-in-out,
+          visibility 0.3s ease-in-out;
+      }
+      .toast-message.show {
+        visibility: visible;
+        opacity: 1;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <nav>
-        <ul>
-            <li><a href="#" id="show-cropper-btn">ナビゲーションバー</a></li>
-            <li><a href="#" id="show-deck-list-btn">デッキ一覧</a></li>
-            <li><a href="use.html">使い方</a></li>
-        </ul>
+      <ul>
+        <li><a href="#" id="show-cropper-btn">ナビゲーションバー</a></li>
+        <li><a href="#" id="show-deck-list-btn">デッキ一覧</a></li>
+        <li><a href="use.html">使い方</a></li>
+      </ul>
     </nav>
 
     <!-- デッキ一覧セクション -->
     <div id="deck-list-section">
-        <h1>保存済みデッキ一覧</h1>
-        <div id="deck-list-container">
-            <h2>チェックボックスに☑をするとデッキの一番左上が契約カードになります。</h2>
-            <ul id="deck-list">
-                <!-- デッキ名がここに表示されます -->
-            </ul>
-        </div>
+      <h1>保存済みデッキ一覧</h1>
+      <div id="deck-list-container">
+        <h2>
+          チェックボックスに☑をするとデッキの一番左上が契約カードになります。
+        </h2>
+        <ul id="deck-list">
+          <!-- デッキ名がここに表示されます -->
+        </ul>
+      </div>
     </div>
 
     <!-- デッキ編集エリア -->
     <div class="deck-editing-area">
-        <div class="save-load-deck-controls">
-            <h3>デッキ作成・編集</h3>
-            <input type="text" id="deckNameInput" placeholder="デッキ名を入力">
-            <button id="saveDeckAsButton">名前を付けて保存</button>
-            <button id="overwriteSaveButton">上書き保存</button>
-            <button id="newDeckButton">新規デッキ作成</button>
-            <input type="file" id="imageLoader" accept="image/*" class="hidden">
-            <button id="crop-button" class="hidden">デッキ作成</button>
+      <div class="save-load-deck-controls">
+        <h3>デッキ作成・編集</h3>
+        <input type="text" id="deckNameInput" placeholder="デッキ名を入力" />
+        <button id="saveDeckAsButton">名前を付けて保存</button>
+        <button id="overwriteSaveButton">上書き保存</button>
+        <button id="newDeckButton">新規デッキ作成</button>
+        <input type="file" id="imageLoader" accept="image/*" class="hidden" />
+        <button id="crop-button" class="hidden">デッキ作成</button>
+      </div>
+      <div class="deck-header-controls">
+        <h2>現在の編集デッキ (<span id="total-card-count">0</span>枚)</h2>
+        <div class="add-card-by-name-controls">
+          <h3>名前でカードを追加</h3>
+          <input type="text" id="cardNameInput" placeholder="カード名を入力" />
+          <button id="addCardByNameButton">カード追加</button>
         </div>
-        <div class="deck-header-controls">
-            <h2>現在の編集デッキ (<span id="total-card-count">0</span>枚)</h2>
-            <div class="add-card-by-name-controls">
-                <h3>名前でカードを追加</h3>
-                <input type="text" id="cardNameInput" placeholder="カード名を入力">
-                <button id="addCardByNameButton">カード追加</button>
-            </div>
-        </div>
-        <div id="deck-editor-container"></div>
+      </div>
+      <div id="deck-editor-container"></div>
     </div>
 
     <!-- 画像プレビューセクション -->
     <div id="cropper-section">
-        <h3>画像プレビュー</h3>
-        <div id="preview-container">
-            <img id="previewImage" src="" alt="画像プレビュー">
-        </div>
+      <h3>画像プレビュー</h3>
+      <div id="preview-container">
+        <img id="previewImage" src="" alt="画像プレビュー" />
+      </div>
     </div>
 
     <!-- デバッグ表示エリア -->
-    <div id="debug-area" style="display: none;">
-        <h3>デバッグ情報: Cannyエッジ検出の結果</h3>
-        <canvas id="edges-canvas"></canvas>
+    <div id="debug-area" style="display: none">
+      <h3>デバッグ情報: Cannyエッジ検出の結果</h3>
+      <canvas id="edges-canvas"></canvas>
     </div>
 
     <!-- 処理用の非表示画像 -->
-    <img id="sourceImage" src="" alt="" style="display: none;">
+    <img id="sourceImage" src="" alt="" style="display: none" />
 
     <!-- Toast Message -->
     <div id="deckSaveToast" class="toast-message"></div>
 
     <script src="src/indexedDB.js"></script>
-    <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+    <script async src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js/dist/opencv.js"></script>
     <script type="module" src="index.js"></script>
-</body>
+  </body>
 </html>
