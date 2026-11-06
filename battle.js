@@ -1,6 +1,6 @@
 // main.js
-import { deck, hand, field, cardIdCounter, setDeck, setHand, setCardIdCounter, setSelectedCores, setLifeCores, setReserveCores, setCountCores, setTrashCores } from './src/game_data.js';
-import { setupEventListeners } from './src/event_handlers.js';
+import { deck, hand, field, cardIdCounter, setDeck, setHand, setCardIdCounter, setSelectedCores, setLifeCores, setReserveCores, setCountCores, setTrashCores, setDeckTokens } from './src/game_data.js';
+import { setupEventListeners, renderDeckGaiModalContent } from './src/event_handlers.js';
 import { renderAll } from './src/ui_render.js';
 import { shuffle } from './src/utils.js';
 import { initializeMagnifyButton } from './src/magnify_logic.js';
@@ -32,14 +32,19 @@ async function initializeGame() {
         return;
     }
 
-    const loadedDeck = await window.cardGameDB.loadDeck(deckName);
+    const loadedDeckFull = await window.cardGameDB.loadDeckFull(deckName);
 
-    if (!loadedDeck) {
+    if (!loadedDeckFull) {
         console.error("No battle deck found in IndexedDB.");
         // Optionally, load a default deck or show an error
         renderAll();
         return;
     }
+
+    const loadedDeck = loadedDeckFull.cards;
+    const loadedTokens = loadedDeckFull.tokens || [];
+    setDeckTokens(loadedTokens);
+    renderDeckGaiModalContent();
 
     // Set contract card flag if needed
     if (useContract && loadedDeck.length > 0) {

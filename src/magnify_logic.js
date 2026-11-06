@@ -3,6 +3,9 @@ import { draggedElement, isDragging, field, hand, trash, burst, openArea } from 
 
 const loupe = document.getElementById('magnifying-loupe');
 const magnifiedImage = document.getElementById('magnified-card-image');
+const magnifiedTokenContainer = document.getElementById('magnified-token-container');
+const magnifiedTokenName = document.getElementById('magnified-token-name');
+const magnifiedTokenText = document.getElementById('magnified-token-text');
 
 // プレビューパネルの固定サイズ
 const PREVIEW_WIDTH = 200; // 80px * 2.5
@@ -21,34 +24,63 @@ function getCardData(cardId) {
 }
 
 function handleCardMouseOver(e) {
-    console.log("handleCardMouseOver called for:", e.currentTarget.dataset.id);
-    console.log("isMagnifyEnabled:", isMagnifyEnabled);
-    console.log("draggedElement:", draggedElement);
-    console.log("isDragging:", isDragging);
-
     if (!isMagnifyEnabled || draggedElement || isDragging) {
-        console.log("Magnifier hidden due to condition.");
-        loupe.style.display = 'none'; // ドラッグ中は非表示を徹底
+        hideMagnifier();
         return;
     }
 
     const cardElement = e.currentTarget;
     const cardId = cardElement.dataset.id;
-    const cardData = getCardData(cardId);
+    
+    // 通常のカード配列内を検索
+    let cardData = cardId ? getCardData(cardId) : null;
 
-    if (!cardData || !cardData.imgDataUrl) {
-        loupe.style.display = 'none';
+    // デッキ外モーダル内の未配置カードの場合（dataset.idが無い）
+    if (!cardData && cardElement.classList.contains('special-card')) {
+        const specialType = cardElement.dataset.cardType;
+        if (specialType === 'token') {
+            cardData = {
+                isSpecial: true,
+                specialType: 'token',
+                name: cardElement.dataset.tokenName || cardElement.textContent.trim() || 'トークン',
+                text: cardElement.dataset.tokenText || ''
+            };
+        }
+    }
+
+    if (!cardData) {
+        hideMagnifier();
         return;
     }
 
-    magnifiedImage.src = cardData.imgDataUrl;
-
-    // 位置はCSSで固定されるため、ここでは表示するだけ
-    loupe.style.display = 'block';
+    if (cardData.imgDataUrl) {
+        if (magnifiedTokenContainer) magnifiedTokenContainer.style.display = 'none';
+        magnifiedImage.src = cardData.imgDataUrl;
+        magnifiedImage.style.display = 'block';
+        loupe.style.display = 'block';
+    } else if (cardData.isSpecial && cardData.specialType === 'token') {
+        magnifiedImage.style.display = 'none';
+        if (magnifiedTokenContainer) {
+            magnifiedTokenContainer.style.display = 'flex';
+            if (magnifiedTokenName) {
+                magnifiedTokenName.textContent = cardData.name || 'トークン';
+            }
+            if (magnifiedTokenText) {
+                magnifiedTokenText.textContent = cardData.text && cardData.text.trim() !== ''
+                    ? cardData.text
+                    : '（効果テキストなし）';
+            }
+        }
+        loupe.style.display = 'block';
+    } else {
+        hideMagnifier();
+    }
 }
 
 function handleCardMouseOut() {
     loupe.style.display = 'none';
+    if (magnifiedImage) magnifiedImage.src = '';
+    if (magnifiedTokenContainer) magnifiedTokenContainer.style.display = 'none';
 }
 
 export function hideMagnifier() {
@@ -56,7 +88,9 @@ export function hideMagnifier() {
 }
 
 export function updateMagnifierEventListeners() {
-    const cards = document.querySelectorAll('#fieldCards .card, #handZone .card, #trashModalContent .card, #openArea .card, #burstCard .card');
+    const cards = document.querySelectorAll(
+        '#fieldCards .card, #handZone .card, #trashModalContent .card, #openArea .card, #burstCard .card, #deckGaiModalContent .card'
+    );
     
     cards.forEach(card => {
         // 既存のリスナーを削除してから追加し、重複を防ぐ

@@ -143,6 +143,112 @@
         visibility: visible;
         opacity: 1;
       }
+
+      /* --- トークン設定スタイル --- */
+      .token-settings-section {
+        margin-top: 25px;
+        padding: 15px;
+        background-color: #fbf7fd;
+        border: 1px solid #d1b3e0;
+        border-radius: 8px;
+      }
+      .token-settings-section h3 {
+        margin-top: 0;
+        margin-bottom: 5px;
+        color: #4a154b;
+      }
+      .token-help-text {
+        font-size: 13px;
+        color: #666;
+        margin-top: 0;
+        margin-bottom: 12px;
+      }
+      .add-token-controls {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 15px;
+      }
+      .add-token-controls input[type="text"] {
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+        flex: 1;
+        max-width: 250px;
+      }
+      .add-token-controls button {
+        background-color: #8e24aa;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.2s;
+      }
+      .add-token-controls button:hover {
+        background-color: #7b1fa2;
+      }
+      #token-editor-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .token-card-item {
+        background: #fff;
+        border: 2px solid #ba68c8;
+        border-radius: 6px;
+        padding: 10px;
+        width: 220px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        position: relative;
+      }
+      .token-card-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 6px;
+      }
+      .token-card-item-title {
+        font-weight: bold;
+        color: #4a154b;
+        font-size: 14px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .token-card-delete-btn {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 2px 8px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .token-card-delete-btn:hover {
+        background: #c82333;
+      }
+      .token-card-textarea {
+        width: 100%;
+        box-sizing: border-box;
+        height: 90px;
+        resize: vertical;
+        padding: 6px;
+        font-size: 12px;
+        font-family: inherit;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      .token-empty-msg {
+        color: #888;
+        font-size: 13px;
+        margin: 0;
+      }
     </style>
   </head>
   <body>
@@ -187,6 +293,17 @@
         </div>
       </div>
       <div id="deck-editor-container"></div>
+
+      <!-- トークン設定エリア -->
+      <div class="token-settings-section">
+        <h3>トークン設定</h3>
+        <p class="token-help-text">※デッキで使用するトークンを登録します。名前を追加するとテキスト（効果）が入力可能になり、対戦画面で拡大時に確認できます。</p>
+        <div class="add-token-controls">
+          <input type="text" id="tokenNameInput" placeholder="トークン名を入力 (例: 眷属)" />
+          <button id="addTokenButton">トークンに名前を追加</button>
+        </div>
+        <div id="token-editor-container"></div>
+      </div>
     </div>
 
     <!-- 画像プレビューセクション -->

@@ -180,11 +180,18 @@ export function discardDeck() {
     }, 350)); // 350msのデバウンス
 }
 
-export function createSpecialCardOnField(cardType, position) {
+export function createSpecialCardOnField(cardType, position, customData = {}) {
     let currentCardId = cardIdCounter;
+    let cardName = cardType === 'token' ? 'トークン' : 'カードB面';
+    let cardText = '';
+    if (cardType === 'token' && customData) {
+        if (customData.name) cardName = customData.name;
+        if (customData.text) cardText = customData.text;
+    }
     const newCard = {
         id: `card-${currentCardId++}`,
-        name: cardType === 'token' ? 'トークン' : 'カードB面',
+        name: cardName,
+        text: cardText,
         imgDataUrl: null, // No image for special cards
         isRotated: false,
         isExhausted: false,

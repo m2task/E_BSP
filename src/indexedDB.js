@@ -41,14 +41,15 @@ function openDB() {
  * デッキをIndexedDBに保存します。
  * @param {string} deckName - 保存するデッキの名前
  * @param {Array} deckData - 保存するデッキのカードデータ
+ * @param {Array} [tokens=[]] - デッキに紐づくトークンデータ
  * @returns {Promise<void>}
  */
-async function saveDeck(deckName, deckData) {
+async function saveDeck(deckName, deckData, tokens = []) {
     const db = await openDB();
     return new Promise((resolve, reject) => {
         const transaction = db.transaction([DECK_STORE_NAME], 'readwrite');
         const store = transaction.objectStore(DECK_STORE_NAME);
-        const request = store.put({ name: deckName, data: deckData });
+        const request = store.put({ name: deckName, data: deckData, tokens: tokens });
 
         request.onsuccess = () => {
             resolve();
@@ -64,7 +65,7 @@ async function saveDeck(deckName, deckData) {
 /**
  * 指定された名前のデッキをIndexedDBから読み込みます。
  * @param {string} deckName - 読み込むデッキの名前
- * @returns {Promise<Array|null>} デッキデータ、または存在しない場合はnull
+ * @returns {Promise<Array|null>} デッキデータ、または存在しない場合はnull（tokensプロパティ付き）
  */
 async function loadDeck(deckName) {
     const db = await openDB();
@@ -75,7 +76,9 @@ async function loadDeck(deckName) {
 
         request.onsuccess = (event) => {
             if (event.target.result) {
-                resolve(event.target.result.data);
+                const data = event.target.result.data || [];
+                data.tokens = event.target.result.tokens || [];
+                resolve(data);
             } else {
                 resolve(null); // デッキが見つからない場合
             }
@@ -83,6 +86,36 @@ async function loadDeck(deckName) {
 
         request.onerror = (event) => {
             console.error('Load deck error:', event.target.error);
+            reject(event.target.error);
+        };
+    });
+}
+
+/**
+ * 指定された名前のデッキ（カードデータおよびトークン）をIndexedDBから読み込みます。
+ * @param {string} deckName - 読み込むデッキの名前
+ * @returns {Promise<{cards: Array, tokens: Array}|null>}
+ */
+async function loadDeckFull(deckName) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([DECK_STORE_NAME], 'readonly');
+        const store = transaction.objectStore(DECK_STORE_NAME);
+        const request = store.get(deckName);
+
+        request.onsuccess = (event) => {
+            if (event.target.result) {
+                resolve({
+                    cards: event.target.result.data || [],
+                    tokens: event.target.result.tokens || []
+                });
+            } else {
+                resolve(null);
+            }
+        };
+
+        request.onerror = (event) => {
+            console.error('Load deck full error:', event.target.error);
             reject(event.target.error);
         };
     });
@@ -160,6 +193,7 @@ async function deleteDeck(deckName) {
 window.cardGameDB = {
     saveDeck,
     loadDeck,
+    loadDeckFull,
     getAllDeckNames,
     getAllDecks,
     deleteDeck

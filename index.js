@@ -20,12 +20,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const saveDeckAsButton = document.getElementById("saveDeckAsButton");
   const overwriteSaveButton = document.getElementById("overwriteSaveButton");
   const newDeckButton = document.getElementById("newDeckButton");
+  const tokenNameInput = document.getElementById("tokenNameInput");
+  const addTokenButton = document.getElementById("addTokenButton");
+  const tokenEditorContainer = document.getElementById("token-editor-container");
 
   const debugArea = document.getElementById("debug-area"); // デバッグエリア
 
   // --- State ---
   const imageState = { isLoaded: false };
   let deck = [];
+  let editingTokens = [];
   let currentEditingDeckName = null;
 
   // --- Utility Functions ---
@@ -175,6 +179,53 @@ document.addEventListener("DOMContentLoaded", () => {
     renderEditedDeck();
   }
 
+  // --- Token Editor Functions ---
+  function renderEditedTokens() {
+    tokenEditorContainer.innerHTML = "";
+    if (editingTokens.length === 0) {
+      tokenEditorContainer.innerHTML =
+        '<p class="token-empty-msg">登録されたトークンはありません。「トークンに名前を追加」から追加してください。</p>';
+      return;
+    }
+
+    editingTokens.forEach((token) => {
+      const item = document.createElement("div");
+      item.className = "token-card-item";
+      item.dataset.tokenId = token.id;
+
+      const header = document.createElement("div");
+      header.className = "token-card-item-header";
+
+      const title = document.createElement("div");
+      title.className = "token-card-item-title";
+      title.textContent = `トークン: ${token.name}`;
+      title.title = token.name;
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "token-card-delete-btn";
+      deleteBtn.textContent = "削除";
+      deleteBtn.addEventListener("click", () => {
+        editingTokens = editingTokens.filter((t) => t.id !== token.id);
+        renderEditedTokens();
+      });
+
+      header.appendChild(title);
+      header.appendChild(deleteBtn);
+
+      const textarea = document.createElement("textarea");
+      textarea.className = "token-card-textarea";
+      textarea.placeholder = "トークンのテキスト（効果や特徴など）を入力...";
+      textarea.value = token.text || "";
+      textarea.addEventListener("input", (e) => {
+        token.text = e.target.value;
+      });
+
+      item.appendChild(header);
+      item.appendChild(textarea);
+      tokenEditorContainer.appendChild(item);
+    });
+  }
+
   // --- Deck List Functions ---
   async function renderDeckList() {
     deckList.innerHTML = "";
@@ -223,8 +274,10 @@ document.addEventListener("DOMContentLoaded", () => {
           renderDeckList();
           if (currentEditingDeckName === deckName) {
             deck = [];
+            editingTokens = [];
             currentEditingDeckName = null;
             renderEditedDeck();
+            renderEditedTokens();
           }
         }
       });
@@ -232,14 +285,20 @@ document.addEventListener("DOMContentLoaded", () => {
       listItem.addEventListener("click", async () => {
         if (currentEditingDeckName === deckName) {
           deck = [];
+          editingTokens = [];
           currentEditingDeckName = null;
           renderEditedDeck();
+          renderEditedTokens();
           return;
         }
-        const loadedDeck = await window.cardGameDB.loadDeck(deckName);
-        if (loadedDeck) {
-          deck = [...loadedDeck];
+        const loadedDeckFull = await window.cardGameDB.loadDeckFull(deckName);
+        if (loadedDeckFull) {
+          deck = [...loadedDeckFull.cards];
+          editingTokens = Array.isArray(loadedDeckFull.tokens)
+            ? loadedDeckFull.tokens.map((t) => ({ ...t }))
+            : [];
           renderEditedDeck();
+          renderEditedTokens();
           currentEditingDeckName = deckName;
           deckEditingArea.scrollIntoView({ behavior: "smooth" });
         } else {
@@ -258,12 +317,19 @@ document.addEventListener("DOMContentLoaded", () => {
     newDeckButton.classList.add("hidden"); // 新規デッキ作成ボタンを非表示
     imageLoader.classList.remove("hidden"); // ファイル選択ボタンを表示
     imageLoader.value = "";
+    deck = [];
+    editingTokens = [];
+    currentEditingDeckName = null;
+    renderEditedDeck();
+    renderEditedTokens();
   });
 
   imageLoader.addEventListener("change", (e) => {
     deck = [];
+    editingTokens = [];
     currentEditingDeckName = null;
     renderEditedDeck();
+    renderEditedTokens();
     debugArea.style.display = "none"; // デバッグエリアを一旦隠す
 
     const file = e.target.files[0];
@@ -456,6 +522,21 @@ document.addEventListener("DOMContentLoaded", () => {
     cardNameInput.value = "";
   });
 
+  addTokenButton.addEventListener("click", () => {
+    const tokenName = tokenNameInput.value.trim();
+    if (tokenName === "") {
+      alert("トークン名を入力してください。");
+      return;
+    }
+    editingTokens.push({
+      id: generateUniqueId(),
+      name: tokenName,
+      text: "",
+    });
+    renderEditedTokens();
+    tokenNameInput.value = "";
+  });
+
   saveDeckAsButton.addEventListener("click", async () => {
     let deckName = deckNameInput.value.trim();
 
@@ -475,7 +556,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     try {
-      await window.cardGameDB.saveDeck(deckName, deck);
+      await window.cardGameDB.saveDeck(deckName, deck, editingTokens);
       showToast("deckSaveToast", `デッキ「${deckName}」を保存しました。`, {
         duration: 2000,
       });
@@ -497,7 +578,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     try {
-      await window.cardGameDB.saveDeck(currentEditingDeckName, deck);
+      await window.cardGameDB.saveDeck(currentEditingDeckName, deck, editingTokens);
       showToast(
         "deckSaveToast",
         `デッキ「${currentEditingDeckName}」を上書き保存しました。`,
@@ -518,6 +599,7 @@ document.addEventListener("DOMContentLoaded", () => {
     deckEditingArea.style.display = "block";
     renderDeckList();
     renderEditedDeck();
+    renderEditedTokens();
   }
 
   initialize();

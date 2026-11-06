@@ -10,6 +10,7 @@ export let lifeCores = ["blue", "blue", "blue", "blue", "blue"];
 export let reserveCores = ["blue", "blue", "blue", "soul"];
 export let countCores = [];
 export let trashCores = [];
+export let deckTokens = [];
 
 export let voidChargeCount = 0;
 
@@ -74,6 +75,7 @@ export function setLifeCores(newLCC) { lifeCores = newLCC; }
 export function setReserveCores(newRCC) { reserveCores = newRCC; }
 export function setCountCores(newDCC) { countCores = newDCC; }
 export function setTrashCores(newTCC) { trashCores = newTCC; }
+export function setDeckTokens(newTokens) { deckTokens = newTokens; }
 export function setVoidChargeCount(count) { voidChargeCount = count; }
 
 export function setHandVisible(visible) { handVisible = visible; }

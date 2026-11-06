@@ -1,8 +1,8 @@
 // src/event_handlers.js
-import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, hand, trash, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging, paymentState, moveState, isMultiSelectingCores, setIsMultiSelectingCores, skipNextClickClear, setSkipNextClickClear } from './game_data.js';
+import { draggedElement, offsetX, offsetY, cardPositions, voidChargeCount, selectedCores, draggedCoreData, setDraggedElement, setOffsetX, setOffsetY, setVoidChargeCount, setSelectedCores, setDraggedCoreData, field, countCores, countShowCountAsNumber, setCountShowCountAsNumber, reserveCores, trashCores, hand, trash, handPinned, setHandPinned, touchDraggedElement, initialTouchX, initialTouchY, currentTouchX, currentTouchY, touchOffsetX, touchOffsetY, setTouchDraggedElement, setInitialTouchX, setInitialTouchY, setCurrentTouchX, setCurrentTouchY, setTouchOffsetX, setTouchOffsetY, isDragging, setIsDragging, paymentState, moveState, isMultiSelectingCores, setIsMultiSelectingCores, skipNextClickClear, setSkipNextClickClear, deckTokens } from './game_data.js';
 import { renderAll, renderTrashModalContent, showSummonActionChoice, showCostModal } from './ui_render.js';
 import { showToast, getZoneName, isMobileDevice, getArrayByZoneName } from './utils.js';
-import { hideMagnifier } from './magnify_logic.js';
+import { hideMagnifier, updateMagnifierEventListeners } from './magnify_logic.js';
 import { drawCard, moveCardData, openDeck, discardDeck, createSpecialCardOnField, discardAllOpenCards, startPaymentProcess } from './card_logic.js';
 import { handleCoreClick, clearSelectedCores, handleCoreDropOnCard, handleCoreInternalMoveOnCard, handleCoreDropOnZone, payCost, payCostFromField, cancelPayment, moveCoreFromField, cancelCoreMove, placeCoreOnSummonedCard } from './core_logic.js';
 
@@ -365,6 +365,10 @@ export function handleDragStart(e) {
             const cardType = target.dataset.cardType;
             e.dataTransfer.setData("type", "special-card");
             e.dataTransfer.setData("cardType", cardType);
+            if (cardType === 'token') {
+                if (target.dataset.tokenName) e.dataTransfer.setData("tokenName", target.dataset.tokenName);
+                if (target.dataset.tokenText) e.dataTransfer.setData("tokenText", target.dataset.tokenText);
+            }
             const rect = e.target.getBoundingClientRect();
             setOffsetX(e.clientX - rect.left);
             setOffsetY(e.clientY - rect.top);
@@ -619,7 +623,14 @@ function handleSpecialCardDrop(e) {
                 left: e.clientX - fieldRect.left - offsetX,
                 top: e.clientY - fieldRect.top - offsetY
             };
-            createSpecialCardOnField(cardType, position);
+            const customData = {};
+            if (cardType === 'token') {
+                const tokenName = e.dataTransfer.getData("tokenName");
+                const tokenText = e.dataTransfer.getData("tokenText");
+                if (tokenName) customData.name = tokenName;
+                if (tokenText) customData.text = tokenText;
+            }
+            createSpecialCardOnField(cardType, position, customData);
         }
     }
 }
@@ -786,7 +797,12 @@ function handleTouchEnd(e) {
                                 left: currentTouchX - fieldRect.left - touchOffsetX,
                                 top: currentTouchY - fieldRect.top - touchOffsetY
                             };
-                            createSpecialCardOnField(cardType, position);
+                            const customData = {};
+                            if (cardType === 'token') {
+                                if (touchedElement.dataset.tokenName) customData.name = touchedElement.dataset.tokenName;
+                                if (touchedElement.dataset.tokenText) customData.text = touchedElement.dataset.tokenText;
+                            }
+                            createSpecialCardOnField(cardType, position, customData);
                         }
                     }
                     hideMagnifier();
@@ -858,8 +874,60 @@ export function openTrashModal() {
     openModal('trashModal', 'trashModalContent', renderTrashModalContent);
 }
 
+export function renderDeckGaiModalContent() {
+    const content = document.getElementById('deckGaiModalContent');
+    if (!content) return;
+    content.innerHTML = '';
+
+    if (deckTokens && deckTokens.length > 0) {
+        deckTokens.forEach(token => {
+            const tokenCard = document.createElement('div');
+            tokenCard.className = 'card special-card';
+            tokenCard.draggable = true;
+            tokenCard.dataset.cardType = 'token';
+            tokenCard.dataset.tokenName = token.name;
+            tokenCard.dataset.tokenText = token.text || '';
+
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'card-name-fallback';
+            nameDiv.textContent = token.name;
+            tokenCard.appendChild(nameDiv);
+
+            content.appendChild(tokenCard);
+        });
+    } else {
+        const defaultToken = document.createElement('div');
+        defaultToken.className = 'card special-card';
+        defaultToken.draggable = true;
+        defaultToken.dataset.cardType = 'token';
+        defaultToken.dataset.tokenName = 'トークン';
+        defaultToken.dataset.tokenText = '';
+
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'card-name-fallback';
+        nameDiv.textContent = 'トークン';
+        defaultToken.appendChild(nameDiv);
+
+        content.appendChild(defaultToken);
+    }
+
+    const tenseiCard = document.createElement('div');
+    tenseiCard.className = 'card special-card';
+    tenseiCard.draggable = true;
+    tenseiCard.dataset.cardType = 'tensei';
+
+    const tenseiNameDiv = document.createElement('div');
+    tenseiNameDiv.className = 'card-name-fallback';
+    tenseiNameDiv.textContent = 'カードB面';
+    tenseiCard.appendChild(tenseiNameDiv);
+
+    content.appendChild(tenseiCard);
+
+    updateMagnifierEventListeners();
+}
+
 export function openDeckGaiModal() {
-    openModal('deckGaiModal', 'deckGaiModalContent', () => {}); // Empty render function for now
+    openModal('deckGaiModal', 'deckGaiModalContent', renderDeckGaiModalContent);
 }
 
 export function openModal(modalId, contentId, renderContent) {
