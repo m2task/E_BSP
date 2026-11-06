@@ -113,9 +113,18 @@ document.addEventListener("DOMContentLoaded", () => {
       const cardItem = document.createElement("div");
       cardItem.className = "deck-card-item";
       cardItem.dataset.cardId = card.id;
+
+      // カード右上の削除バッジ（×）
+      const deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "×";
+      deleteBtn.className = "card-delete-badge";
+      deleteBtn.title = "このカードを削除";
+      deleteBtn.addEventListener("click", () => handleDeleteCard(card.id));
+
       const img = document.createElement("img");
       img.src = card.imgDataUrl;
       img.alt = card.name || `Card ${card.id}`;
+
       const controls = document.createElement("div");
       controls.className = "card-controls";
       const decreaseBtn = document.createElement("button");
@@ -131,14 +140,12 @@ document.addEventListener("DOMContentLoaded", () => {
       increaseBtn.addEventListener("click", () =>
         handleIncreaseQuantity(card.id),
       );
-      const deleteBtn = document.createElement("button");
-      deleteBtn.textContent = "削除";
-      deleteBtn.className = "delete-button";
-      deleteBtn.addEventListener("click", () => handleDeleteCard(card.id));
+
       controls.appendChild(decreaseBtn);
       controls.appendChild(quantitySpan);
       controls.appendChild(increaseBtn);
-      controls.appendChild(deleteBtn);
+
+      cardItem.appendChild(deleteBtn);
       cardItem.appendChild(img);
       cardItem.appendChild(controls);
       deckEditorContainer.appendChild(cardItem);
